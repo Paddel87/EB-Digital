@@ -26,6 +26,14 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-07 23:35 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 9 abgeschlossen, `README.md` aus Vorlagen-Zustand auf vollständiges Statusbild gebracht.**
+- **Plan vorab vorgelegt und bestätigt** mit fünf zu klärenden Punkten: Status-Badge-Schema (Konzeption statt Vorlage-Mapping alpha/beta/stable), Build-Badge zwischenzeitlich „no status", CHANGELOG.md weglassen (nicht existent), LICENSE-Datei in Phase 1 statt jetzt anlegen, Sprache Deutsch.
+- **Inhalt der README:** 7 Badges in 2 Zeilen (Klasse G Maximum 10, sechs darunter wegen Konzeptionsphase); Einzeiler aus `vision.md` Abschnitt 1; „Über das Projekt"-Block aus `vision.md` 1+2+3+5; Status-Block synchronisiert mit `project-context.md`, `fahrplan.md`, `architecture.md` Abschnitt 9, `decisions.md` Teil A, `blockers.md`; Quick Start als „Heute lauffähig" mit Klon-Anleitung plus Phase-1-Hinweis (kein Aspirational-Inhalt); Architektur-Skizze als vereinfachte Mermaid plus 1-Satz-Modulliste; Verwendung explizit auf Phase 4 verschoben; Nächste Schritte mit drei konkreten Punkten (Modus-2-Restschritte, Phase 1, Phase 2); Mitwirken aus CLAUDE.md 11 + project-context.md 7+10; Doku-Tabelle ohne CHANGELOG.md; Lizenz mit Hinweis auf späteres LICENSE-File.
+- **Entfernt:** Vorlage „Badge-Auswahl pro Klasse" (~58 Zeilen) und Initialisierungs-Hinweis am Dateiende (~10 Zeilen). Methodik-relevante HTML-Kommentare am Datei-Anfang plus im Status-Block-Bereich behalten – sie sind Pflege-Hinweise, keine Initialisierungs-Vorlage.
+- **Beobachtung zur Vorlage:** Badge-Vorlage erwartet „alpha / beta / stable / maintenance / deprecated" als Status-Werte; `project-context.md` führt aber „Konzeption / Aufbau / aktive Entwicklung / Wartung / deprecated". Das ist eine Vorlagen-/Projekt-Diskrepanz, die ich zugunsten von `project-context.md` aufgelöst habe (CLAUDE.md Abschnitt 16 macht `project-context.md` zur Quelle für den Status-Block). Vermerk: falls die Vorlagen-CLAUDE.md projektübergreifend angepasst wird, sollten die beiden Status-Listen vereinheitlicht werden – aber das ist Methodik-Diskussion, nicht Schritt-9-Aufgabe.
+
 ### 2026-05-07 23:20 – [BEOBACHTUNG]
 
 - **Modus-2-Schritt 8 abgeschlossen, `logbuch.md` Vorlagen-Cleanup durchgeführt.**

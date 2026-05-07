@@ -1,4 +1,4 @@
-# [Projektname]
+# EB Digital
 
 <!-- Diese README spiegelt den aktuellen Umsetzungsstand des Projekts wider.
      Sie ist KEIN sporadisch gepflegtes Marketing-Dokument, sondern ein lebendes Statusbild.
@@ -8,23 +8,33 @@
      Inhalte stammen aus den Pflicht-Dokumenten und müssen mit ihnen konsistent sein.
      Drift zwischen README und Pflicht-Dokumenten ist ein Bug. -->
 
-[Badge-Zeile – siehe Abschnitt „Badge-Auswahl pro Klasse" am Ende dieser Vorlage]
+![Status](https://img.shields.io/badge/status-konzeption-lightgrey)
+![Version](https://img.shields.io/badge/version-v0.1.0-blue)
+![Build](https://img.shields.io/github/actions/workflow/status/Paddel87/EB-Digital/ci.yml?branch=main)
+![License](https://img.shields.io/badge/license-AGPL--3.0-blue)
 
-[Optional: zweite Badge-Zeile, falls thematisch sinnvoll gruppiert]
+![Python](https://img.shields.io/badge/python-3.13-blue)
+![Node](https://img.shields.io/badge/node-24--LTS-green)
+![Last Commit](https://img.shields.io/github/last-commit/Paddel87/EB-Digital)
 
-> [Einzeiler: was das Projekt ist und für wen, in einem Satz.
-> Soll auch im sozialen Vorschau-Snippet (Open Graph) funktionieren.]
+> Multi-Tenant-Plattform zur Echtzeit-Koordination ehrenamtlicher Einsatzbetreuung bei polizeilichen Großlagen.
 
 ## Über das Projekt
 
-[2–4 Absätze. Quelle: `vision.md` Abschnitte 1–3 (Kernidee, Problem, Zielbild),
-in für Außenstehende verständliche Sprache übersetzt.]
+EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlichen Einsatzbetreuung polizeilicher Großlagen durch ein strukturiertes, serviceorientiertes Auftragssystem. Disponenten, Betreuungsfahrzeuge und Einsatzkräfte arbeiten über rollenspezifische Oberflächen zusammen – mit Live-Karte, automatischer Fahrzeugzuweisung, anonymer Bestellfunktion für Einsatzkräfte und kollaborativer Multi-Disponenten-UX.
 
-**Was es löst:** [aus `vision.md` Abschnitt 2]
+**Was es löst:** Fehlende Echtzeit-Koordination zwischen Disponenten, Betreuungsfahrzeugen und Einsatzkräften bei Großlagen – ohne Lagebild, ohne automatische Fahrzeugzuweisung, ohne Statusrückmeldung.
 
-**Für wen:** [aus `vision.md` Abschnitt 2 und `project-context.md` Abschnitt 2]
+**Für wen:** Ehrenamtliche Strukturen polizeilicher Berufsverbände als Anbieter (initial DPolG, perspektivisch GdP und weitere). Polizeibedienstete im Außendienst als anonyme Bezieherseite. Cross-Berufsverbands-Versorgung ist gelebte solidarische Praxis und Teil des Selbstverständnisses des Systems.
 
-**Was es bewusst nicht ist:** [aus `vision.md` Abschnitt 5 – die wichtigsten Abgrenzungen]
+**Was es bewusst nicht ist:**
+
+- Kein Behörden-IT-Anschluss, kein operatives Lagebild im behördlichen Sinne, keine Einsatzversorgung im behördlichen Sinne.
+- Keine Klarnamen-Verwaltung; Einsatzkräfte erhalten anonyme Temporär-Sessions.
+- Keine Mitgliedschaftsprüfung der Einsatzkraft – verbandsoffener Zugriff über die Einsatz-URL.
+- Keine Hilfe-Funktion für Einsatzkräfte (läuft über den polizeilichen Dienstweg).
+- Keine native App in Phase 1 – ausschließlich PWA.
+- Keine US-Cloud-Anbieter, kein Tracking, keine SaaS-Auth-Provider.
 
 ## Aktueller Status
 
@@ -32,182 +42,112 @@ in für Außenstehende verständliche Sprache übersetzt.]
      - project-context.md Abschnitt 1 (Status, Version)
      - fahrplan.md Abschnitt „Aktueller Stand"
      - architecture.md Abschnitt 9 (Reifegrad-Übersicht)
-     - decisions.md Teil B (ADR-Übersicht, Reaktiv-Quote)
+     - decisions.md Teil A (ADR-Übersicht, Reaktiv-Quote)
+     - blockers.md (Aktive Blocker)
      Inkonsistenzen sind Bugs und werden vor Sessionende behoben. -->
 
-- **Projektphase:** [aus `fahrplan.md` – z. B. „Phase 2: Auth-System (UMSETZUNG)"]
-- **Version:** [aus `project-context.md` Abschnitt 1]
-- **Status:** [aus `project-context.md` Abschnitt 1 – Konzeption / Aufbau / aktive Entwicklung / Wartung / deprecated]
-- **Letzte Änderung:** [Datum des letzten Sessionende, automatisch aus Commit-Datum]
-- **Architektur-Reife:** [Kurzfassung aus `architecture.md` Abschnitt 9 – z. B. „Module A, B BELASTBAR; Modul C VORLÄUFIG; Modul D OFFEN, wartet auf Spike S-3"]
-- **Aktive Blocker:** [Anzahl aus `blockers.md`; bei >0 Verweis auf die Datei]
+- **Projektphase:** Modus 2 – Initialisierung (Phasentyp INITIALISIERUNG); reguläre Phase 1 (Repo-Bootstrap & Tech-Foundations) noch nicht begonnen.
+- **Version:** v0.1.0
+- **Status:** Konzeption
+- **Letzte Änderung:** 2026-05-07
+- **Architektur-Reife:** 9 Bestandteile `[BELASTBAR]` (Stack-/NFR-/Datenschutz-Constraints), ca. 35 `[VORLÄUFIG]` (Module, Schnittstellen, Datenmodell-Invarianten), 9 `[OFFEN]` (Spikes G–M, Bedrohungsmodell, Tracing). Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends bleibt bis zum Last-/Funktionstest in Phase 7 `[VORLÄUFIG]`.
+- **Aktive Blocker:** 0 ([`docs/blockers.md`](docs/blockers.md)).
+- **ADRs:** 9 (alle `[STRATEGISCH]`, INITIALISIERUNG); Reaktiv-Quote 0/9 (Schwellenwert 20 % nicht überschritten).
+- **Klassifikation:** Klasse G (Groß) – ADR-001.
 
 ## Quick Start
 
-[Schritte für jemanden, der das Projekt nach dem Klonen startet.
-Konkret und kopierbar, keine Abstraktionen.
-Quelle: `project-context.md` Abschnitt 8 (Betrieb und Deployment) plus eigenes Hands-on.]
+> **Hinweis Konzeptionsphase:** Das Repository enthält aktuell die Pflicht-Dokumente, aber noch keinen Anwendungscode. Quick Start wird mit Phase 1 (Repo-Bootstrap & Tech-Foundations) konkretisiert; siehe [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
 
-### Voraussetzungen
+### Voraussetzungen (geplant für Phase 1)
 
-- [Sprache und Mindestversion, z. B. Python 3.12+]
-- [Werkzeuge, z. B. Docker, Make]
-- [Optional: Hardware, z. B. GPU für ML-Workloads]
+- Docker Engine 29.4+ und Docker Compose v5.1+
+- uv 0.11+ (Python-Package-Manager) und Python 3.13
+- pnpm 11+ und Node.js 24 LTS
+- Optional: GitHub-Account für CI-Auslösung; SSH-Zugriff auf Hetzner-VPS für Production-Deployment
 
-### Installation
-
-```bash
-# Repo klonen
-git clone [URL]
-cd [projektname]
-
-# Abhängigkeiten installieren
-[konkreter Befehl]
-
-# Erstkonfiguration
-[konkreter Befehl, z. B. `cp .env.example .env`]
-```
-
-### Erste Ausführung
+### Heute lauffähig
 
 ```bash
-[konkreter Befehl]
-```
+# Repository klonen
+git clone https://github.com/Paddel87/EB-Digital.git
+cd EB-Digital
 
-Erwartete Ausgabe: [...]
+# Pflicht-Dokumente lesen (Pflichtlektüre nach CLAUDE.md Abschnitt 2)
+cat docs/project-context.md
+cat docs/architecture.md
+cat docs/fahrplan.md
+```
 
 ## Architektur (Überblick)
 
-[Eine Skizze in 5–10 Zeilen, NICHT die volle Architektur. Quelle: `architecture.md` Abschnitt 1 + Modul-Karte in vereinfachter Form.
-Verweis auf `architecture.md` für Details.]
+```mermaid
+graph LR
+  FD["frontend-disponent<br/>SvelteKit"]
+  FB["frontend-betreuer<br/>SvelteKit PWA"]
+  FE["frontend-einsatzkraft<br/>SvelteKit PWA"]
+  RP["infra/reverse-proxy<br/>Caddy"]
+  BE["Backend<br/>Modular Monolith<br/>(11 Module)"]
+  TP["infra/tile-proxy<br/>nginx"]
+  PG[("PostgreSQL 17.9")]
+  VK[("Valkey 8.1.7")]
+  MT[MapTiler]
+  TT[TomTom]
 
+  FD --> RP
+  FB --> RP
+  FE --> RP
+  RP --> BE
+  BE --> TP
+  BE --> PG
+  BE --> VK
+  TP --> MT
+  TP --> TT
 ```
-[ASCII-Skizze oder Mermaid-Block, max. 10 Zeilen]
-```
 
-**Module:**
+**Backend-Module (11):** `auth` (Login + Sessions + CLI-Bootstrap) · `auth_anonymous` (einsatz-URL + AccessCode) · `tenants` (Mandanten-Onboarding) · `catalog` (Artikelkatalog) · `operations` (Operations + Orders + Audit-Log) · `fleet` (Fahrzeuge + Beladung) · `geo` (Routing + Tile-Cache + Sperrungs-Override) · `realtime` (WebSocket-Hub) · `resilience` (Backup/Recovery) · `export` (DSGVO-Datenexport) · `retention` (30-Tage-Anonymisierung + Aggregat).
 
-- **[Modul A]:** [1 Satz Verantwortung]
-- **[Modul B]:** [1 Satz Verantwortung]
+**Frontends (3):** `frontend-disponent` (Browser, Lagezentrum) · `frontend-betreuer` (PWA Mobile, Turn-by-Turn) · `frontend-einsatzkraft` (anonyme PWA).
 
-→ Vollständige Architektur: [`docs/architecture.md`](docs/architecture.md)
+**Infrastruktur (2):** `infra/reverse-proxy` (Caddy mit automatischem TLS) · `infra/tile-proxy` (nginx-Cache vor MapTiler/TomTom).
+
+→ Vollständige Architektur: [`docs/architecture.md`](docs/architecture.md) · Architektur-Entscheidungen: [`docs/decisions.md`](docs/decisions.md)
 
 ## Verwendung
 
-[Häufigste Anwendungsfälle als kurze Beispiele.
-Bei UI-basierten Systemen: Screenshots oder Beschreibung der Hauptansichten.
-Bei CLI-Tools: typische Befehle.
-Bei APIs: typische Requests.]
-
-### Beispiel: [Anwendungsfall]
-
-```
-[konkretes Beispiel]
-```
+> Verwendungs-Beispiele werden ergänzt, sobald Phase 4 (Operations Core + Realtime + Einsatzkraft-PWA) abgeschlossen ist und ein End-to-End-Pfad lauffähig ist. Bis dahin spiegelt [`docs/architecture.md`](docs/architecture.md) Abschnitt 5 die geplanten Datenflüsse F1–F5.
 
 ## Nächste Schritte
 
-[Aus `fahrplan.md` – die nächsten 1–3 geplanten Schritte oder Phasen, in nutzerorientierter Sprache.
-Nicht die vollständige Roadmap, nur was als nächstes in der Umsetzung kommt.]
+1. **Modus-2-Initialisierung abschließen:** Schritt 9 (`README.md`, dieser Schritt), Schritt 10 (CI-/Hook-Skelett aus `templates/`), Schritt 11 (Vision-Überführungsstatus), Schritt 12 (Initialisierungs-Commit).
+2. **Phase 1 – Repository-Bootstrap & Tech-Foundations** (UMSETZUNG): Repo-Setup mit uv-/pnpm-Workspaces, CI-Pipeline aktivieren, Backend-Skelett (FastAPI + PostgreSQL + Alembic + Procrastinate), Admin-Bootstrap-CLI (ADR-004), Frontend-Workspaces, Compose-`dev`-Profil. Voll detailliert in [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
+3. **Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2)** (UMSETZUNG): Vollständige Auth-Schicht, Mandanten-Onboarding, `operation_tenant_participation` als alleinige Operation↔Mandant-Verknüpfung (ADR-009 Invariante I1), abstrakter Berechtigungs-Filter (Invariante I2).
 
-- [Schritt 1, kurz]
-- [Schritt 2, kurz]
-
-→ Vollständiger Fahrplan: [`docs/fahrplan.md`](docs/fahrplan.md)
+→ Vollständiger Fahrplan mit 7 regulären Phasen plus späterer Verbund-Erweiterungs-Phase X: [`docs/fahrplan.md`](docs/fahrplan.md)
 
 ## Mitwirken
 
-[Falls Open Source: Verweis auf CONTRIBUTING.md falls vorhanden, Issue-Tracker, Branch-Konventionen.
-Bei privaten Projekten: kurzer Hinweis auf den Workflow.]
-
-- **Branch-Konvention:** [aus `CLAUDE.md` Abschnitt 11]
-- **Commit-Format:** [aus `CLAUDE.md` Abschnitt 11]
-- **Code-Standards:** [aus `project-context.md` Abschnitt 7]
+- **Branch-Konvention:** Hauptbranch `main`. Feature-Branches `feat/<kurztitel>`, Bugfixes `fix/<kurztitel>`, Refactor `refactor/<kurztitel>`. In der Initialisierungsphase ist direkter Push auf `main` zulässig (Status `Konzeption`); ab Statuswechsel nur über Pull Request mit grünen Pflicht-Gates.
+- **Commit-Format:** Conventional Commits in deutscher Sprache, atomar pro Änderung, Imperativ-Präsens. Bei freigabepflichtigen Änderungen: ADR-Nummer im Commit-Body. Pre-Commit-Hooks und `commitlint` sind Pflicht-Gates.
+- **Code-Standards:** Python via uv + ruff (Linter+Formatter) + mypy `--strict` + bandit + pip-audit. TypeScript via pnpm + eslint (`@typescript-eslint`, `eslint-plugin-svelte`, `eslint-plugin-security`) + prettier + svelte-check + `tsc --strict --noUncheckedIndexedAccess`. Tests: pytest+Coverage (Backend, kritische Pfade ≥ 95 %), vitest+Playwright (Frontends). CI: GitHub Actions, drei Workflows (`ci.yml`, `security.yml`, später `release.yml`).
+- **Methodik:** semi-autonomer Modus mit Claude Code (siehe [`CLAUDE.md`](CLAUDE.md)). Architektur-Entscheidungen werden in [`docs/decisions.md`](docs/decisions.md) als ADRs festgehalten; Reaktiv-Quote ≤ 20 % über die letzten 10 ADRs.
+- **Dokumentationssprache:** Deutsch. **Codesprache (Bezeichner, Kommentare):** Englisch (Domänen-Begriffe übersetzt – siehe [`docs/architecture.md`](docs/architecture.md) Abschnitt 0).
 
 ## Dokumentation
 
 | Dokument | Inhalt |
 |---|---|
-| [`docs/vision.md`](docs/vision.md) | Ursprüngliche Projektvision (eingefroren) |
-| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele |
-| [`docs/architecture.md`](docs/architecture.md) | Systemarchitektur, Module, Schnittstellen |
-| [`docs/fahrplan.md`](docs/fahrplan.md) | Entwicklungsplan und Fortschritt |
-| [`docs/decisions.md`](docs/decisions.md) | Architekturentscheidungen (ADRs) |
-| [`docs/blockers.md`](docs/blockers.md) | Aktive Blocker und gelöste Probleme |
-| [`CHANGELOG.md`](CHANGELOG.md) | Versionshistorie |
+| [`docs/vision.md`](docs/vision.md) | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss) |
+| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards |
+| [`docs/architecture.md`](docs/architecture.md) | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht |
+| [`docs/fahrplan.md`](docs/fahrplan.md) | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert |
+| [`docs/decisions.md`](docs/decisions.md) | 9 ADRs (Klassifikation, Stack, Pattern, Fragen A–F) plus 14 Entscheidungsregeln |
+| [`docs/blockers.md`](docs/blockers.md) | Aktive Blocker (aktuell keine) und Erkennungs-Heuristiken |
+| [`docs/logbuch.md`](docs/logbuch.md) | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen |
+| [`CLAUDE.md`](CLAUDE.md) | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus) |
 
 ## Lizenz
 
-[aus `project-context.md` Abschnitt 6 – Compliance und Lizenz]
+Dieses Projekt steht unter der **GNU Affero General Public License v3.0** (AGPL-3.0). Das vollständige Lizenz-File wird in Phase 1 als `LICENSE` im Repo-Root angelegt; bis dahin gilt der Hinweis in [`docs/project-context.md`](docs/project-context.md) Abschnitt 6 als verbindlich.
 
----
-
-## Badge-Auswahl pro Klasse (Initialisierungshinweis)
-
-<!-- Dieser Abschnitt wird beim Initialisieren entfernt.
-     Er dokumentiert nur, welche Badges in welcher Klasse als Default gelten. -->
-
-**Maximalwerte (CLAUDE.md Abschnitt 1B):**
-
-- **Klasse K (Klein):** maximal **5** Badges
-- **Klasse M (Mittel):** maximal **8** Badges
-- **Klasse G (Groß):** maximal **10** Badges
-- **Klasse V (Verteilt-Groß):** maximal **12** Badges
-
-**Pflicht-Badges (alle Klassen):**
-
-- **Status** – aus `project-context.md` Abschnitt 1: alpha / beta / stable / maintenance / deprecated
-- **Version** – SemVer-Wert aus `project-context.md` Abschnitt 1
-- **License** – aus `project-context.md` Abschnitt 6
-- **Build** – CI-Status des Hauptbranches
-
-**Empfohlene Zusatz-Badges nach Klasse:**
-
-- **Klasse K (1 Slot):** Sprach-/Laufzeit-Mindestversion ODER Last Commit
-- **Klasse M (4 Slots):** Sprach-/Laufzeit-Version, Coverage, Last Commit, Open Issues
-- **Klasse G (6 Slots):** zusätzlich Type-Check-Status, Security-Scan-Status, Lint-Status, Lines-of-Code, Stack-Hauptkomponente, Aktivitätsindikator
-- **Klasse V (8 Slots):** zusätzlich pro Service ein Build-/Status-Badge ODER Compliance-Badge (DSGVO, etc.) ODER Container-Image-Status
-
-**Reihenfolge in der Badge-Zeile (verbindlich):**
-
-1. Status (immer ganz links – wichtigste Information)
-2. Version
-3. Build
-4. Coverage (falls vorhanden)
-5. Type-Check / Lint / Security (technische Qualitätsbadges)
-6. License
-7. Sprach-/Laufzeit-Version
-8. Aktivitätsindikatoren (Last Commit, Open Issues)
-
-**Bei Klasse G und V mit zwei Zeilen:** Zeile 1 = Status- und Qualitätsbadges, Zeile 2 = technische und Aktivitäts-Badges.
-
-**Regeln:**
-
-- Badges spiegeln **reale** Zustände – kein „coming soon"-Coverage-Badge.
-- Bei Statuswechsel oder Versionserhöhung: Badge-Update Pflicht im selben Commit.
-- Maximalwerte sind Obergrenze, nicht Zielwert. Wenn ein Projekt mit weniger auskommt: weniger ist besser.
-- Badge-Quellen bevorzugt: shields.io für statische und einfach abgeleitete Badges; offizielle Service-Badges (codecov, github actions) für dynamische.
-
-**Beispielzeile (Klasse M, 6 Badges):**
-
-```markdown
-![Status](https://img.shields.io/badge/status-beta-yellow)
-![Version](https://img.shields.io/badge/version-v0.4.1-blue)
-![Build](https://img.shields.io/github/actions/workflow/status/USER/REPO/ci.yml)
-![Coverage](https://img.shields.io/badge/coverage-82%25-green)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Python](https://img.shields.io/badge/python-3.12+-blue)
-```
-
----
-
-**Initialisierungshinweis (erste Session nach Projektanlage):**
-
-- Dieser ganze Abschnitt „Badge-Auswahl pro Klasse" und der Initialisierungshinweis selbst werden nach der Initialisierung **entfernt**.
-- Inhaltliche Befüllung der README erfolgt aus den anderen Pflicht-Dokumenten – siehe Quellenangaben in den HTML-Kommentaren oben.
-- **Strukturwahl** richtet sich nach Klasse:
-  - **Klasse K (Klein):** Abschnitte „Architektur (Überblick)", „Mitwirken", „Dokumentation"-Tabelle können entfallen oder verkürzt werden. „Über das Projekt" auf 1 Absatz reduzieren.
-  - **Klasse M (Mittel):** Volle Form wie oben.
-  - **Klasse G (Groß):** Volle Form, „Architektur (Überblick)" mit Mermaid-Diagramm und Verweisen auf Modul-spezifische Architektur-Dokumente.
-  - **Klasse V (Verteilt-Groß):** Volle Form, zusätzlich Service-Übersicht in „Architektur (Überblick)" mit Verweisen auf `architecture-<service>.md` und `architecture-integration.md`. „Quick Start" ggf. um Multi-Service-Setup erweitern.
-- README-Initialisierung ist Teil der Modus-2-Befüllungsreihenfolge (CLAUDE.md Abschnitt 1A, Schritt 8 nachgelagert) – sie wird nach allen anderen Dokumenten erstellt, weil sie aus diesen abgeleitet wird.
+**Erlaubte Abhängigkeitslizenzen:** MIT, BSD-2/BSD-3, Apache-2.0, MPL-2.0, ISC. **Ausgeschlossen:** GPL/LGPL als Backend-Dependency (außer per ADR), proprietär, RSALv2, SSPL, Confluent-Community-License, Elastic-License. Begründung in [`docs/project-context.md`](docs/project-context.md) Abschnitt 6.
