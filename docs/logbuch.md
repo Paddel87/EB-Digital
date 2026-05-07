@@ -26,14 +26,74 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
-### YYYY-MM-DD HH:MM – [SESSIONENDE]
+### 2026-05-07 16:35 – [BEOBACHTUNG]
 
-- **Session-Dauer:** [z. B. „2h 15min" oder „kurze Session"]
-- **Bearbeitet:** [Welche Fahrplan-Schritte wurden in dieser Session berührt; Status-Änderungen]
-- **Erreicht:** [Was ist am Ende der Session konkret fertig oder vorangeschritten]
-- **Offen geblieben:** [Was war angefangen, ist aber nicht abgeschlossen; mit Stand]
-- **Nächster Schritt:** [Was zu Beginn der nächsten Session aufgegriffen wird – konkret]
-- **Stimmung / Beobachtung:** [optional: was lief gut, was zäh, woran erinnern für nächstes Mal]
+- **Schublade 2 + 3 für Modus-2-Schritt 6 vorbereitet, Klärungs-Session abgeschlossen.**
+- **Schublade 2 (ERKUNDUNG-Spikes vor jeweiliger UMSETZUNG-Phase, in `fahrplan.md` aufzunehmen):**
+  - **G — Sperrungs-Override-Technik:** ERKUNDUNG/Spike, 4–8 h, klärt TomTom-Custom-Areas vs. Route-Bias vs. Penalty-Map; Datenbedarf bei Override-Pflege; API-Budget-Folgen. Liegt vor erster UMSETZUNG-Phase mit `backend/geo`. Ergebnis: ADR mit Technikwahl.
+  - **H — Resilience-Granularität:** ERKUNDUNG/Vergleichsstudie+Prototyp, 6–8 h, klärt Backup-Strategie (logical/physical, RTO/RPO), Recovery-Reihenfolge (Procrastinate-Job-State + Detail-Daten), Verhalten bei Crash mitten im Auftragsstatus-Wechsel, Erfahrung reconnect WebSocket nach State-Reload. Liegt vor UMSETZUNG `backend/resilience`. Ergebnis: ADR „Backup-Frequenz, Recovery-Reihenfolge, getestete RTO".
+  - **I — Geografischer Plausibilitäts-Algorithmus:** ERKUNDUNG/Spike, 4 h, klärt Distanz-Metrik (Hülle vs. Mittelpunkt), GPS-Ungenauigkeit, Text-Standort-Behandlung, mandanten-konfigurierbarer Schwellenwert (Default 5 km). Liegt vor UMSETZUNG Einsatzkraft-Bestellpfad in `backend/operations`. Ergebnis: Pseudocode + Test-Datensatz.
+  - **J — Bündelungs-Trigger:** ERKUNDUNG/Vergleichsstudie, 4 h, klärt Auslöser (System-Heuristik vs. Disponenten-manuell vs. Versorgungs-Transporter-Crew), UI-Auswirkung, Aggregat-Wirkung auf `anzahl_buendelungen`. Liegt vor UMSETZUNG Großbestellungs-Modus. Ergebnis: ADR Auslöser-Wahl Phase 1 (Vermutung: manuell durch Disponent).
+  - **K — Hilfe-Knopf-Semantik:** ERKUNDUNG/Spike, 2–3 h, klärt Pflichtfeld-Beschreibung, Disponenten-Eskalations-Sichtbarkeit, Quittungspfad zum Betreuer, kein PII-Speicher. Liegt vor UMSETZUNG `frontend-betreuer`-Hilfe-Knopf. Ergebnis: UX-Konzept + Datenmodell-Skizze.
+  - **L — Kartenmaterial-Offline-Caching-Technik:** ERKUNDUNG/Prototyp, 6–8 h, klärt Workbox-Strategie für Tile-Cache, Pre-Cache des Einsatzraums beim Schichtbeginn, Tile-Lebensdauer (≥ 7 Tage konsistent mit nginx-Cache), Speicher-Quota mobiler Browser. Liegt vor UMSETZUNG `frontend-betreuer`-Karten-Anzeige produktiv. Ergebnis: Prototyp + Konfigurations-ADR.
+  - **M — Fahrzeugbezeichnungs-Schema:** ERKUNDUNG/Vergleichsstudie + Stakeholder-Rückfrage DPolG, 2 h netto, klärt Naming-Konvention (z. B. „EB-Bremen-01" oder verbandseigene Funkrufnamen), Eindeutigkeit pro Mandant vs. global, Längen-Constraints. Liegt vor erstem Roll-out, kein Architektur-Blocker. Ergebnis: ADR „Fahrzeug-Naming".
+- **Schublade 3 (organisatorische Roadmap-Meilensteine ohne Code):**
+  - **N — Plattform-Betreiber-Governance:** Klärung vor Produktivbetrieb (Patrick persönlich vs. Trägerverein vs. Stiftung). Berührt Haftung, DSGVO-Verantwortlichkeit, Mandanten-Vertragsgestaltung. Verknüpft mit „Administrator-Architektur bei Multi-Tenancy" (Skalierungsfrage zentraler vs. mehrere Plattform-Admins).
+  - **O — Test-Termin reale Großlage:** konkretes Datum von DPolG + Patrick zu setzen, Anker im 3–6-Monats-Fenster. STABILISIERUNG-Phase als Validierungs-Anker.
+  - **P — Schriftliche Onboarding-Unterlagen:** DSGVO-Datenverarbeitungs-Vereinbarung, Nutzungsbedingungen, Haftungsklarheit. Pflicht-Voraussetzung für Mandanten-Freischaltung. Verknüpft mit N (Trägerstruktur beeinflusst Vertragsgestaltung).
+- **Bestätigung Patrick:** Triage geht so in Modus-2-Schritt 6 ein.
+
+### 2026-05-07 16:20 – [BEOBACHTUNG]
+
+- **Grundsatzfrage F (Parallele Mandanten an derselben Großlage) geklärt:** Verbund-Modus mit gemeinsamem Auftragspool ist Ziel, aber nicht Phase 1. Vision-Verhältnis: V2 (Reinterpretation – Verbund als opt-in-Erweiterung mit beidseitigem Konsens, Default-Trennung bleibt). Phase: P2 (Phase 1 architektonisch verbund-tauglich vorbereiten, eigentliche Verbund-Funktionalität in späterer UMSETZUNG-Phase). Fünf Phase-1-Invarianten festgelegt (I1 Verknüpfungstabelle `einsatz_mandant_teilnahme`, I2 abstrakter Berechtigungs-Filter, I3 Fahrzeug-Zuweisung über Einsatz-Kontext, I4 Aggregat einstweilen mit einer `mandant_id`, I5 Datenexport einstweilen auf Eigentümer-Rolle reduziert). Keine eigenes `backend/verbund`-Modul in Phase 1. Spätere Verbund-Phase wird in Modus-2-Schritt 6 in `fahrplan.md` als Phase mit ERKUNDUNG-Vorlauf aufgenommen. ADR-Anlage in Modus-2-Schritt 5.
+
+### 2026-05-07 15:50 – [BEOBACHTUNG]
+
+- **Grundsatzfrage E (Multi-Disponent-Hierarchie) geklärt:** Kein Lead-Modell. Alle Disponenten am Einsatz voll gleichberechtigt, einschließlich destruktiver Aktionen. Vollständiges Audit-Log (Tabelle `einsatz_audit_log`) ersetzt Lead-Schutz durch retrospektive Nachvollziehbarkeit. UX-Bestätigungs-Dialog vor destruktiven Aktionen im `frontend-disponent`. Begründung Patricks: Plattform-Administrator nicht zuverlässig erreichbar; Disponenten haben den operativen Überblick und müssen handlungsfähig bleiben. Audit-Log liefert zugleich Datenbasis für Aggregations-Felder aus Frage C. Abweichung von der ursprünglichen Empfehlung (Lead-Modell mit Eröffner-Default) – Begründung gilt als geklärt aufgenommen. ADR-Anlage in Modus-2-Schritt 5.
+
+### 2026-05-07 15:25 – [BEOBACHTUNG]
+
+- **Grundsatzfrage D (Datenexport-Format und Granularität) geklärt:** asynchron via Procrastinate-Job, API-Tripel POST/GET/GET-Download, ZIP mit JSON pro Tabelle plus manifest.json, vollständige Mandanten-Daten ohne externe Anhänge, Self-Service Mandant + Plattform-Admin-Override, 7 Tage Aufbewahrung mit Cleanup-Job. Endpunkt-Skizze in `project-context.md` Abschnitt 6 entsprechend angepasst. ADR-Anlage in Modus-2-Schritt 5.
+
+### 2026-05-07 15:05 – [BEOBACHTUNG]
+
+- **Grundsatzfrage C (Aggregations-Schema) geklärt:** Aggregation pro Einsatz, finaler Snapshot beim Einsatz-Ende; Metriken-Set ohne Personen-Buckets (Bestellungen, Fahraufträge, Stornos, Bündelungen, Versorgungs-Transporter-Modi, Zugangscode-Status, Strecken-Freigaben, Hilfe-Meldungen, Gesamt-Distanz gerundet, Spitzenwerte aktiver Fahrzeuge/Disponenten); Stadt-Label statt Geometrie in Phase 1; Mandanten-Trennung beim Zugriff; Aggregat-Schreibung entkoppelt vom 30-Tage-Anonymisierungs-Job. Begründung in `project-context.md` Abschnitt 11. ADR-Anlage in Modus-2-Schritt 5.
+
+### 2026-05-07 14:45 – [BEOBACHTUNG]
+
+- **Grundsatzfrage B (Zugangscode für Einsatzkraft-PWA) geklärt:** 6 Zeichen Crockford-Base32, ein Code pro Einsatz wiederverwendbar, Toggle wirkt nur auf neue Sessions, Disponenten-UI mit Anzeige+Copy+QR (kombinierte URL), keine Rotation in Phase 1. Begründung in `project-context.md` Abschnitt 11. ADR-Anlage in Modus-2-Schritt 5.
+
+### 2026-05-07 14:25 – [BEOBACHTUNG]
+
+- **Grundsatzfrage A (Admin-Bootstrap-Flow) geklärt:** CLI-Befehl `python -m eb_digital admin create`, jederzeit nutzbar, Passwort interaktiv. Verworfen: ENV-Bootstrap (Klartext-Risiko), Web-Setup-Wizard (Race + früher UI-Code), Hybrid-Setup-Link (Logs als Sekundär-Faktor problematisch). Eintrag in `project-context.md` Abschnitt 11 als geklärt markiert. ADR-Anlage erfolgt im Block in Modus-2-Schritt 5.
+
+### 2026-05-07 14:00 – [SESSIONSTART]
+
+- **Letzter Stand:** Initialisierungs-Commit `3b92368 init(modus-2): Schritte 1-3 abgeschlossen, project-context.md gehärtet`. Modus 2 Schritte 1 (Klassifikations-Hypothese), 2 (project-context vorbefüllt), 2a (Versions-Verifikation 2026-05-07) und 3 (Härtungs-Schritt) abgeschlossen. Schritte 4–12 (architecture, decisions, fahrplan, blockers, logbuch, README, CI-Skelett, Vision-Status, Init-Commit) stehen noch aus.
+- **Geplant für diese Session:** Klärung der offenen Grundsatzfragen aus `project-context.md` Abschnitt 11 vor Befüllung von `architecture.md` (Modus-2-Schritt 4). Triage in „jetzt klären / als Erkundungs-Schritt einplanen / organisatorisch offen lassen" und anschließend Punkt für Punkt durchgehen.
+- **Vorabprüfung:** Wir sind weiterhin in Modus 2 (Initialisierung), Phasentyp INITIALISIERUNG. Architektur-Reifegrade noch nicht vergeben. Pflichtlektüre vollständig gelesen plus Vertiefung `vision.md` (Auslöser: Grundsatzfragen verweisen direkt auf Vision Abschnitt 9).
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus.
+
+### 2026-05-07 16:55 – [SESSIONENDE]
+
+- **Session-Dauer:** ca. 3 h (14:00–16:55).
+- **Bearbeitet:** Klärungs-Session der offenen Grundsatzfragen aus `project-context.md` Abschnitt 11; Triage in drei Schubladen; Schublade 1 (Fragen A–F) vollständig durchgearbeitet; Schublade 2 (G–M) und Schublade 3 (N/O/P) als Fahrplan-Skizzen für Modus-2-Schritt 6 vorbereitet und bestätigt.
+- **Erreicht:**
+  - **Frage A (Admin-Bootstrap-Flow) → CLI-Befehl, jederzeit nutzbar.**
+  - **Frage B (Zugangscode) → 6 Zeichen Crockford-Base32, ein Code pro Einsatz, QR-Unterstützung, keine Rotation in Phase 1.**
+  - **Frage C (Aggregations-Schema) → pro Einsatz, festes Metriken-Set, Stadt-Label statt Geometrie, Mandanten-Trennung beim Zugriff, Aggregat-Schreibung entkoppelt vom Anonymisierungs-Job.**
+  - **Frage D (Datenexport) → asynchron via Procrastinate, ZIP+JSON pro Tabelle plus manifest.json, Self-Service Mandant + Plattform-Admin, 7 Tage Aufbewahrung.** Endpunkt-Skizze in `project-context.md` Abschnitt 6 entsprechend angepasst (Job-Tripel POST/GET/GET-Download).
+  - **Frage E (Multi-Disponent) → kein Lead-Modell, alle gleichberechtigt, vollständiges Audit-Log (`einsatz_audit_log`).**
+  - **Frage F (Parallele Mandanten) → Verbund-Modus als Ziel, Phase 1 nur architektonisch verbund-tauglich; fünf Phase-1-Invarianten festgelegt (I1 Verknüpfungstabelle `einsatz_mandant_teilnahme`, I2 abstrakter Filter, I3 Fahrzeug-Zuweisung über Einsatz-Kontext, I4 Aggregat einstweilen mit einer `mandant_id`, I5 Datenexport einstweilen auf Eigentümer-Rolle).**
+  - `project-context.md` Abschnitt 11 mit allen sechs „GEKLÄRT 2026-05-07"-Einträgen und Triage-Vermerk konsolidiert.
+  - `fahrplan.md` „Aktueller Stand"-Block aktualisiert (Modus-2-INITIALISIERUNG mit nächstem Schritt 4).
+- **Offen geblieben:** Modus-2-Schritte 4 (architecture.md), 5 (decisions.md mit ADRs A–F + ggf. ADR für Vision-V2-Reinterpretation aus Frage F), 6 (fahrplan.md mit Schublade 2 + 3), 7 (blockers.md), 8 (logbuch Vorlagen-Cleanup), 9 (README.md), 10 (CI-/Hook-Skelett), 11 (vision Überführungsstatus), 12 (Init-Commit). Schubladen 2 und 3 als Skizzen im Logbuch-Eintrag 16:35 abgelegt – beim Befüllen von `fahrplan.md` direkt verwertbar.
+- **Nächster Schritt:** Modus-2-Schritt 4 – `architecture.md` befüllen. Eingangsfragen: Modul-Karte aus `project-context.md` Abschnitt 4 in Mermaid übertragen; Reifegrade hypothesengetreu setzen (`[VORLÄUFIG]` als Default, `[BELASTBAR]` nur bei harten Vision-Konstraints); Schnittstellenverträge für die durch Schublade 1 jetzt klar gewordenen Kontaktstellen skizzieren (`backend/auth` CLI, `backend/auth_anonymous` Code-Validierung, `backend/operations` Lead-freie Auftragslogik plus Audit-Log, `backend/retention` Aggregat-Schreibung beim Einsatz-Ende, `backend/export` Job-Tripel, `einsatz_mandant_teilnahme`-Invarianten). Stufe-2-Klassifikations-Bestätigung am Ende des Architektur-Grobschnitts.
+- **Stimmung / Beobachtung:**
+  - Triage in Schubladen vor der eigentlichen Klärung war wirkungsvoll – sie hat verhindert, dass sekundäre Fragen mit den Architektur-blockierenden vermischt wurden.
+  - Frage F war die einzige mit echtem Vision-Konflikt-Risiko. Nachfragen zu V1/V2/V3 plus P1/P2/P3 hat eine fast unbemerkte Vision-Aufweichung verhindert. Lerneffekt: bei freigabepflichtigen Architekturen mit Vision-Berührung lieber zwei Klärungs-Sätze als einen langen Architekturbau-Folgeaufwand.
+  - Frage E zeigte die Pflicht zu „nicht stillschweigend interpretieren": die Begründung Patricks zu 4.B passte nicht zur Option, die er gewählt hatte – Nachfrage hat eine ganz andere Variante (Var.3 = kein Lead) zutage gefördert.
+  - README ist noch im Vorlagen-Zustand und deshalb in dieser Session nicht synchronisiert worden – das ist kein Drift-Bug, sondern Modus-2-Schritt 9 nimmt sie in Betrieb. Vermerk hier, damit die Sessionende-Disziplin (CLAUDE.md Abschnitt 12 + 16) bewusst dokumentiert nicht erfüllt wurde, weil das Dokument zum Zeitpunkt des Sessionendes noch nicht aktiv ist.
 
 ### YYYY-MM-DD HH:MM – [PROBLEM-GELÖST]
 
