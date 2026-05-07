@@ -26,6 +26,13 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-07 23:05 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 7 abgeschlossen, `blockers.md` auf Startzustand gebracht.**
+- **Aktive Blocker:** keine. Begründung im Dokument festgehalten: alle Schublade-1-Grundsatzfragen geklärt (Logbuch 14:25 bis 16:20), alle Schublade-2-Spikes G–M in Phasen 3 + 5 platziert, alle Schublade-3-Roadmap-Meilensteine N/O/P in Phase 7 platziert. Härtungs-Schritt (Modus-2-Schritt 3) hatte keine Blocker hinterlassen.
+- **Beibehalten:** Blocker-Erkennungs-Heuristiken (5 Muster für Sofort-Eskalation ohne Dreifach-Versuch) plus Eintrags-Format-Vorlagen für aktive und gelöste Blocker. Initialisierungs-Hinweis am Dateiende entfernt.
+- **Nummerierungs-Regel** explizit dokumentiert: durchgehend, keine Lücken, gelöste Blocker behalten ihre Nummer. Erster Eintrag wäre `#001`.
+
 ### 2026-05-07 22:50 – [BEOBACHTUNG]
 
 - **Modus-2-Schritt 6 abgeschlossen, `fahrplan.md` mit 7 regulären Phasen + 1 späterer Erweiterungs-Phase X befüllt.**

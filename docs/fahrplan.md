@@ -10,8 +10,8 @@
 - **Stand vom:** 2026-05-07
 - **Laufende Phase:** Modus 2 – Initialisierung (Vorlagen-Befüllung gemäß `CLAUDE.md` Abschnitt 1A)
 - **Phasentyp:** INITIALISIERUNG
-- **Aktiver Schritt:** keiner – Modus-2-Schritt 6 (`fahrplan.md` befüllen) abgeschlossen. Sieben reguläre Phasen plus eine spätere Erweiterungs-Phase X (Verbund) festgelegt; Schublade-2-Spikes G–M und Schublade-3-Roadmap-Meilensteine N/O/P einsortiert.
-- **Nächster Schritt:** Modus-2-Schritt 7 – `blockers.md` auf Startzustand bringen (entweder leer mit „Keine aktiven Blocker" oder mit den im Härtungs-Schritt identifizierten Blockern).
+- **Aktiver Schritt:** keiner – Modus-2-Schritt 7 (`blockers.md` auf Startzustand bringen) abgeschlossen. Datei ist auf „Keine aktiven Blocker" initialisiert; Erkennungs-Heuristiken und Eintrags-Format-Vorlagen behalten.
+- **Nächster Schritt:** Modus-2-Schritt 8 – Logbuch-Vorlagen-Cleanup. Beispiel-Einträge mit `YYYY-MM-DD HH:MM`-Platzhaltern entfernen, Eintragstypen-Übersicht und Pflege-/Archivierungs-Hinweise behalten. Erster realer Eintrag entsteht zu Beginn der ersten regulären Session nach Modus-2-Abschluss.
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
