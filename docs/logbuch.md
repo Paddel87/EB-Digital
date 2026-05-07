@@ -26,6 +26,59 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-07 19:30 – [SESSIONENDE]
+
+- **Session-Dauer:** ca. 2 h (17:30–19:30).
+- **Bearbeitet:** Modus-2-Schritt 4 abgeschlossen – `architecture.md` von Vorlagen-Zustand auf vollständigen Architektur-Grobschnitt befüllt. Architektur-Plan vorab abgestimmt und bestätigt; Stufe-2-Klassifikations-Bestätigung am Dokumentende.
+- **Erreicht:**
+  - Abschnitt 0 Reifegrad-System um Code-Bezeichner-Konvention ergänzt (Domänen-Übersetzungstabelle Deutsch→Englisch); Klärungs-Session-Tabellennamen `einsatz_mandant_teilnahme`/`einsatz_audit_log` werden im Code als `operation_tenant_participation`/`operation_audit_log` umgesetzt.
+  - Abschnitt 1 Überblick + Architektur-Pattern „Modular Monolith Backend + 3 SvelteKit-Frontends + nginx-Tile-Proxy + Caddy-Reverse-Proxy" formuliert.
+  - Abschnitt 2 Modul-Karte als Mermaid-Top-Level (Frontends → Reverse-Proxy → Backend → Tile-Proxy → MapTiler/TomTom; PostgreSQL/Valkey/File-Volume).
+  - Abschnitt 3 alle 14 Module detailliert (Reifegrad, Verantwortung, Nicht-Verantwortung, Schnittstellen-Verweis, interne Struktur, Abhängigkeiten, NFRs, offene Fragen).
+  - Abschnitt 4 zehn Schnittstellenverträge S1–S10 (CLI-Bootstrap, Anonymous Session API, Operations Event Bus, Vehicle Assignment, Retention-Trigger, Tenant Data Export Tripel, Geo→Tile-Proxy, Auth-REST-API, WebSocket-Topologie, Tenant Participation Lookup).
+  - Abschnitt 5 fünf Datenflüsse F1–F5 (Mandanten-Onboarding, Einsatzkraft-Bestellung Hard-Path, Disponenten-Aktion mit Audit-Log, Operation-Ende→Aggregat→Anonymisierung, asynchroner Datenexport).
+  - Abschnitt 6 NFRs (Performance, Skalierung, Security, Observability, Datenschutz) mit Reifegrad-Verteilung.
+  - Abschnitt 7 Datenmodell-Grobübersicht als Mermaid-ER mit zentralen Entitäten und Erläuterung der Phase-1-Invarianten I1/I4 + Lebensdauer-Felder.
+  - Abschnitt 8 Verworfene Alternativen aus den Klärungen (Lead-Modell, synchroner Export, ENV-Bootstrap, Web-Setup-Wizard, Hybrid-Setup-Link, Verbund-Phase-1, Cross-Anzeige, Pseudonyme-Hashes, Karten-Snapshots, Single-Use-Codes, 4-stellige PIN); ADR-Nummern folgen in Schritt 5.
+  - Abschnitt 9 Reifegrad-Übersicht: ~50 Bestandteile als Tabelle (1 BELASTBAR Kommunikations-Grundmodus + 1 BELASTBAR Procrastinate + diverse VORLÄUFIG-Module/Schnittstellen/NFRs + sieben OFFEN-Bereiche für die Spikes G–M plus NFR Bedrohungsmodell und Tracing).
+  - Abschnitt 10 Stufe-2-Klassifikations-Bestätigung: Klasse G **bestätigt** (16 Komponenten, 5 zentrale externe Abhängigkeiten, 2 Sprachen, 2 Persistenzschichten, eine Compose-Einheit – nicht Klasse V, weil kein verteilter Lebenszyklus). Keine Anpassung der Hypothese aus Schritt 1 nötig.
+  - `fahrplan.md` „Aktueller Stand"-Block aktualisiert auf Schritt 5.
+- **Offen geblieben:** Modus-2-Schritte 5 (decisions.md mit ADRs A–F + ADR-001/002/003 + Vision-V2-Reinterpretation), 6 (fahrplan.md mit Phasen + Schubladen 2/3), 7 (blockers.md), 8 (logbuch Vorlagen-Cleanup), 9 (README.md), 10 (CI-/Hook-Skelett), 11 (vision Überführungsstatus), 12 (Init-Commit).
+- **Nächster Schritt:** Modus-2-Schritt 5 – `decisions.md` befüllen. ADR-Reihenfolge:
+  - ADR-001 [STRATEGISCH] [METHODIK]: Projektgrößen-Klassifikation Klasse G (Bestätigung Stufe 2).
+  - ADR-002 [STRATEGISCH] [STACK]: Stack-Wahl (Backend + Frontend + Datenbanken + Infra, Verifikations-Stempel 2026-05-07).
+  - ADR-003 [STRATEGISCH] [METHODIK]: Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends.
+  - ADR-004 [STRATEGISCH] [SECURITY]: Admin-Bootstrap-Flow (Frage A).
+  - ADR-005 [STRATEGISCH] [SECURITY]: Zugangscode-Schema (Frage B).
+  - ADR-006 [STRATEGISCH] [DATENMODELL]: Aggregations-Schema (Frage C).
+  - ADR-007 [STRATEGISCH] [SCHNITTSTELLE]: Datenexport asynchron via Procrastinate (Frage D).
+  - ADR-008 [STRATEGISCH] [MODUL]: Multi-Disponent ohne Lead (Frage E).
+  - ADR-009 [STRATEGISCH] [DATENMODELL]: Verbund-Reinterpretation V2 + Phase-1-Invarianten I1–I5 (Frage F).
+  - Teil A (Übersicht) und Teil C (Regeln) entsprechend pflegen.
+- **Stimmung / Beobachtung:**
+  - Vorab-Plan war wirkungsvoll – das Dokument ließ sich in einem Wurf sauber durchschreiben, ohne dass mitten im Schreiben Detail-Klärungen offen blieben. Die Klärungs-Session der vorigen Session hat sich hier ausgezahlt.
+  - Code-Bezeichner-Konvention (Englisch im Code, Domänenbegriffe übersetzt) habe ich proaktiv eingeführt, weil `project-context.md` Codesprache Englisch verlangt, aber Klärungs-Session deutsche Tabellennamen produziert hatte. Inkonsistenz war im Hintergrund; jetzt sauber dokumentiert mit Übersetzungstabelle. Das ist keine Vision-Änderung, sondern Code-Konvention.
+  - `[OFFEN]`-Bereiche sind klar von Spikes G–M referenziert – die Verbindung Architektur→Fahrplan-Spike ist jetzt ein-zu-eins. Das hilft beim Befüllen von Schritt 6.
+  - Stufe-2-Klassifikations-Bestätigung hatte keine Überraschung; Klasse G war von Anfang an plausibel und wird jetzt durch den konkreten Architektur-Grobschnitt validiert.
+  - Datei umfangreich (~700 Zeilen). Falls sie bei späterem Wachstum unübersichtlich wird, ist der Auslagerungspfad nach `architecture-<modul>.md` für besonders komplexe Module bereits in `CLAUDE.md` Abschnitt 1B Klasse G vorgesehen.
+
+### 2026-05-07 19:25 – [REIFEGRAD-WECHSEL]
+
+- **Bestandteile:** alle in `architecture.md` Abschnitt 9 gelisteten Bestandteile (Architektur-Pattern, Kommunikations-Modi, 14 Module, 10 Schnittstellen, 9 NFRs, 6 Datenmodell-Invarianten, 7 Spike-OFFEN-Bereiche, Datenmodell-Grobschnitt).
+- **Wechsel:** Initial-Vergabe (Vorlagen-Zustand → konkreter Reifegrad). Verteilung:
+  - `[BELASTBAR]`: 9 (Vision-/Stack-fixierte Bestandteile – REST/JSON, WebSocket-Grundmodus, HTTP-Tile-Proxy-Routing, Procrastinate, Datenschutz-Constraints, NFRs Tile-Cache-TTL, Routing-Disziplin, Backend-Multi-Architektur, PWA-Offline-Pflicht, Coverage-Mindestwerte).
+  - `[VORLÄUFIG]`: ca. 35 (Module, Schnittstellen, Datenmodell-Invarianten, Skalierungs-/Performance-Annahmen, weitere NFRs).
+  - `[OFFEN]`: 9 (Spike G/H/I/J/K/L/M plus NFR Bedrohungsmodell, NFR Tracing).
+- **Auslöser:** Modus-2-Schritt 4, befüllt aus Klärungs-Ergebnissen Schublade 1 + Vision-Stack + Klassifikations-Bestätigung.
+- **Datum in `architecture.md` Abschnitt 9 nachgetragen:** ja, 2026-05-07.
+
+### 2026-05-07 17:30 – [SESSIONSTART]
+
+- **Letzter Stand:** PR #1 erstellt (`init(modus-2): offene Grundsatzfragen vor Schritt 4 geklärt`, Commit `4853e0c`), Klärungs-Session abgeschlossen, Schublade 1 (Fragen A–F) durchgearbeitet, Schubladen 2/3 als Fahrplan-Skizzen für Schritt 6 abgelegt.
+- **Geplant für diese Session:** Modus-2-Schritt 4 – `architecture.md` befüllen. Modul-Karte aus `project-context.md` Abschnitt 4 in Mermaid übertragen; Reifegrade hypothesengetreu setzen (`[VORLÄUFIG]` als Default, `[BELASTBAR]` nur bei harten Vision-Konstraints, `[OFFEN]` für Schublade-2-Punkte mit Verweis auf Spike); Schnittstellenverträge skizzieren für die durch Schublade 1 jetzt klar gewordenen Kontaktstellen; Stufe-2-Klassifikations-Bestätigung am Ende.
+- **Vorabprüfung:** Modus 2 weiterhin INITIALISIERUNG. `architecture.md` ist Vorlagen-Zustand (kein Reifegrad vergeben). Eingangskriterien für Schritt 4: Schublade 1 vollständig geklärt (erfüllt), Stack fixiert (erfüllt, `project-context.md` Abschnitt 3 + Verifikation 2026-05-07), Modul-Liste in `project-context.md` Abschnitt 4 vorhanden (erfüllt). Keine offenen STOPPs.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus.
+
 ### 2026-05-07 16:35 – [BEOBACHTUNG]
 
 - **Schublade 2 + 3 für Modus-2-Schritt 6 vorbereitet, Klärungs-Session abgeschlossen.**

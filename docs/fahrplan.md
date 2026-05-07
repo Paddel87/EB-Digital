@@ -10,8 +10,8 @@
 - **Stand vom:** 2026-05-07
 - **Laufende Phase:** Modus 2 – Initialisierung (Vorlagen-Befüllung gemäß `CLAUDE.md` Abschnitt 1A)
 - **Phasentyp:** INITIALISIERUNG
-- **Aktiver Schritt:** keiner – Klärungs-Session der offenen Grundsatzfragen aus `project-context.md` Abschnitt 11 abgeschlossen
-- **Nächster Schritt:** Modus-2-Schritt 4 – `architecture.md` mit den in Schublade 1 geklärten Entscheidungen (Fragen A–F, Stand 2026-05-07) als Reifegrad-Hypothesen befüllen. Klassifikations-Bestätigung (Stufe 2) anhand des Architektur-Grobschnitts; bei Abweichung von Klasse G zurück zu Stufe 1.
+- **Aktiver Schritt:** keiner – Modus-2-Schritt 4 (`architecture.md` befüllen) abgeschlossen, Stufe-2-Klassifikation Klasse G bestätigt.
+- **Nächster Schritt:** Modus-2-Schritt 5 – `decisions.md` befüllen. ADR-001 (Klassifikation Klasse G), ADR-002 (Stack-Wahl), ADR-003 (Architektur-Pattern Modular Monolith), plus eigene ADRs für die geklärten Grundsatzentscheidungen aus Schublade 1 (Fragen A–F: Admin-Bootstrap, Zugangscode-Schema, Aggregations-Schema, Datenexport-Verfahren, Multi-Disponent ohne Lead, Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5). Numerierung durchgängig.
 - **Offene STOPP-Situationen:** keine.
 
 **Hinweis:** Die regulären Phasenfelder dieses Dokuments (Phasen 1, 2, …) sind noch Vorlagen-Platzhalter. Sie werden in Modus-2-Schritt 6 mit den Phasen aus dem geklärten Konzept befüllt, einschließlich der Schublade-2-ERKUNDUNG-Spikes (G–M) und Schublade-3-Roadmap-Meilensteine (N/O/P) – Detail-Skizzen siehe Logbuch-Eintrag 2026-05-07 16:35.
