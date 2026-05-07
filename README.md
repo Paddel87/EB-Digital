@@ -46,10 +46,10 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
      - blockers.md (Aktive Blocker)
      Inkonsistenzen sind Bugs und werden vor Sessionende behoben. -->
 
-- **Projektphase:** Modus 2 – Initialisierung (Phasentyp INITIALISIERUNG); reguläre Phase 1 (Repo-Bootstrap & Tech-Foundations) noch nicht begonnen.
+- **Projektphase:** Modus 2 (Initialisierung) abgeschlossen am 2026-05-08 mit PR #3. Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG) ist nächster Schritt.
 - **Version:** v0.1.0
 - **Status:** Konzeption
-- **Letzte Änderung:** 2026-05-07
+- **Letzte Änderung:** 2026-05-08
 - **Architektur-Reife:** 9 Bestandteile `[BELASTBAR]` (Stack-/NFR-/Datenschutz-Constraints), ca. 35 `[VORLÄUFIG]` (Module, Schnittstellen, Datenmodell-Invarianten), 9 `[OFFEN]` (Spikes G–M, Bedrohungsmodell, Tracing). Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends bleibt bis zum Last-/Funktionstest in Phase 7 `[VORLÄUFIG]`.
 - **Aktive Blocker:** 0 ([`docs/blockers.md`](docs/blockers.md)).
 - **ADRs:** 9 (alle `[STRATEGISCH]`, INITIALISIERUNG); Reaktiv-Quote 0/9 (Schwellenwert 20 % nicht überschritten).
@@ -119,9 +119,9 @@ graph LR
 
 ## Nächste Schritte
 
-1. **Modus-2-Initialisierung abschließen:** Schritt 9 (`README.md`, dieser Schritt), Schritt 10 (CI-/Hook-Skelett aus `templates/`), Schritt 11 (Vision-Überführungsstatus), Schritt 12 (Initialisierungs-Commit).
-2. **Phase 1 – Repository-Bootstrap & Tech-Foundations** (UMSETZUNG): Repo-Setup mit uv-/pnpm-Workspaces, CI-Pipeline aktivieren, Backend-Skelett (FastAPI + PostgreSQL + Alembic + Procrastinate), Admin-Bootstrap-CLI (ADR-004), Frontend-Workspaces, Compose-`dev`-Profil. Voll detailliert in [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
-3. **Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2)** (UMSETZUNG): Vollständige Auth-Schicht, Mandanten-Onboarding, `operation_tenant_participation` als alleinige Operation↔Mandant-Verknüpfung (ADR-009 Invariante I1), abstrakter Berechtigungs-Filter (Invariante I2).
+1. **Phase 1 – Repository-Bootstrap & Tech-Foundations** (UMSETZUNG): Repo-Setup mit uv-/pnpm-Workspaces, CI-Pipeline aktivieren, Backend-Skelett (FastAPI + PostgreSQL + Alembic + Procrastinate), Admin-Bootstrap-CLI (ADR-004), Frontend-Workspaces, Compose-`dev`-Profil. Voll detailliert in [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
+2. **Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2)** (UMSETZUNG): Vollständige Auth-Schicht, Mandanten-Onboarding, `operation_tenant_participation` als alleinige Operation↔Mandant-Verknüpfung (ADR-009 Invariante I1), abstrakter Berechtigungs-Filter (Invariante I2).
+3. **Phase 3 – Spikes Wave 1** (ERKUNDUNG): Spike I (Geo-Plausibilitäts-Algorithmus) und Spike J (Bündelungs-Trigger) als Vorklärungen vor Phase 4 Operations Core.
 
 → Vollständiger Fahrplan mit 7 regulären Phasen plus späterer Verbund-Erweiterungs-Phase X: [`docs/fahrplan.md`](docs/fahrplan.md)
 

@@ -26,6 +26,29 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-08 00:30 – [SESSIONENDE]
+
+- **Session-Dauer:** ca. 3 h (21:39 am 2026-05-07 – 00:30 am 2026-05-08).
+- **Bearbeitet:** Modus-2-Schritte 5 bis 12 in einem Zug. Zu Sessionstart noch ein Branch-Sichtbarkeits-Problem behoben (Schritt 4 lag auf parallelem Worktree-Branch und war über `git log --all` sichtbar; PR #2 hat ihn während der Session in `main` gemerged).
+- **Erreicht:**
+  - **Schritt 5:** `decisions.md` mit ADR-001 bis ADR-009 plus 14 Entscheidungsregeln, Reaktiv-Quote 0/9 initialisiert. Konsistenz-Check `architecture.md` Abschnitt 8 auf konkrete ADR-Nummern. Commit `c0e89af`.
+  - **Schritt 6:** `fahrplan.md` mit 7 regulären Phasen plus Phase X (Verbund später). Phase 1 voll detailliert in 8 Schritten 1.1–1.8 im vollen Schritt-Format. Spikes G–M in Phasen 3 + 5 platziert, Roadmap N/O/P in Phase 7. Commit `8cbccd6`.
+  - **Schritt 7:** `blockers.md` auf Startzustand (Keine aktiven Blocker) plus Erkennungs-Heuristiken plus Eintrags-Format-Vorlagen. Commit `cc0f6a8`.
+  - **Schritt 8:** `logbuch.md` Vorlagen-Cleanup (sechs Beispiel-Einträge plus Initialisierungs-Hinweis entfernt). Commit `3b782ec`.
+  - **Schritt 9:** `README.md` aus Vorlagen-Zustand auf Statusbild gebracht. 7 Badges, Über-das-Projekt aus `vision.md`, Status-Block synchronisiert mit allen Pflicht-Dokumenten. Commit `857e55d`.
+  - **Schritt 10:** CI- und Pre-Commit-Skelett (`.github/workflows/ci.yml`, `.github/workflows/security.yml`, `.pre-commit-config.yaml`). `release.yml` bewusst weggelassen (project-context.md: spätere Phase). Commit `44673af`.
+  - **Schritt 11:** `vision.md` Überführungs-Status abgehakt. Vision eingefroren. Commit `b60d877`.
+  - **Schritt 12:** Initialisierungs-Abschluss als PR #3 statt zusätzlichem Riesencommit (Methoden-Abweichung von CLAUDE.md Abschnitt 1A Schritt 12 dokumentiert). PR am 2026-05-08 gemerged, Merge-Commit `5f5c7db` auf `main`.
+  - **Sessionende-Disziplin:** `fahrplan.md` Stand-Block aktualisiert auf „Modus 2 abgeschlossen, Phase 1 nächster Schritt"; `README.md` Status-Block (Projektphase, Letzte Änderung) und „Nächste Schritte" synchronisiert.
+- **Offen geblieben:** Reguläre Phase 1 ist noch nicht begonnen. Erste Session der nächsten Phase startet mit Schritt 1.1 (Repository- und Workspace-Setup). Vor Phase-1-Beginn werden in Schritt 1.1 außerdem `LICENSE`-Datei (AGPL-3.0) und `.env.example` angelegt – das ist Teil von 1.1 „Repository-Setup".
+- **Stimmung / Beobachtungen:**
+  - **Methodischer Lerneffekt 1 – Branch-Awareness:** Pflichtlektüre nach CLAUDE.md Abschnitt 2 hat bei Sessionstart die Existenz des parallelen Worktree-Branches mit Schritt 4 nicht aufgezeigt. `git log` ohne `--all` zeigt nur den lokalen Branch-Stand. Vorschlag für CLAUDE.md-Update: in Abschnitt 2 Pflichtlektüre einen Punkt „parallele Worktree-Branches und offene PRs prüfen" ergänzen. Außerhalb dieser Session zu klären – nicht jetzt.
+  - **Methodischer Lerneffekt 2 – Vorlage-Vorlage-Abstimmung:** Die README-Vorlage erwartet Status-Werte „alpha/beta/stable/maintenance/deprecated", `project-context.md` führt aber „Konzeption/Aufbau/aktive Entwicklung/Wartung/deprecated". Ich habe zugunsten von `project-context.md` (Quelle laut CLAUDE.md Abschnitt 16) entschieden, aber die Vorlagen-CLAUDE.md sollte projektübergreifend angeglichen werden. Ebenfalls außerhalb dieser Session.
+  - **Methodischer Lerneffekt 3 – Phasen-Disziplin und Phasenanzahl:** Klasse G erlaubt 5–7 Phasen. Mit strikter Phasentyp-Trennung (CLAUDE.md Abschnitt 6: keine Spike+UMSETZUNG-Mischung) komme ich auf 7 Phasen ohne Verbund-Modus, der Phase X außerhalb der Hauptliste belegt. Falls der Verbund-Bedarf konkretisiert wird, muss die Hauptphasen-Liste neu strukturiert werden – damit dokumentiert in `Replanning-Historie`.
+  - **Methodischer Lerneffekt 4 – Phase 1 Sonderregel:** UMSETZUNG-Eingangsdisziplin „alle berührten Bestandteile auf [BELASTBAR]" ist in einer Skelett-Phase nicht erfüllbar, weil die Module bis zur Implementierung VORLÄUFIG bleiben. Eingangsbedingung wurde abgemildert auf „Modul-Schnitt durch ADR strategisch fixiert". Bewusst dokumentiert, damit es in einer späteren Session nicht als versehentliche Aufweichung gelesen wird.
+  - **Pragmatik der vielen Init-Commits vs. CLAUDE.md-Schritt-12-Vorgabe:** CLAUDE.md sieht einen einzigen Init-Commit vor; in der Praxis war es bei interaktiver Schritt-für-Schritt-Bearbeitung schöner, pro Schritt einen Commit zu machen. PR #3 hat das mit Sammeltitel zusammengeführt – funktioniert in der Praxis sauber und behält die Granularität für Nachvollziehbarkeit. Die CLAUDE.md-Formulierung könnte „eine Init-PR-Einheit" anstelle von „ein Init-Commit" sagen. Ebenfalls außerhalb dieser Session.
+  - **Reaktiv-Quote:** 0/9 nach Init – sehr gute Ausgangslage. Erste reaktive Entscheidung wäre eine in Phase 1, die hoffentlich nicht eintritt. Beobachtung beim Phasen-Wechsel.
+
 ### 2026-05-08 00:10 – [BEOBACHTUNG]
 
 - **Modus-2-Schritt 11 abgeschlossen, `vision.md` Überführungs-Status abgehakt und Vision eingefroren.**

@@ -7,11 +7,11 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** 2026-05-07
-- **Laufende Phase:** Modus 2 – Initialisierung (Vorlagen-Befüllung gemäß `CLAUDE.md` Abschnitt 1A)
-- **Phasentyp:** INITIALISIERUNG
-- **Aktiver Schritt:** keiner – Modus-2-Schritt 11 (`vision.md` Überführungs-Status) abgeschlossen. Alle sechs Checkboxen abgehakt, Initialisierungs-Abschluss-Datum 2026-05-07 gesetzt, ADR-Verweise (ADR-001 bis ADR-009) ergänzt, Verbund-Reinterpretation V2 als Hinweis am Block-Ende vermerkt. Vision ist damit als historisches Artefakt eingefroren.
-- **Nächster Schritt:** Modus-2-Schritt 12 – Initialisierungs-Abschluss. Vorschlag: PR `scp/cool-varahamihira-72645a` → `main` mit Sammeltitel statt zusätzlichem Riesencommit (CLAUDE.md Abschnitt 1A Schritt 12 sieht einen einzelnen Init-Commit vor; in dieser Session sind aber pro Schritt separate Commits entstanden – PR-Variante schließt die Init-Phase als zusammenhängende Einheit ab).
+- **Stand vom:** 2026-05-08
+- **Laufende Phase:** Übergang zu Phase 1 – Modus 2 (Initialisierung) **abgeschlossen** mit PR #3 am 2026-05-08, Merge-Commit `5f5c7db` auf `main`. Reguläre Arbeit beginnt mit Phase 1 in der nächsten Session.
+- **Phasentyp:** zwischen INITIALISIERUNG (abgeschlossen) und Phase-1 UMSETZUNG (noch nicht begonnen).
+- **Aktiver Schritt:** keiner. Modus-2-Schritte 1–12 vollständig abgeschlossen.
+- **Nächster Schritt:** Phase 1 Schritt 1.1 – Repository- und Workspace-Setup (uv-Workspace mit `pyproject.toml`, pnpm-Workspace mit drei Frontend-Paketen, EditorConfig, `.gitignore`, pre-commit-Installation, commitlint-Konfiguration). Voller Schritt-Inhalt siehe Phase 1 unten.
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
