@@ -1,0 +1,170 @@
+# Voller CI-Gate-Satz für EB Digital (Klasse G).
+# Kombiniert Backend (Python 3.13) und Frontend (TypeScript/Node 24, drei SvelteKit-Pakete).
+# Spiegelt die Pflichtkategorien aus CLAUDE.md Abschnitt 15 und project-context.md Abschnitt 7.
+# Lokale Pre-Commit-Hooks (.pre-commit-config.yaml) führen denselben Lint/Type-/Format-Stand aus –
+# diese Pipeline ist die unabhängige Diagnoseschicht plus Test- und Build-Stufe.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.13"
+  NODE_VERSION: "24"
+  PNPM_VERSION: "11"
+  UV_VERSION: "0.11.0"
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Backend (Python 3.13 mit uv)
+  # ---------------------------------------------------------------------------
+
+  lint-backend:
+    name: Backend · Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v5.0.0
+        with:
+          version: ${{ env.UV_VERSION }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Sync dependencies
+        run: uv sync --all-extras --frozen
+      - name: Ruff lint
+        run: uv run ruff check backend/
+      - name: Ruff format check
+        run: uv run ruff format --check backend/
+
+  typecheck-backend:
+    name: Backend · Type-Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v5.0.0
+        with:
+          version: ${{ env.UV_VERSION }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Sync dependencies
+        run: uv sync --all-extras --frozen
+      - name: mypy --strict
+        run: uv run mypy --strict backend/eb_digital/
+
+  test-backend:
+    name: Backend · Tests & Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v5.0.0
+        with:
+          version: ${{ env.UV_VERSION }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Sync dependencies
+        run: uv sync --all-extras --frozen
+      - name: Pytest with coverage
+        # Globaler Mindestwert 80 % Lines (project-context.md Abschnitt 7).
+        # Modul-spezifische strengere Schwellen (Auth ≥ 95 %, Operations ≥ 90 %,
+        # Retention ≥ 95 %, Resilience ≥ 90 %) werden in pyproject.toml via
+        # [tool.coverage.report] mit per-Modul-Konfiguration durchgesetzt.
+        run: uv run pytest --cov=backend/eb_digital --cov-report=xml --cov-report=term --cov-fail-under=80
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend
+          path: coverage.xml
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Frontend (TypeScript 6 / SvelteKit 2 / Node 24, pnpm-Workspace mit 3 Paketen)
+  # ---------------------------------------------------------------------------
+
+  lint-frontend:
+    name: Frontend · Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: ESLint (inkl. eslint-plugin-security)
+        run: pnpm -r lint
+      - name: Prettier check
+        run: pnpm -r format:check
+
+  typecheck-frontend:
+    name: Frontend · Type-Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: svelte-check
+        run: pnpm -r check
+      - name: tsc --noEmit
+        run: pnpm -r tsc --noEmit
+
+  test-frontend:
+    name: Frontend · Tests & Coverage
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - frontend-disponent
+          - frontend-betreuer
+          - frontend-einsatzkraft
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Vitest with coverage
+        # Globaler Mindestwert 80 % Lines konfiguriert in vitest.config.ts pro Paket.
+        run: pnpm --filter ${{ matrix.package }} test --coverage
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.package }}
+          path: apps/${{ matrix.package }}/coverage/
+          retention-days: 14
+
+  build-frontend:
+    name: Frontend · Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build all frontend packages
+        run: pnpm -r build

@@ -26,6 +26,31 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-07 23:55 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 10 abgeschlossen, CI-Workflow- und Pre-Commit-Skelett angelegt.**
+- **Plan vorab vorgelegt und bestätigt** mit fünf zu klärenden Punkten: Action-Patch-Pins (`v5.0.0`/`v4.0.0` als Annahme), Pre-Commit-Hook-Patches (`.0`-Patches der Minor-Linien), initial rote Runs OK, security.yml beschränkt auf Dep-Audits + bandit (kein Duplikat-eslint-security), `release.yml` nicht jetzt.
+- **`.github/workflows/ci.yml`** mit 7 Jobs angelegt:
+  - Backend (3 Jobs): `lint-backend` (ruff check + format), `typecheck-backend` (mypy --strict), `test-backend` (pytest + Coverage 80 %).
+  - Frontend (4 Jobs): `lint-frontend` (eslint + prettier --check), `typecheck-frontend` (svelte-check + tsc), `test-frontend` (vitest, Matrix über drei Frontend-Pakete), `build-frontend` (pnpm -r build).
+  - Trigger: `push` (alle Branches) plus `pull_request` (main).
+  - Tooling: uv für Python (statt pip aus dem Template), pnpm für TypeScript.
+- **`.github/workflows/security.yml`** mit 3 Jobs angelegt:
+  - `dep-audit-backend` (pip-audit `--strict --vulnerability-service=osv`).
+  - `dep-audit-frontend` (pnpm audit `--audit-level=high`).
+  - `static-security-backend` (bandit `-c pyproject.toml`).
+  - Trigger: `schedule` (cron `0 6 * * 0`) plus `workflow_dispatch`.
+  - Bewusst weggelassen: separater eslint-plugin-security-Lauf (läuft im regulären lint-frontend-Job mit).
+- **`.pre-commit-config.yaml`** mit Hooks für beide Sprachen plus generelle Hygiene-Hooks angelegt:
+  - General: trailing-whitespace, end-of-file, check-yaml/toml/json, check-added-large-files, check-merge-conflict, detect-private-key.
+  - Python: ruff (lint+format, `files: ^backend/`), mypy --strict, bandit.
+  - TypeScript/Frontend: prettier (mit `prettier-plugin-svelte`), eslint, svelte-check, tsc --noEmit – die letzten drei als lokale Hooks via pnpm-Workspace-Scripts (weil sie installierte Frontend-Dependencies brauchen).
+- **TBD-Ersetzungen** alle aus `project-context.md` Abschnitt 3+7 abgeleitet: Python 3.13, Node 24, pnpm 11, uv 0.11.0, ruff 0.15.0, mypy 1.20.2 (exakt), bandit 1.9.0, prettier 3.8.0, prettier-plugin-svelte 3.5.0, GitHub-Actions checkout/setup-python/setup-node @v6, astral-sh/setup-uv@v5.0.0, pnpm/action-setup@v4.0.0.
+- **Nicht angelegt:** `.github/workflows/release.yml` – `project-context.md` Abschnitt 7+8 verschiebt das explizit auf eine spätere Phase (Phase 7: Roll-out-Vorbereitung).
+- **Coverage-Modul-Schwellen:** Globaler 80 %-Wert ist im Workflow als `--cov-fail-under=80` gesetzt; modul-spezifische strengere Schwellen (Auth ≥ 95 %, Operations ≥ 90 %, Retention ≥ 95 %, Resilience ≥ 90 % aus `project-context.md` Abschnitt 7) werden in Phase 1 Schritt 1.3 in `pyproject.toml` `[tool.coverage.report]` mit per-Modul-Konfigurationen ergänzt.
+- **Initial rote Runs erwartet** – kein Code/keine `pyproject.toml`/keine `package.json` im Repo. Phase 1 Schritte 1.1 + 1.2 stellen die Skelette her, dann werden Workflows grün. Branch-Protection auf `main` wird in Phase 1 Schritt 1.2 aktiviert; bis dahin direkter Push erlaubt (`project-context.md` Abschnitt 10).
+- **Methoden-Hinweis:** Die `# TBD:`-Platzhalter aus den Templates wurden alle aufgelöst, aber zwei Action-Patches (`astral-sh/setup-uv`, `pnpm/action-setup`) sind als Annahme gepinnt (`v5.0.0`/`v4.0.0`) und beim ersten Lauf in Phase 1 Schritt 1.2 zu verifizieren. Falls die Tags nicht existieren: konservativ höchsten existierenden Patch der Major-Linie wählen, kein ADR nötig (Patch-Anpassung freigabefrei nach Regel-001).
+
 ### 2026-05-07 23:35 – [BEOBACHTUNG]
 
 - **Modus-2-Schritt 9 abgeschlossen, `README.md` aus Vorlagen-Zustand auf vollständiges Statusbild gebracht.**

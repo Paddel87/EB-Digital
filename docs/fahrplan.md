@@ -10,8 +10,8 @@
 - **Stand vom:** 2026-05-07
 - **Laufende Phase:** Modus 2 – Initialisierung (Vorlagen-Befüllung gemäß `CLAUDE.md` Abschnitt 1A)
 - **Phasentyp:** INITIALISIERUNG
-- **Aktiver Schritt:** keiner – Modus-2-Schritt 9 (`README.md` befüllen) abgeschlossen. README aus Vorlagen-Zustand auf vollständiges Statusbild gebracht: 7 Badges (Status, Version, Build, License + Python, Node, Last-Commit), Über-das-Projekt aus `vision.md`, Status-Block synchronisiert mit Pflicht-Dokumenten, Architektur-Skizze als Mermaid, nächste Schritte aus `fahrplan.md`. Initialisierungshinweis und Badge-Auswahl-Vorlage entfernt.
-- **Nächster Schritt:** Modus-2-Schritt 10 – CI-Workflow- und Pre-Commit-Skelett aus `templates/` in das Projekt kopieren und anpassen (Klasse G: `ci-<sprache>.yml` plus `security.yml` plus `release.yml`-Skelett). Pre-Commit-Konfiguration aus `templates/pre-commit/<sprache>.yaml` nach `.pre-commit-config.yaml`. Alle `# TBD:`-Platzhalter durch Werte aus `project-context.md` Abschnitt 7 ersetzen.
+- **Aktiver Schritt:** keiner – Modus-2-Schritt 10 (CI-Workflow- und Pre-Commit-Skelett) abgeschlossen. Drei Dateien angelegt: `.github/workflows/ci.yml` (kombinierter Backend+Frontend-Workflow mit 7 Jobs), `.github/workflows/security.yml` (wöchentlicher Cron + on-demand, 3 Jobs für Dep-Audits + bandit), `.pre-commit-config.yaml` (Python+TypeScript-Hooks kombiniert). `release.yml` bewusst nicht angelegt (project-context.md Abschnitt 7+8: spätere Phase). Alle `# TBD:`-Platzhalter durch konkrete Werte aus project-context.md Abschnitt 3+7 ersetzt.
+- **Nächster Schritt:** Modus-2-Schritt 11 – `docs/vision.md` Überführungs-Status am Dateiende abhaken und einfrieren. Damit ist die Vision als historisches Artefakt fixiert; spätere Substantive-Änderungen erfordern einen ADR mit Verweis auf den ursprünglichen Vision-Abschnitt.
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen

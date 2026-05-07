@@ -1,0 +1,90 @@
+# Pre-Commit-Konfiguration für EB Digital (Klasse G, Python 3.13 + TypeScript 6).
+# Installation: `uv tool install pre-commit && pre-commit install`
+# Lokal ausführen: `pre-commit run --all-files`
+#
+# Lokale Pflicht-Gates analog zum CI-Workflow .github/workflows/ci.yml.
+# CI ist die Diagnoseschicht zusätzlich zu diesen Hooks (CLAUDE.md Abschnitt 15).
+
+repos:
+  # Allgemeine Hygiene-Hooks.
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
+
+  # Python: Linter + Formatter (ruff 0.15.x, project-context.md Abschnitt 3).
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/
+
+  # Python: Type-Checker (mypy 1.20.2, project-context.md Abschnitt 3).
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.20.2
+    hooks:
+      - id: mypy
+        args: [--strict]
+        files: ^backend/eb_digital/
+        # Type-Stubs werden in Phase 1 Schritt 1.3 ergänzt, sobald Backend-
+        # Dependencies pinned sind.
+        additional_dependencies: []
+
+  # Python: Static Security (bandit 1.9.x, project-context.md Abschnitt 3).
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.0
+    hooks:
+      - id: bandit
+        args: [-c, pyproject.toml]
+        additional_dependencies: ["bandit[toml]"]
+        files: ^backend/eb_digital/
+
+  # TypeScript/Frontend: Prettier (3.8.x, project-context.md Abschnitt 3).
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.8.0
+    hooks:
+      - id: prettier
+        types_or: [javascript, jsx, ts, tsx, svelte, json, css, scss, markdown, yaml]
+        # Frontend-Workspace plus Doku/Konfig im Repo-Root.
+        additional_dependencies:
+          - prettier@3.8.0
+          - prettier-plugin-svelte@3.5.0
+
+  # TypeScript/Frontend: ESLint, TSC, svelte-check als lokale Hooks
+  # (laufen über pnpm-Workspace-Scripts, weil sie auf installierte Dependencies
+  # in apps/frontend-* angewiesen sind).
+  - repo: local
+    hooks:
+      - id: eslint
+        name: ESLint (frontend)
+        entry: pnpm -r lint
+        language: system
+        types_or: [javascript, jsx, ts, tsx, svelte]
+        files: ^apps/
+        pass_filenames: false
+
+      - id: svelte-check
+        name: svelte-check (frontend)
+        entry: pnpm -r check
+        language: system
+        types_or: [ts, tsx, svelte]
+        files: ^apps/
+        pass_filenames: false
+
+      - id: tsc-noemit
+        name: tsc --noEmit (frontend)
+        entry: pnpm -r tsc --noEmit
+        language: system
+        types_or: [ts, tsx]
+        files: ^apps/
+        pass_filenames: false
