@@ -26,6 +26,19 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-08 00:10 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 11 abgeschlossen, `vision.md` Überführungs-Status abgehakt und Vision eingefroren.**
+- **Alle sechs Checkboxen** auf [x] gesetzt mit konkreten Verweisen auf die zugehörigen Modus-2-Schritte und Logbuch-Einträge:
+  - Konzeptphase (Schritte 1+2+2a)
+  - Härtungsphase (Schritt 3 plus Klärungs-Session Schublade 1)
+  - Vorlagen-Set initialisiert (Schritte 4–10)
+  - ADR-001 angelegt (plus Erwähnung von ADR-002 bis ADR-009)
+  - Initialisierungs-Abschluss-Datum: 2026-05-07
+- **Zusätzlich** am Block-Ende ein Hinweis ergänzt: Verbund-Modus-Reinterpretation V2 ist in ADR-009 dokumentiert und verändert die Vision **nicht**, sondern präzisiert die Anbieterseiten-Trennung als Default mit Delegations-Möglichkeit. Damit ist klargestellt, dass Frage F kein Vision-Pivot war.
+- **Vision ist damit eingefroren.** Spätere substantielle Vision-Änderungen erfordern einen ADR mit Verweis auf den ursprünglichen Vision-Abschnitt; Vision-Datei wird inhaltlich nicht mehr verändert.
+- **Nicht angefasst:** Vision-Abschnitte 1–10. Diese bleiben als historisches Eingangs-Dokument unverändert.
+
 ### 2026-05-07 23:55 – [BEOBACHTUNG]
 
 - **Modus-2-Schritt 10 abgeschlossen, CI-Workflow- und Pre-Commit-Skelett angelegt.**

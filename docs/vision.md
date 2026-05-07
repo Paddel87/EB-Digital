@@ -154,12 +154,14 @@ Dieses Dokument ist Eingang in die Konzeptphase, nicht ihr Ergebnis. Es ersetzt 
 **Überführungs-Status:**
 
 - [x] Vision von Mensch ausgefüllt
-- [ ] Konzeptphase abgeschlossen
-- [ ] Härtungsphase abgeschlossen
-- [ ] Vorlagen-Set initialisiert
-- [ ] ADR-001 angelegt: Anpassung des Vorlagen-Sets
-- [ ] Datum der Initialisierungs-Abschluss: –
+- [x] Konzeptphase abgeschlossen (Modus-2-Schritte 1, 2, 2a am 2026-05-07: Klassifikations-Hypothese Klasse G, `project-context.md` befüllt, Stack-Versionen verifiziert auf offiziellen Quellen)
+- [x] Härtungsphase abgeschlossen (Modus-2-Schritt 3 plus Klärungs-Session zu Schublade-1-Fragen A–F am 2026-05-07: Admin-Bootstrap, AccessCode, Aggregations-Schema, Datenexport-Verfahren, Multi-Disponent ohne Lead, Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5)
+- [x] Vorlagen-Set initialisiert (Modus-2-Schritte 4–10 am 2026-05-07: `architecture.md`, `decisions.md`, `fahrplan.md`, `blockers.md`, `logbuch.md`, `README.md`, CI-/Hook-Skelett unter `.github/workflows/` plus `.pre-commit-config.yaml`)
+- [x] ADR-001 angelegt: Projektgrößen-Klassifikation Klasse G plus Strukturwahl Vorlagen-Set, Reaktiv-Schwellenwert 20 %, Vorläufig→Belastbar-Verhältnis nach jeder UMSETZUNG-Phase. Folgend ADR-002 (Stack-Wahl), ADR-003 (Architektur-Pattern), ADR-004 bis ADR-009 (Fragen A–F).
+- [x] Datum der Initialisierungs-Abschluss: **2026-05-07**
 
 **Nach abgeschlossener Initialisierung:** Diese Datei wird nicht mehr verändert.
 Spätere Vision-Erweiterungen oder Pivots werden in einem ADR dokumentiert,
 nicht in dieser Datei. Bei substantieller Vision-Änderung: neuer ADR mit Verweis hier.
+
+Verbund-Modus-Reinterpretation V2 (parallele Mandanten an derselben Großlage als opt-in-Erweiterung mit beidseitigem Konsens) ist in **ADR-009** dokumentiert. Sie verändert die Vision nicht, sondern präzisiert die Anbieterseiten-Trennung als Default mit Delegations-Möglichkeit.

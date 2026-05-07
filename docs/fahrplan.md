@@ -10,8 +10,8 @@
 - **Stand vom:** 2026-05-07
 - **Laufende Phase:** Modus 2 – Initialisierung (Vorlagen-Befüllung gemäß `CLAUDE.md` Abschnitt 1A)
 - **Phasentyp:** INITIALISIERUNG
-- **Aktiver Schritt:** keiner – Modus-2-Schritt 10 (CI-Workflow- und Pre-Commit-Skelett) abgeschlossen. Drei Dateien angelegt: `.github/workflows/ci.yml` (kombinierter Backend+Frontend-Workflow mit 7 Jobs), `.github/workflows/security.yml` (wöchentlicher Cron + on-demand, 3 Jobs für Dep-Audits + bandit), `.pre-commit-config.yaml` (Python+TypeScript-Hooks kombiniert). `release.yml` bewusst nicht angelegt (project-context.md Abschnitt 7+8: spätere Phase). Alle `# TBD:`-Platzhalter durch konkrete Werte aus project-context.md Abschnitt 3+7 ersetzt.
-- **Nächster Schritt:** Modus-2-Schritt 11 – `docs/vision.md` Überführungs-Status am Dateiende abhaken und einfrieren. Damit ist die Vision als historisches Artefakt fixiert; spätere Substantive-Änderungen erfordern einen ADR mit Verweis auf den ursprünglichen Vision-Abschnitt.
+- **Aktiver Schritt:** keiner – Modus-2-Schritt 11 (`vision.md` Überführungs-Status) abgeschlossen. Alle sechs Checkboxen abgehakt, Initialisierungs-Abschluss-Datum 2026-05-07 gesetzt, ADR-Verweise (ADR-001 bis ADR-009) ergänzt, Verbund-Reinterpretation V2 als Hinweis am Block-Ende vermerkt. Vision ist damit als historisches Artefakt eingefroren.
+- **Nächster Schritt:** Modus-2-Schritt 12 – Initialisierungs-Abschluss. Vorschlag: PR `scp/cool-varahamihira-72645a` → `main` mit Sammeltitel statt zusätzlichem Riesencommit (CLAUDE.md Abschnitt 1A Schritt 12 sieht einen einzelnen Init-Commit vor; in dieser Session sind aber pro Schritt separate Commits entstanden – PR-Variante schließt die Init-Phase als zusammenhängende Einheit ab).
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
