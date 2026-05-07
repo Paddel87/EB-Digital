@@ -1,0 +1,34 @@
+# Minimal-CI für Klasse K (Klein).
+# Ein Job, Lint und Test. Pre-Commit-Hooks tragen lokal die Hauptlast.
+# Sprache hier beispielhaft Python — analog für andere Sprachen anpassen.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python  # TBD: Sprache und Version anpassen
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"  # TBD: aus project-context.md Abschnitt 3
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"  # TBD: Installationsbefehl an Package Manager anpassen
+
+      - name: Lint
+        run: ruff check .  # TBD: Linter aus project-context.md Abschnitt 7
+
+      - name: Test
+        run: pytest  # TBD: Test-Runner aus project-context.md Abschnitt 7
