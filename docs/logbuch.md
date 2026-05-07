@@ -26,6 +26,25 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-07 22:50 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 6 abgeschlossen, `fahrplan.md` mit 7 regulären Phasen + 1 späterer Erweiterungs-Phase X befüllt.**
+- **Phasen-Struktur:**
+  - **Phase 1** Repo-Bootstrap & Tech-Foundations (UMSETZUNG, voll detailliert mit 8 Schritten 1.1–1.8 im Schritt-Format).
+  - **Phase 2** Auth + Tenants + Verbund-Tauglichkeit I1/I2 (UMSETZUNG, gröber, 7 Schritte).
+  - **Phase 3** Spikes Wave 1 (ERKUNDUNG, Spikes I + J).
+  - **Phase 4** Operations Core + Realtime + Einsatzkraft-PWA (UMSETZUNG, gröber, 6 Schritte).
+  - **Phase 5** Spikes Wave 2 (ERKUNDUNG, Spikes G + H + K + L + M).
+  - **Phase 6** Geo + Frontends + Resilience + Retention + Export (UMSETZUNG, gröber, 7 Schritte).
+  - **Phase 7** Stabilisierung + Roll-out + Roadmap N/O/P (STABILISIERUNG, 8 Schritte).
+  - **Phase X** Verbund-Modus später (ERKUNDUNG → UMSETZUNG, sehr grob, 6 Schritte).
+- **Disziplin-Wahl:** Spikes wurden gebündelt in eigene ERKUNDUNG-Phasen 3 und 5 vor den jeweiligen UMSETZUNG-Phasen 4 und 6, statt sie innerhalb von UMSETZUNG-Phasen einzuschieben. Begründung: `CLAUDE.md` Abschnitt 6 Phasentyp-Disziplin verbietet Vermischung. Kosten: 7 Phasen sind das Maximum für Klasse G – Verbund-Modus läuft als Phase X außerhalb der Hauptliste, bis er aktiv wird.
+- **Phase-1-Sonderregel** bewusst dokumentiert: Eingangs-Disziplin „alle berührten Bestandteile auf [BELASTBAR]" abgemildert, weil Bootstrap-Phase die initialen Skelette herstellt und nur strategische Modul-Schnitt-Fixierung (durch ADR-002, ADR-003, ADR-004) als Eingangsbedingung verlangt. Vermerkt direkt in der Phasen-Beschreibung, damit es bei späteren Sessions nicht als versehentliche Aufweichung gelesen wird.
+- **Spike-Zuordnung im Detail** in der Phasen-Übersichts-Tabelle festgehalten, plus Roadmap-Meilensteine N/O/P explizit Phase 7 zugeordnet. Damit ist die Brücke zwischen Schubladen-Triage (Logbuch 2026-05-07 16:35) und konkretem Fahrplan vollständig.
+- **Replanning-Historie** mit dem Initial-Eintrag 2026-05-07 versehen.
+- **Iterations-Reflexion-Vorlage** für Phase 1 belassen; wird beim Phase-1-Abschluss befüllt.
+- **Beobachtung zur Vorlage:** Phase-1-Schritt-Format mit 13 Pflichtfeldern pro Schritt × 8 Schritte ist sehr lang (~330 Zeilen für Phase 1). Lesbar, aber an der Grenze. Falls Phase 2+ vergleichbar voll dokumentiert würden, wäre Auslagerung in `fahrplan-<modul>.md`-Teil-Dokumente nötig. Spätere Phasen sind hier bewusst grob gehalten, Verfeinerung kurz vor Phasen-Beginn.
+
 ### 2026-05-07 22:10 – [ADR-ANGELEGT]
 
 - **Block-Anlage Modus-2-Schritt 5:** ADR-001 bis ADR-009 in einem Zug in `decisions.md` befüllt.
