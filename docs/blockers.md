@@ -22,6 +22,13 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
 
 ## Aktive Blocker
 
+**Keine aktiven Blocker.**
+
+(Stand: 2026-05-07. Im Härtungs-Schritt von Modus-2-Schritt 3 wurden keine Blocker identifiziert; alle in Schublade 1 zusammengefassten Grundsatzfragen aus `project-context.md` Abschnitt 11 sind in der Klärungs-Session am 2026-05-07 abschließend entschieden, alle Schublade-2-Punkte als Spikes G–M in `fahrplan.md` Phasen 3 und 5 platziert, alle Schublade-3-Punkte als Roadmap-Meilensteine N/O/P in Phase 7. Damit gibt es keine offenen Architektur- oder Konzept-Lücken, die als Blocker gelten würden.)
+
+### Eintrags-Format (Vorlage – nicht löschen)
+
+```
 ### Blocker #NNN: [Titel]
 
 - **Datum:** YYYY-MM-DD
@@ -45,10 +52,9 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
   - [Konkrete Information, Freigabe, externe Klärung – ohne Auslassungen]
 - **Vorgeschlagene Entscheidungsfrage:**
   [Die spezifische Frage, die der Mensch beantworten soll, in einer Form, aus der eine Antwort direkt abgeleitet werden kann]
+```
 
-### Blocker #NNN: [...]
-
-[...]
+**Nummerierungs-Regel:** durchgehend, keine Lücken, auch gelöste Blocker behalten ihre Nummer. Erster Eintrag wäre `#001`.
 
 ---
 
@@ -57,19 +63,15 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
 [Nach Auflösung hierher verschieben. Ergänzungen: "Lösungsdatum", "Lösung", "ADR-Referenz falls zutreffend".
 Bei hoher Anzahl: nach `docs/archiv/blockers-YYYY-MM.md` auslagern.]
 
+*Bisher keine Blocker aufgelöst, weil bisher keine Blocker aufgetreten sind.*
+
+### Eintrags-Format gelöste Blocker (Vorlage)
+
+```
 ### Blocker #NNN: [Titel] – GELÖST YYYY-MM-DD
 
 - **Ursprüngliche Beschreibung:** [gekürzt oder Referenz]
 - **Lösung:** [was hat funktioniert, warum]
 - **ADR:** [falls die Auflösung einen ADR erzeugt hat]
 - **Abgeleitete Regel:** [falls eine wiederkehrende Lektion entstanden ist]
-
----
-
-**Initialisierungshinweis (erste Session nach Projektanlage):**
-
-- Beispiel-Blocker entfernen. Abschnitt „Aktive Blocker" startet leer mit Hinweis „Keine aktiven Blocker".
-- Abschnitt „Blocker-Erkennung" ist **nicht optional** und bleibt projektübergreifend identisch – nicht anpassen.
-- Datei wird erst befüllt, wenn ein echter Blocker auftritt (vorzeitige Erkennung nach Abschnitt oben oder Dreifach-Fehlschlag).
-- Nummerierung durchgehend (keine Lücken, auch gelöste Blocker behalten ihre Nummer).
-- Format des Eintrags (Felder und Struktur) ist **nicht optional**.
+```

@@ -26,6 +26,108 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-08 00:10 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 11 abgeschlossen, `vision.md` Überführungs-Status abgehakt und Vision eingefroren.**
+- **Alle sechs Checkboxen** auf [x] gesetzt mit konkreten Verweisen auf die zugehörigen Modus-2-Schritte und Logbuch-Einträge:
+  - Konzeptphase (Schritte 1+2+2a)
+  - Härtungsphase (Schritt 3 plus Klärungs-Session Schublade 1)
+  - Vorlagen-Set initialisiert (Schritte 4–10)
+  - ADR-001 angelegt (plus Erwähnung von ADR-002 bis ADR-009)
+  - Initialisierungs-Abschluss-Datum: 2026-05-07
+- **Zusätzlich** am Block-Ende ein Hinweis ergänzt: Verbund-Modus-Reinterpretation V2 ist in ADR-009 dokumentiert und verändert die Vision **nicht**, sondern präzisiert die Anbieterseiten-Trennung als Default mit Delegations-Möglichkeit. Damit ist klargestellt, dass Frage F kein Vision-Pivot war.
+- **Vision ist damit eingefroren.** Spätere substantielle Vision-Änderungen erfordern einen ADR mit Verweis auf den ursprünglichen Vision-Abschnitt; Vision-Datei wird inhaltlich nicht mehr verändert.
+- **Nicht angefasst:** Vision-Abschnitte 1–10. Diese bleiben als historisches Eingangs-Dokument unverändert.
+
+### 2026-05-07 23:55 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 10 abgeschlossen, CI-Workflow- und Pre-Commit-Skelett angelegt.**
+- **Plan vorab vorgelegt und bestätigt** mit fünf zu klärenden Punkten: Action-Patch-Pins (`v5.0.0`/`v4.0.0` als Annahme), Pre-Commit-Hook-Patches (`.0`-Patches der Minor-Linien), initial rote Runs OK, security.yml beschränkt auf Dep-Audits + bandit (kein Duplikat-eslint-security), `release.yml` nicht jetzt.
+- **`.github/workflows/ci.yml`** mit 7 Jobs angelegt:
+  - Backend (3 Jobs): `lint-backend` (ruff check + format), `typecheck-backend` (mypy --strict), `test-backend` (pytest + Coverage 80 %).
+  - Frontend (4 Jobs): `lint-frontend` (eslint + prettier --check), `typecheck-frontend` (svelte-check + tsc), `test-frontend` (vitest, Matrix über drei Frontend-Pakete), `build-frontend` (pnpm -r build).
+  - Trigger: `push` (alle Branches) plus `pull_request` (main).
+  - Tooling: uv für Python (statt pip aus dem Template), pnpm für TypeScript.
+- **`.github/workflows/security.yml`** mit 3 Jobs angelegt:
+  - `dep-audit-backend` (pip-audit `--strict --vulnerability-service=osv`).
+  - `dep-audit-frontend` (pnpm audit `--audit-level=high`).
+  - `static-security-backend` (bandit `-c pyproject.toml`).
+  - Trigger: `schedule` (cron `0 6 * * 0`) plus `workflow_dispatch`.
+  - Bewusst weggelassen: separater eslint-plugin-security-Lauf (läuft im regulären lint-frontend-Job mit).
+- **`.pre-commit-config.yaml`** mit Hooks für beide Sprachen plus generelle Hygiene-Hooks angelegt:
+  - General: trailing-whitespace, end-of-file, check-yaml/toml/json, check-added-large-files, check-merge-conflict, detect-private-key.
+  - Python: ruff (lint+format, `files: ^backend/`), mypy --strict, bandit.
+  - TypeScript/Frontend: prettier (mit `prettier-plugin-svelte`), eslint, svelte-check, tsc --noEmit – die letzten drei als lokale Hooks via pnpm-Workspace-Scripts (weil sie installierte Frontend-Dependencies brauchen).
+- **TBD-Ersetzungen** alle aus `project-context.md` Abschnitt 3+7 abgeleitet: Python 3.13, Node 24, pnpm 11, uv 0.11.0, ruff 0.15.0, mypy 1.20.2 (exakt), bandit 1.9.0, prettier 3.8.0, prettier-plugin-svelte 3.5.0, GitHub-Actions checkout/setup-python/setup-node @v6, astral-sh/setup-uv@v5.0.0, pnpm/action-setup@v4.0.0.
+- **Nicht angelegt:** `.github/workflows/release.yml` – `project-context.md` Abschnitt 7+8 verschiebt das explizit auf eine spätere Phase (Phase 7: Roll-out-Vorbereitung).
+- **Coverage-Modul-Schwellen:** Globaler 80 %-Wert ist im Workflow als `--cov-fail-under=80` gesetzt; modul-spezifische strengere Schwellen (Auth ≥ 95 %, Operations ≥ 90 %, Retention ≥ 95 %, Resilience ≥ 90 % aus `project-context.md` Abschnitt 7) werden in Phase 1 Schritt 1.3 in `pyproject.toml` `[tool.coverage.report]` mit per-Modul-Konfigurationen ergänzt.
+- **Initial rote Runs erwartet** – kein Code/keine `pyproject.toml`/keine `package.json` im Repo. Phase 1 Schritte 1.1 + 1.2 stellen die Skelette her, dann werden Workflows grün. Branch-Protection auf `main` wird in Phase 1 Schritt 1.2 aktiviert; bis dahin direkter Push erlaubt (`project-context.md` Abschnitt 10).
+- **Methoden-Hinweis:** Die `# TBD:`-Platzhalter aus den Templates wurden alle aufgelöst, aber zwei Action-Patches (`astral-sh/setup-uv`, `pnpm/action-setup`) sind als Annahme gepinnt (`v5.0.0`/`v4.0.0`) und beim ersten Lauf in Phase 1 Schritt 1.2 zu verifizieren. Falls die Tags nicht existieren: konservativ höchsten existierenden Patch der Major-Linie wählen, kein ADR nötig (Patch-Anpassung freigabefrei nach Regel-001).
+
+### 2026-05-07 23:35 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 9 abgeschlossen, `README.md` aus Vorlagen-Zustand auf vollständiges Statusbild gebracht.**
+- **Plan vorab vorgelegt und bestätigt** mit fünf zu klärenden Punkten: Status-Badge-Schema (Konzeption statt Vorlage-Mapping alpha/beta/stable), Build-Badge zwischenzeitlich „no status", CHANGELOG.md weglassen (nicht existent), LICENSE-Datei in Phase 1 statt jetzt anlegen, Sprache Deutsch.
+- **Inhalt der README:** 7 Badges in 2 Zeilen (Klasse G Maximum 10, sechs darunter wegen Konzeptionsphase); Einzeiler aus `vision.md` Abschnitt 1; „Über das Projekt"-Block aus `vision.md` 1+2+3+5; Status-Block synchronisiert mit `project-context.md`, `fahrplan.md`, `architecture.md` Abschnitt 9, `decisions.md` Teil A, `blockers.md`; Quick Start als „Heute lauffähig" mit Klon-Anleitung plus Phase-1-Hinweis (kein Aspirational-Inhalt); Architektur-Skizze als vereinfachte Mermaid plus 1-Satz-Modulliste; Verwendung explizit auf Phase 4 verschoben; Nächste Schritte mit drei konkreten Punkten (Modus-2-Restschritte, Phase 1, Phase 2); Mitwirken aus CLAUDE.md 11 + project-context.md 7+10; Doku-Tabelle ohne CHANGELOG.md; Lizenz mit Hinweis auf späteres LICENSE-File.
+- **Entfernt:** Vorlage „Badge-Auswahl pro Klasse" (~58 Zeilen) und Initialisierungs-Hinweis am Dateiende (~10 Zeilen). Methodik-relevante HTML-Kommentare am Datei-Anfang plus im Status-Block-Bereich behalten – sie sind Pflege-Hinweise, keine Initialisierungs-Vorlage.
+- **Beobachtung zur Vorlage:** Badge-Vorlage erwartet „alpha / beta / stable / maintenance / deprecated" als Status-Werte; `project-context.md` führt aber „Konzeption / Aufbau / aktive Entwicklung / Wartung / deprecated". Das ist eine Vorlagen-/Projekt-Diskrepanz, die ich zugunsten von `project-context.md` aufgelöst habe (CLAUDE.md Abschnitt 16 macht `project-context.md` zur Quelle für den Status-Block). Vermerk: falls die Vorlagen-CLAUDE.md projektübergreifend angepasst wird, sollten die beiden Status-Listen vereinheitlicht werden – aber das ist Methodik-Diskussion, nicht Schritt-9-Aufgabe.
+
+### 2026-05-07 23:20 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 8 abgeschlossen, `logbuch.md` Vorlagen-Cleanup durchgeführt.**
+- **Entfernt:** sechs Beispiel-Einträge mit `YYYY-MM-DD HH:MM`-Platzhaltern (PROBLEM-GELÖST, PROBLEM-OFFEN→BLOCKER, SESSIONSTART, BEOBACHTUNG, REIFEGRAD-WECHSEL, ADR-ANGELEGT) sowie der Initialisierungshinweis am Dateiende.
+- **Beibehalten:** chronologische Einträge ab 2026-05-07 14:00 (Klärungs-Session) bis aktuell, Eintragstypen-Übersicht mit Pflicht-/Empfehlungs-Markierung, Hinweise zur Pflege (neueste oben, Zeitstempel-Format, Detailtiefe lieber zu hoch, Verweise statt Duplikation, keine Secrets), Archivierungs-Block (>800 Zeilen).
+- **Folgenüberlegung:** Logbuch hat aktuell ca. 200 Zeilen, weit unter der 800-Zeilen-Auslagerungsschwelle. Nächste Auslagerungs-Prüfung erst beim Wachstum oder nach mehreren Wochen aktiver Sessions.
+
+### 2026-05-07 23:05 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 7 abgeschlossen, `blockers.md` auf Startzustand gebracht.**
+- **Aktive Blocker:** keine. Begründung im Dokument festgehalten: alle Schublade-1-Grundsatzfragen geklärt (Logbuch 14:25 bis 16:20), alle Schublade-2-Spikes G–M in Phasen 3 + 5 platziert, alle Schublade-3-Roadmap-Meilensteine N/O/P in Phase 7 platziert. Härtungs-Schritt (Modus-2-Schritt 3) hatte keine Blocker hinterlassen.
+- **Beibehalten:** Blocker-Erkennungs-Heuristiken (5 Muster für Sofort-Eskalation ohne Dreifach-Versuch) plus Eintrags-Format-Vorlagen für aktive und gelöste Blocker. Initialisierungs-Hinweis am Dateiende entfernt.
+- **Nummerierungs-Regel** explizit dokumentiert: durchgehend, keine Lücken, gelöste Blocker behalten ihre Nummer. Erster Eintrag wäre `#001`.
+
+### 2026-05-07 22:50 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 6 abgeschlossen, `fahrplan.md` mit 7 regulären Phasen + 1 späterer Erweiterungs-Phase X befüllt.**
+- **Phasen-Struktur:**
+  - **Phase 1** Repo-Bootstrap & Tech-Foundations (UMSETZUNG, voll detailliert mit 8 Schritten 1.1–1.8 im Schritt-Format).
+  - **Phase 2** Auth + Tenants + Verbund-Tauglichkeit I1/I2 (UMSETZUNG, gröber, 7 Schritte).
+  - **Phase 3** Spikes Wave 1 (ERKUNDUNG, Spikes I + J).
+  - **Phase 4** Operations Core + Realtime + Einsatzkraft-PWA (UMSETZUNG, gröber, 6 Schritte).
+  - **Phase 5** Spikes Wave 2 (ERKUNDUNG, Spikes G + H + K + L + M).
+  - **Phase 6** Geo + Frontends + Resilience + Retention + Export (UMSETZUNG, gröber, 7 Schritte).
+  - **Phase 7** Stabilisierung + Roll-out + Roadmap N/O/P (STABILISIERUNG, 8 Schritte).
+  - **Phase X** Verbund-Modus später (ERKUNDUNG → UMSETZUNG, sehr grob, 6 Schritte).
+- **Disziplin-Wahl:** Spikes wurden gebündelt in eigene ERKUNDUNG-Phasen 3 und 5 vor den jeweiligen UMSETZUNG-Phasen 4 und 6, statt sie innerhalb von UMSETZUNG-Phasen einzuschieben. Begründung: `CLAUDE.md` Abschnitt 6 Phasentyp-Disziplin verbietet Vermischung. Kosten: 7 Phasen sind das Maximum für Klasse G – Verbund-Modus läuft als Phase X außerhalb der Hauptliste, bis er aktiv wird.
+- **Phase-1-Sonderregel** bewusst dokumentiert: Eingangs-Disziplin „alle berührten Bestandteile auf [BELASTBAR]" abgemildert, weil Bootstrap-Phase die initialen Skelette herstellt und nur strategische Modul-Schnitt-Fixierung (durch ADR-002, ADR-003, ADR-004) als Eingangsbedingung verlangt. Vermerkt direkt in der Phasen-Beschreibung, damit es bei späteren Sessions nicht als versehentliche Aufweichung gelesen wird.
+- **Spike-Zuordnung im Detail** in der Phasen-Übersichts-Tabelle festgehalten, plus Roadmap-Meilensteine N/O/P explizit Phase 7 zugeordnet. Damit ist die Brücke zwischen Schubladen-Triage (Logbuch 2026-05-07 16:35) und konkretem Fahrplan vollständig.
+- **Replanning-Historie** mit dem Initial-Eintrag 2026-05-07 versehen.
+- **Iterations-Reflexion-Vorlage** für Phase 1 belassen; wird beim Phase-1-Abschluss befüllt.
+- **Beobachtung zur Vorlage:** Phase-1-Schritt-Format mit 13 Pflichtfeldern pro Schritt × 8 Schritte ist sehr lang (~330 Zeilen für Phase 1). Lesbar, aber an der Grenze. Falls Phase 2+ vergleichbar voll dokumentiert würden, wäre Auslagerung in `fahrplan-<modul>.md`-Teil-Dokumente nötig. Spätere Phasen sind hier bewusst grob gehalten, Verfeinerung kurz vor Phasen-Beginn.
+
+### 2026-05-07 22:10 – [ADR-ANGELEGT]
+
+- **Block-Anlage Modus-2-Schritt 5:** ADR-001 bis ADR-009 in einem Zug in `decisions.md` befüllt.
+  - **ADR-001** [STRATEGISCH] [METHODIK] – Projektgrößen-Klassifikation Klasse G. **Auslöser:** Stufe-2-Bestätigung am Ende des Architektur-Grobschnitts (`architecture.md` Abschnitt 10) deckt sich mit Stufe-1-Hypothese aus Modus-2-Schritt 1.
+  - **ADR-002** [STRATEGISCH] [STACK] [DEPLOYMENT] – Stack-Wahl FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate. **Auslöser:** Verifikations-Stempel `Verifiziert: 2026-05-07` für alle gelisteten Komponenten in `project-context.md` Abschnitt 3.
+  - **ADR-003** [STRATEGISCH] [METHODIK] – Architektur-Pattern Modular Monolith Backend + 3 SvelteKit-Frontends + Tile-Proxy + Reverse-Proxy. **Auslöser:** Modul-Karte und Architektur-Pattern in `architecture.md` Abschnitt 1+2.
+  - **ADR-004** [STRATEGISCH] [SECURITY] – Admin-Bootstrap-Flow als CLI-Befehl. **Auslöser:** Klärung Frage A am 2026-05-07 14:25.
+  - **ADR-005** [STRATEGISCH] [SECURITY] – AccessCode-Schema 6 Zeichen Crockford-Base32. **Auslöser:** Klärung Frage B am 2026-05-07 14:45.
+  - **ADR-006** [STRATEGISCH] [DATENMODELL] – Aggregations-Schema pro Operation, ohne Personen-Buckets. **Auslöser:** Klärung Frage C am 2026-05-07 15:05.
+  - **ADR-007** [STRATEGISCH] [SCHNITTSTELLE] [DATENMODELL] – Datenexport asynchron via Procrastinate-Job-Tripel. **Auslöser:** Klärung Frage D am 2026-05-07 15:25.
+  - **ADR-008** [STRATEGISCH] [MODUL] [DATENMODELL] – Multi-Disponent ohne Lead, vollständiges `operation_audit_log`. **Auslöser:** Klärung Frage E am 2026-05-07 15:50.
+  - **ADR-009** [STRATEGISCH] [DATENMODELL] – Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5. **Auslöser:** Klärung Frage F am 2026-05-07 16:20.
+- **Reaktiv-Quote initialisiert:** 0/9 = 0 % `[REAKTIV]`-Anteil. Schwellenwert Klasse G: 20 %. Keine Reflexion nötig.
+- **Aus den ADRs abgeleitete 14 Regeln** in Teil C eingetragen (Versionsdisziplin, Stack-Ausschlüsse, Modulgrenzen-Pflicht, Frontend↔Externer-Service-Verbot, CLI-Bootstrap, AccessCode-Hashing/-Toggle-Verhalten, Aggregat-Schreibung, Personen-Bucket-Verbot, Async-Mandanten-Operationen, Audit-Log-Pflicht/Confirmation-Dialog, Tenant-Participation als alleinige Verknüpfung, Teilnahme-Filter-Formulierung).
+
+### 2026-05-07 21:39 – [SESSIONSTART]
+
+- **Letzter Stand:** Modus-2-Schritt 4 abgeschlossen. PR #2 (`init(modus-2): Schritt 4 abgeschlossen, architecture.md befüllt`, Commit `d2c910f`) am 2026-05-07 in `main` gemerged (Merge-Commit `5a5f21e`). Architektur-Grobschnitt mit 14 Modulen, 10 Schnittstellen S1–S10, 5 Datenflüssen F1–F5, ER-Datenmodell, NFRs und Reifegrad-Übersicht steht. Stufe-2-Klassifikation Klasse G bestätigt.
+- **Geplant für diese Session:** Modus-2-Schritt 5 – `decisions.md` von Vorlagen-Zustand auf vollständigen ADR-Satz befüllen. ADR-001 Klassifikation (G), ADR-002 Stack-Wahl, ADR-003 Architektur-Pattern, ADR-004 bis ADR-009 für die in Schublade 1 geklärten Fragen A–F. Teil A (Übersicht) und Teil C (Regeln) entsprechend pflegen. Reaktiv-Quote initialisieren.
+- **Vorabprüfung:** Modus 2 weiterhin INITIALISIERUNG. Eingangskriterien für Schritt 5: Klärungs-Session Schublade 1 vollständig (erfüllt, Logbuch-Einträge 14:25 bis 16:20), Architektur-Grobschnitt vorhanden mit Verworfenen-Alternativen-Liste in `architecture.md` Abschnitt 8 (erfüllt), Verifikations-Stempel Stack 2026-05-07 (erfüllt, `project-context.md` Abschnitt 3). `decisions.md` ist Vorlagen-Zustand. Keine offenen STOPPs.
+- **Methoden-Korrektur aus Sessionstart:** Bei der Pflichtlektüre habe ich zunächst nicht erkannt, dass Schritt 4 auf einem parallelen Worktree-Branch (`scp/trusting-tereshkova-b09abc-step-4`) bereits durchgeführt war. Nach `git fetch --all` plus User-Hinweis fand ich den Commit `d2c910f`. PR #2 wurde noch während meiner Klärung gemerged, mein Worktree-Branch via Fast-Forward auf `5a5f21e` gebracht. Lerneffekt: Pflichtlektüre nach CLAUDE.md Abschnitt 2 sollte um einen Branch-Awareness-Check ergänzt werden – Vorschlag wandert in eine spätere CLAUDE.md-Diskussion.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus.
+
 ### 2026-05-07 19:30 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 2 h (17:30–19:30).
@@ -148,54 +250,6 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
   - Frage E zeigte die Pflicht zu „nicht stillschweigend interpretieren": die Begründung Patricks zu 4.B passte nicht zur Option, die er gewählt hatte – Nachfrage hat eine ganz andere Variante (Var.3 = kein Lead) zutage gefördert.
   - README ist noch im Vorlagen-Zustand und deshalb in dieser Session nicht synchronisiert worden – das ist kein Drift-Bug, sondern Modus-2-Schritt 9 nimmt sie in Betrieb. Vermerk hier, damit die Sessionende-Disziplin (CLAUDE.md Abschnitt 12 + 16) bewusst dokumentiert nicht erfüllt wurde, weil das Dokument zum Zeitpunkt des Sessionendes noch nicht aktiv ist.
 
-### YYYY-MM-DD HH:MM – [PROBLEM-GELÖST]
-
-- **Kontext:** [In welchem Schritt / Modul / Datei trat das Problem auf]
-- **Symptom:** [Was war zu sehen, welche Fehlermeldung, welches Verhalten]
-- **Ursache:** [Was war der eigentliche Grund]
-- **Lösung:** [Was wurde geändert, um es zu beheben]
-- **Aufwand:** [grobe Zeitangabe, z. B. „10 Min", „1h", „halber Tag"]
-- **Lerneffekt:** [optional: was nehmen wir daraus mit, was würden wir nächstes Mal anders machen]
-- **Wiederkehrgefahr:** [optional: kann das Problem in ähnlicher Form an anderer Stelle auftauchen?]
-
-### YYYY-MM-DD HH:MM – [PROBLEM-OFFEN → BLOCKER]
-
-- **Kontext:** [...]
-- **Symptom:** [...]
-- **Versuche bisher:** [...]
-- **Eskaliert nach:** `blockers.md` Eintrag #NNN
-
-[Eintrag wird ergänzt, sobald der Blocker gelöst ist – als „[BLOCKER-AUFGELÖST]"-Eintrag mit Verweis hierhin.]
-
-### YYYY-MM-DD HH:MM – [SESSIONSTART]
-
-- **Letzter Stand:** [aufgenommen aus letztem SESSIONENDE-Eintrag]
-- **Geplant für diese Session:** [welche Schritte sollen bearbeitet werden]
-- **Vorabprüfung:** [ist `[BELASTBAR]`-Architektur für die geplanten UMSETZUNG-Schritte gegeben? Sind Eingangskriterien erfüllt?]
-- **Modus / Werkzeug:** [Claude Code / normaler Chat, falls relevant]
-
-### YYYY-MM-DD HH:MM – [BEOBACHTUNG]
-
-[Freie Notiz, wenn etwas auffällt, das kein Problem und keine Entscheidung ist, aber später nützlich sein könnte.
-Z. B. „Build-Zeit hat sich seit letzter Woche verdreifacht, könnte später relevant werden",
-„Bibliothek X hat ein neues Major-Release, prüfen ob Migration in nächster STABILISIERUNG nötig",
-„Test-Suite läuft auf neuer Maschine 30 % schneller, eventuell Threshold-Werte überdenken"]
-
-### YYYY-MM-DD HH:MM – [REIFEGRAD-WECHSEL]
-
-- **Bestandteil:** [Modul / Schnittstelle / NFR aus `architecture.md`]
-- **Wechsel:** [VORLÄUFIG → BELASTBAR | BELASTBAR → VORLÄUFIG | OFFEN → VORLÄUFIG | etc.]
-- **Auslöser:** [welcher Schritt, welche Validierung, welcher ADR]
-- **Datum in `architecture.md` Abschnitt 9 nachgetragen:** [ja/nein]
-
-### YYYY-MM-DD HH:MM – [ADR-ANGELEGT]
-
-- **ADR:** [Nummer und Kurztitel]
-- **Tag:** [STRATEGISCH | OPERATIV | REAKTIV | ERKENNTNIS]
-- **Auslöser:** [warum kam diese Entscheidung jetzt auf]
-
-[Eintrag dient als chronologische Spur; der eigentliche Inhalt steht in `decisions.md`.]
-
 ---
 
 ## Eintragstypen (Übersicht)
@@ -228,15 +282,3 @@ Wenn das Logbuch unübersichtlich wird (Richtwert: >800 Zeilen, schneller wachse
 - Alte Einträge nach `docs/archiv/logbuch-YYYY-MM.md` auslagern.
 - Im aktiven Logbuch bleibt: die letzten 4–8 Wochen, plus alle Einträge, die mit aktuell offenen `blockers.md`-Einträgen verbunden sind.
 - Auslagerung ist Sessionende-Aktion, keine freigabepflichtige Entscheidung.
-
----
-
-**Initialisierungshinweis (erste Session nach Projektanlage):**
-
-- Beispiel-Einträge oben sind Format-Demonstration und werden bei Initialisierung **entfernt**.
-- Erster echter Eintrag entsteht zu Beginn der ersten regulären Session nach Modus-2-Abschluss: `[SESSIONSTART]` mit Verweis auf den Initialisierungs-Commit.
-- **Strukturwahl** richtet sich nach Klasse (siehe `CLAUDE.md` Abschnitt 1B):
-  - **Klasse K (Klein):** Reduzierte Form – `[SESSIONSTART]`/`[SESSIONENDE]` auf Pflicht reduziert, andere Typen optional. Archivierung selten nötig.
-  - **Klasse M (Mittel) und G (Groß):** Volle Form wie oben.
-  - **Klasse V (Verteilt-Groß):** Bei stark service-getrennter Arbeit ggf. service-spezifische Logbücher (`logbuch-<service>.md`) zusätzlich. `logbuch.md` bleibt als Master mit Sessionrahmen und service-übergreifenden Ereignissen.
-- KI legt Einträge **proaktiv und ungefragt** an. „Empfohlen" in Frage 3 heißt nicht „selten oder nur bei Bedarf" – es heißt „ohne dass der Mensch jedes Mal auffordern muss".
