@@ -26,6 +26,13 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-07 23:20 – [BEOBACHTUNG]
+
+- **Modus-2-Schritt 8 abgeschlossen, `logbuch.md` Vorlagen-Cleanup durchgeführt.**
+- **Entfernt:** sechs Beispiel-Einträge mit `YYYY-MM-DD HH:MM`-Platzhaltern (PROBLEM-GELÖST, PROBLEM-OFFEN→BLOCKER, SESSIONSTART, BEOBACHTUNG, REIFEGRAD-WECHSEL, ADR-ANGELEGT) sowie der Initialisierungshinweis am Dateiende.
+- **Beibehalten:** chronologische Einträge ab 2026-05-07 14:00 (Klärungs-Session) bis aktuell, Eintragstypen-Übersicht mit Pflicht-/Empfehlungs-Markierung, Hinweise zur Pflege (neueste oben, Zeitstempel-Format, Detailtiefe lieber zu hoch, Verweise statt Duplikation, keine Secrets), Archivierungs-Block (>800 Zeilen).
+- **Folgenüberlegung:** Logbuch hat aktuell ca. 200 Zeilen, weit unter der 800-Zeilen-Auslagerungsschwelle. Nächste Auslagerungs-Prüfung erst beim Wachstum oder nach mehreren Wochen aktiver Sessions.
+
 ### 2026-05-07 23:05 – [BEOBACHTUNG]
 
 - **Modus-2-Schritt 7 abgeschlossen, `blockers.md` auf Startzustand gebracht.**
@@ -197,54 +204,6 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
   - Frage E zeigte die Pflicht zu „nicht stillschweigend interpretieren": die Begründung Patricks zu 4.B passte nicht zur Option, die er gewählt hatte – Nachfrage hat eine ganz andere Variante (Var.3 = kein Lead) zutage gefördert.
   - README ist noch im Vorlagen-Zustand und deshalb in dieser Session nicht synchronisiert worden – das ist kein Drift-Bug, sondern Modus-2-Schritt 9 nimmt sie in Betrieb. Vermerk hier, damit die Sessionende-Disziplin (CLAUDE.md Abschnitt 12 + 16) bewusst dokumentiert nicht erfüllt wurde, weil das Dokument zum Zeitpunkt des Sessionendes noch nicht aktiv ist.
 
-### YYYY-MM-DD HH:MM – [PROBLEM-GELÖST]
-
-- **Kontext:** [In welchem Schritt / Modul / Datei trat das Problem auf]
-- **Symptom:** [Was war zu sehen, welche Fehlermeldung, welches Verhalten]
-- **Ursache:** [Was war der eigentliche Grund]
-- **Lösung:** [Was wurde geändert, um es zu beheben]
-- **Aufwand:** [grobe Zeitangabe, z. B. „10 Min", „1h", „halber Tag"]
-- **Lerneffekt:** [optional: was nehmen wir daraus mit, was würden wir nächstes Mal anders machen]
-- **Wiederkehrgefahr:** [optional: kann das Problem in ähnlicher Form an anderer Stelle auftauchen?]
-
-### YYYY-MM-DD HH:MM – [PROBLEM-OFFEN → BLOCKER]
-
-- **Kontext:** [...]
-- **Symptom:** [...]
-- **Versuche bisher:** [...]
-- **Eskaliert nach:** `blockers.md` Eintrag #NNN
-
-[Eintrag wird ergänzt, sobald der Blocker gelöst ist – als „[BLOCKER-AUFGELÖST]"-Eintrag mit Verweis hierhin.]
-
-### YYYY-MM-DD HH:MM – [SESSIONSTART]
-
-- **Letzter Stand:** [aufgenommen aus letztem SESSIONENDE-Eintrag]
-- **Geplant für diese Session:** [welche Schritte sollen bearbeitet werden]
-- **Vorabprüfung:** [ist `[BELASTBAR]`-Architektur für die geplanten UMSETZUNG-Schritte gegeben? Sind Eingangskriterien erfüllt?]
-- **Modus / Werkzeug:** [Claude Code / normaler Chat, falls relevant]
-
-### YYYY-MM-DD HH:MM – [BEOBACHTUNG]
-
-[Freie Notiz, wenn etwas auffällt, das kein Problem und keine Entscheidung ist, aber später nützlich sein könnte.
-Z. B. „Build-Zeit hat sich seit letzter Woche verdreifacht, könnte später relevant werden",
-„Bibliothek X hat ein neues Major-Release, prüfen ob Migration in nächster STABILISIERUNG nötig",
-„Test-Suite läuft auf neuer Maschine 30 % schneller, eventuell Threshold-Werte überdenken"]
-
-### YYYY-MM-DD HH:MM – [REIFEGRAD-WECHSEL]
-
-- **Bestandteil:** [Modul / Schnittstelle / NFR aus `architecture.md`]
-- **Wechsel:** [VORLÄUFIG → BELASTBAR | BELASTBAR → VORLÄUFIG | OFFEN → VORLÄUFIG | etc.]
-- **Auslöser:** [welcher Schritt, welche Validierung, welcher ADR]
-- **Datum in `architecture.md` Abschnitt 9 nachgetragen:** [ja/nein]
-
-### YYYY-MM-DD HH:MM – [ADR-ANGELEGT]
-
-- **ADR:** [Nummer und Kurztitel]
-- **Tag:** [STRATEGISCH | OPERATIV | REAKTIV | ERKENNTNIS]
-- **Auslöser:** [warum kam diese Entscheidung jetzt auf]
-
-[Eintrag dient als chronologische Spur; der eigentliche Inhalt steht in `decisions.md`.]
-
 ---
 
 ## Eintragstypen (Übersicht)
@@ -277,15 +236,3 @@ Wenn das Logbuch unübersichtlich wird (Richtwert: >800 Zeilen, schneller wachse
 - Alte Einträge nach `docs/archiv/logbuch-YYYY-MM.md` auslagern.
 - Im aktiven Logbuch bleibt: die letzten 4–8 Wochen, plus alle Einträge, die mit aktuell offenen `blockers.md`-Einträgen verbunden sind.
 - Auslagerung ist Sessionende-Aktion, keine freigabepflichtige Entscheidung.
-
----
-
-**Initialisierungshinweis (erste Session nach Projektanlage):**
-
-- Beispiel-Einträge oben sind Format-Demonstration und werden bei Initialisierung **entfernt**.
-- Erster echter Eintrag entsteht zu Beginn der ersten regulären Session nach Modus-2-Abschluss: `[SESSIONSTART]` mit Verweis auf den Initialisierungs-Commit.
-- **Strukturwahl** richtet sich nach Klasse (siehe `CLAUDE.md` Abschnitt 1B):
-  - **Klasse K (Klein):** Reduzierte Form – `[SESSIONSTART]`/`[SESSIONENDE]` auf Pflicht reduziert, andere Typen optional. Archivierung selten nötig.
-  - **Klasse M (Mittel) und G (Groß):** Volle Form wie oben.
-  - **Klasse V (Verteilt-Groß):** Bei stark service-getrennter Arbeit ggf. service-spezifische Logbücher (`logbuch-<service>.md`) zusätzlich. `logbuch.md` bleibt als Master mit Sessionrahmen und service-übergreifenden Ereignissen.
-- KI legt Einträge **proaktiv und ungefragt** an. „Empfohlen" in Frage 3 heißt nicht „selten oder nur bei Bedarf" – es heißt „ohne dass der Mensch jedes Mal auffordern muss".

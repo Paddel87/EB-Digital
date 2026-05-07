@@ -10,8 +10,8 @@
 - **Stand vom:** 2026-05-07
 - **Laufende Phase:** Modus 2 – Initialisierung (Vorlagen-Befüllung gemäß `CLAUDE.md` Abschnitt 1A)
 - **Phasentyp:** INITIALISIERUNG
-- **Aktiver Schritt:** keiner – Modus-2-Schritt 7 (`blockers.md` auf Startzustand bringen) abgeschlossen. Datei ist auf „Keine aktiven Blocker" initialisiert; Erkennungs-Heuristiken und Eintrags-Format-Vorlagen behalten.
-- **Nächster Schritt:** Modus-2-Schritt 8 – Logbuch-Vorlagen-Cleanup. Beispiel-Einträge mit `YYYY-MM-DD HH:MM`-Platzhaltern entfernen, Eintragstypen-Übersicht und Pflege-/Archivierungs-Hinweise behalten. Erster realer Eintrag entsteht zu Beginn der ersten regulären Session nach Modus-2-Abschluss.
+- **Aktiver Schritt:** keiner – Modus-2-Schritt 8 (Logbuch-Vorlagen-Cleanup) abgeschlossen. Sechs Beispiel-Einträge plus Initialisierungs-Hinweis entfernt; chronologische Einträge ab 2026-05-07 14:00 sowie Eintragstypen-Übersicht und Pflege-/Archivierungs-Hinweise behalten.
+- **Nächster Schritt:** Modus-2-Schritt 9 – `README.md` befüllen aus den jetzt vorliegenden Pflicht-Dokumenten. Badge-Auswahl und Strukturwahl nach Klasse G (max. 10 Badges, Pflicht-Badges Status/Version/Build/License). Initialisierungshinweis in der README am Dateiende entfernen.
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
