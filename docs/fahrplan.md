@@ -10,11 +10,11 @@
 - **Stand vom:** 2026-05-07
 - **Laufende Phase:** Modus 2 – Initialisierung (Vorlagen-Befüllung gemäß `CLAUDE.md` Abschnitt 1A)
 - **Phasentyp:** INITIALISIERUNG
-- **Aktiver Schritt:** keiner – Modus-2-Schritt 4 (`architecture.md` befüllen) abgeschlossen, Stufe-2-Klassifikation Klasse G bestätigt.
-- **Nächster Schritt:** Modus-2-Schritt 5 – `decisions.md` befüllen. ADR-001 (Klassifikation Klasse G), ADR-002 (Stack-Wahl), ADR-003 (Architektur-Pattern Modular Monolith), plus eigene ADRs für die geklärten Grundsatzentscheidungen aus Schublade 1 (Fragen A–F: Admin-Bootstrap, Zugangscode-Schema, Aggregations-Schema, Datenexport-Verfahren, Multi-Disponent ohne Lead, Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5). Numerierung durchgängig.
+- **Aktiver Schritt:** keiner – Modus-2-Schritt 5 (`decisions.md` befüllen) abgeschlossen. ADR-001 bis ADR-009 angelegt, Reaktiv-Quote 0/9 initialisiert, 14 Entscheidungsregeln in Teil C abgeleitet.
+- **Nächster Schritt:** Modus-2-Schritt 6 – `fahrplan.md` befüllen. Phasen aus dem geklärten Konzept ableiten und benennen, erste Phase mit konkreten Schritten füllen, spätere Phasen können gröber sein. Schublade 2 (ERKUNDUNG-Spikes G–M) und Schublade 3 (organisatorische Roadmap-Meilensteine N/O/P) als Phasen oder Phasen-Schritte einarbeiten. Detail-Skizzen pro Spike liegen im Logbuch-Eintrag 2026-05-07 16:35.
 - **Offene STOPP-Situationen:** keine.
 
-**Hinweis:** Die regulären Phasenfelder dieses Dokuments (Phasen 1, 2, …) sind noch Vorlagen-Platzhalter. Sie werden in Modus-2-Schritt 6 mit den Phasen aus dem geklärten Konzept befüllt, einschließlich der Schublade-2-ERKUNDUNG-Spikes (G–M) und Schublade-3-Roadmap-Meilensteine (N/O/P) – Detail-Skizzen siehe Logbuch-Eintrag 2026-05-07 16:35.
+**Hinweis:** Die regulären Phasenfelder dieses Dokuments (Phasen 1, 2, …) sind noch Vorlagen-Platzhalter. Sie werden in Modus-2-Schritt 6 mit den Phasen aus dem geklärten Konzept befüllt.
 
 ## Phasen-Typen
 

@@ -594,7 +594,7 @@ Alle modulübergreifenden Aufrufe sind hier dokumentiert. Änderungen an `[BELAS
 
 ### Security
 
-- **Bedrohungsmodell:** `[OFFEN]` – wird im Auth-Modul-ADR (Modus-2-Schritt 5 oder erste UMSETZUNG-Phase) erstellt; vor Produktivstart per externer Security-Review validiert (`project-context.md` Abschnitt 3 „Auth-Bausteine" Pflicht).
+- **Bedrohungsmodell:** `[OFFEN]` – wird in einem späteren Auth-Threat-Model-ADR (vor erster UMSETZUNG-Phase `backend/auth`) erstellt; vor Produktivstart per externer Security-Review validiert (`project-context.md` Abschnitt 3 „Auth-Bausteine" Pflicht).
 - **Schutzmaßnahmen:**
   - Argon2id-Hashing per `argon2-cffi`. `[BELASTBAR]`.
   - Cookie-Sessions `Secure` + `HttpOnly` + `SameSite=Strict`, signiert. `[BELASTBAR]`.
@@ -685,21 +685,21 @@ erDiagram
 
 ## 8. Verworfene Alternativen
 
-Architekturoptionen, die bewusst nicht gewählt wurden, mit Begründung. Die hier gelisteten ADR-Referenzen werden in Modus-2-Schritt 5 vergeben.
+Architekturoptionen, die bewusst nicht gewählt wurden, mit Begründung. ADR-Referenzen vergeben in Modus-2-Schritt 5 (2026-05-07).
 
-- **Lead-Disponent-Modell mit exklusiven kritischen Aktionen** – verworfen zugunsten des flachen Modells „alle Disponenten gleichberechtigt" mit Audit-Log und UX-Bestätigungs-Dialog. Begründung: Plattform-Admin als Eskalations-Pfad nicht zuverlässig erreichbar; Disponenten haben den operativen Überblick. Siehe `project-context.md` Abschnitt 11 Frage E. ADR-Nummer folgt in Schritt 5.
-- **Synchron-Einzelendpunkt für Datenexport** (`GET /api/tenants/{id}/export` als Single-Request) – verworfen wegen Worker-Block-Risiko bei großen Mandanten und Kollision mit p95 < 300 ms-Ziel. Stattdessen asynchron via Procrastinate-Job-Tripel. Siehe `project-context.md` Abschnitt 11 Frage D. ADR-Nummer folgt in Schritt 5.
-- **ENV-Variable-Bootstrap für Plattform-Admin** – verworfen wegen Klartext-Passwort-Risiko in `.env`/Compose-File/Logs/Backups. Siehe `project-context.md` Abschnitt 11 Frage A. ADR-Nummer folgt in Schritt 5.
-- **Web-Setup-Wizard für Plattform-Admin** – verworfen wegen Race-Condition-Risiko und früher Web-Code-Last. Siehe `project-context.md` Abschnitt 11 Frage A. ADR-Nummer folgt in Schritt 5.
-- **Hybrid-Setup-Link via Server-Log** – verworfen wegen Konflikt mit Datenschutz-Constraint „keine sensiblen Daten in Logs". Siehe `project-context.md` Abschnitt 11 Frage A. ADR-Nummer folgt in Schritt 5.
-- **Verbund-Modus in Phase 1** – verworfen wegen Phase-1-Komplexität; stattdessen architektonische Verbund-Tauglichkeit über fünf Invarianten I1–I5 vorbereitet, eigentliche Implementierung in späterer UMSETZUNG-Phase. Siehe `project-context.md` Abschnitt 11 Frage F. ADR-Nummer folgt in Schritt 5.
-- **Cross-Anzeige bei Geo-Überschneidung paralleler Mandanten in Phase 1** – verworfen, weil DPolG-Bremen Solo-Mandant und Geo-Überschneidungs-Logik in Phase 1 ohne Validierungsmöglichkeit. Erweiterungspfad in spätere Phase verschoben.
-- **Pseudonyme Personen-Hashes im Aggregat** – verworfen wegen Re-Identifikations-Risiko bei kleinen Mandanten. Aggregat hat keine Personen-Buckets. Siehe `project-context.md` Abschnitt 11 Frage C. ADR-Nummer folgt in Schritt 5.
-- **Karten-Snapshots im Datenexport** – verworfen wegen MapTiler-Lizenz-Klärungsbedarf und Phase-1-Komplexität. Siehe `project-context.md` Abschnitt 11 Frage D.
-- **Single-Use-Codes pro Einsatzkraft** – verworfen, weil Verteilung „außerhalb des Systems" ohne zentrale Verteilliste pro Einsatzkraft nicht realisierbar. Stattdessen ein Code pro Operation, wiederverwendbar. Siehe `project-context.md` Abschnitt 11 Frage B.
-- **4-stellige PIN als AccessCode** – verworfen wegen zu geringer Brute-Force-Reserve (10⁴ vs. 32⁶). Siehe `project-context.md` Abschnitt 11 Frage B.
+- **Lead-Disponent-Modell mit exklusiven kritischen Aktionen** – verworfen zugunsten des flachen Modells „alle Disponenten gleichberechtigt" mit Audit-Log und UX-Bestätigungs-Dialog. Begründung: Plattform-Admin als Eskalations-Pfad nicht zuverlässig erreichbar; Disponenten haben den operativen Überblick. Siehe `project-context.md` Abschnitt 11 Frage E. **Siehe ADR-008.**
+- **Synchron-Einzelendpunkt für Datenexport** (`GET /api/tenants/{id}/export` als Single-Request) – verworfen wegen Worker-Block-Risiko bei großen Mandanten und Kollision mit p95 < 300 ms-Ziel. Stattdessen asynchron via Procrastinate-Job-Tripel. Siehe `project-context.md` Abschnitt 11 Frage D. **Siehe ADR-007.**
+- **ENV-Variable-Bootstrap für Plattform-Admin** – verworfen wegen Klartext-Passwort-Risiko in `.env`/Compose-File/Logs/Backups. Siehe `project-context.md` Abschnitt 11 Frage A. **Siehe ADR-004.**
+- **Web-Setup-Wizard für Plattform-Admin** – verworfen wegen Race-Condition-Risiko und früher Web-Code-Last. Siehe `project-context.md` Abschnitt 11 Frage A. **Siehe ADR-004.**
+- **Hybrid-Setup-Link via Server-Log** – verworfen wegen Konflikt mit Datenschutz-Constraint „keine sensiblen Daten in Logs". Siehe `project-context.md` Abschnitt 11 Frage A. **Siehe ADR-004.**
+- **Verbund-Modus in Phase 1** – verworfen wegen Phase-1-Komplexität; stattdessen architektonische Verbund-Tauglichkeit über fünf Invarianten I1–I5 vorbereitet, eigentliche Implementierung in späterer UMSETZUNG-Phase. Siehe `project-context.md` Abschnitt 11 Frage F. **Siehe ADR-009.**
+- **Cross-Anzeige bei Geo-Überschneidung paralleler Mandanten in Phase 1** – verworfen, weil DPolG-Bremen Solo-Mandant und Geo-Überschneidungs-Logik in Phase 1 ohne Validierungsmöglichkeit. Erweiterungspfad in spätere Phase verschoben. **Siehe ADR-009** (im Kontext der Verbund-Vorbereitung).
+- **Pseudonyme Personen-Hashes im Aggregat** – verworfen wegen Re-Identifikations-Risiko bei kleinen Mandanten. Aggregat hat keine Personen-Buckets. Siehe `project-context.md` Abschnitt 11 Frage C. **Siehe ADR-006.**
+- **Karten-Snapshots im Datenexport** – verworfen wegen MapTiler-Lizenz-Klärungsbedarf und Phase-1-Komplexität. Siehe `project-context.md` Abschnitt 11 Frage D. **Siehe ADR-007.**
+- **Single-Use-Codes pro Einsatzkraft** – verworfen, weil Verteilung „außerhalb des Systems" ohne zentrale Verteilliste pro Einsatzkraft nicht realisierbar. Stattdessen ein Code pro Operation, wiederverwendbar. Siehe `project-context.md` Abschnitt 11 Frage B. **Siehe ADR-005.**
+- **4-stellige PIN als AccessCode** – verworfen wegen zu geringer Brute-Force-Reserve (10⁴ vs. 32⁶). Siehe `project-context.md` Abschnitt 11 Frage B. **Siehe ADR-005.**
 
-Stack-seitige Verwerfungen sind in `project-context.md` Abschnitt 3 „Explizit nicht erlaubt" geführt – hier nicht dupliziert.
+Stack-seitige Verwerfungen sind in `project-context.md` Abschnitt 3 „Explizit nicht erlaubt" geführt – hier nicht dupliziert. Begründung der Stack-Wahl in **ADR-002**.
 
 ## 9. Reifegrad-Übersicht (Stand 2026-05-07)
 
@@ -708,7 +708,7 @@ Stack-seitige Verwerfungen sind in `project-context.md` Abschnitt 3 „Explizit 
 | Architektur-Pattern (Modular Monolith + 3 SvelteKit-Frontends + 2 Proxies) | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase mit bestandenem Funktions-/Last-Test |
 | Kommunikations-Grundmodus REST/WS/HTTP-Tile-Proxy | BELASTBAR | 2026-05-07 | Vision-Stack-fix |
 | Pub/Sub via Valkey | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG `backend/realtime` |
-| Procrastinate-Job-Engine | BELASTBAR | 2026-05-07 | Stack-fix (ADR-002 Schritt 5) |
+| Procrastinate-Job-Engine | BELASTBAR | 2026-05-07 | Stack-fix (ADR-002) |
 | backend/auth | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase + externe Security-Review |
 | backend/auth_anonymous | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
 | backend/tenants | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
@@ -773,6 +773,6 @@ Architektur-Indikatoren am Ende des Architektur-Grobschnitts:
 - **Nutzergruppen:** 4 (Plattform-Admin, Disponent, Betreuer, anonyme Einsatzkraft) mit unterschiedlichen Rollen-/Berechtigungs-Modellen plus Mandanten-Trennung auf Anbieterseite.
 - **NFR-Komplexität:** DSGVO + API-Budget + Offline-PWA + Resilience-Anforderung – mehrere parallele NFR-Cluster, typisch G.
 
-**Ergebnis:** Klasse G **bestätigt**. Keine Anpassung der Hypothese aus Modus-2-Schritt 1 nötig. ADR-001 in Modus-2-Schritt 5 wird die Klassifikation entsprechend formulieren.
+**Ergebnis:** Klasse G **bestätigt**. Keine Anpassung der Hypothese aus Modus-2-Schritt 1 nötig. Klassifikation in **ADR-001** fixiert.
 
 **Reaktiv-Schwellenwert:** 20 % `[REAKTIV]`-Anteil über letzte 10 ADRs (`project-context.md` Abschnitt 6 Methodik-Schwellenwerte) gilt unverändert.

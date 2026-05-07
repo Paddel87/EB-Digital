@@ -26,6 +26,29 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-07 22:10 – [ADR-ANGELEGT]
+
+- **Block-Anlage Modus-2-Schritt 5:** ADR-001 bis ADR-009 in einem Zug in `decisions.md` befüllt.
+  - **ADR-001** [STRATEGISCH] [METHODIK] – Projektgrößen-Klassifikation Klasse G. **Auslöser:** Stufe-2-Bestätigung am Ende des Architektur-Grobschnitts (`architecture.md` Abschnitt 10) deckt sich mit Stufe-1-Hypothese aus Modus-2-Schritt 1.
+  - **ADR-002** [STRATEGISCH] [STACK] [DEPLOYMENT] – Stack-Wahl FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate. **Auslöser:** Verifikations-Stempel `Verifiziert: 2026-05-07` für alle gelisteten Komponenten in `project-context.md` Abschnitt 3.
+  - **ADR-003** [STRATEGISCH] [METHODIK] – Architektur-Pattern Modular Monolith Backend + 3 SvelteKit-Frontends + Tile-Proxy + Reverse-Proxy. **Auslöser:** Modul-Karte und Architektur-Pattern in `architecture.md` Abschnitt 1+2.
+  - **ADR-004** [STRATEGISCH] [SECURITY] – Admin-Bootstrap-Flow als CLI-Befehl. **Auslöser:** Klärung Frage A am 2026-05-07 14:25.
+  - **ADR-005** [STRATEGISCH] [SECURITY] – AccessCode-Schema 6 Zeichen Crockford-Base32. **Auslöser:** Klärung Frage B am 2026-05-07 14:45.
+  - **ADR-006** [STRATEGISCH] [DATENMODELL] – Aggregations-Schema pro Operation, ohne Personen-Buckets. **Auslöser:** Klärung Frage C am 2026-05-07 15:05.
+  - **ADR-007** [STRATEGISCH] [SCHNITTSTELLE] [DATENMODELL] – Datenexport asynchron via Procrastinate-Job-Tripel. **Auslöser:** Klärung Frage D am 2026-05-07 15:25.
+  - **ADR-008** [STRATEGISCH] [MODUL] [DATENMODELL] – Multi-Disponent ohne Lead, vollständiges `operation_audit_log`. **Auslöser:** Klärung Frage E am 2026-05-07 15:50.
+  - **ADR-009** [STRATEGISCH] [DATENMODELL] – Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5. **Auslöser:** Klärung Frage F am 2026-05-07 16:20.
+- **Reaktiv-Quote initialisiert:** 0/9 = 0 % `[REAKTIV]`-Anteil. Schwellenwert Klasse G: 20 %. Keine Reflexion nötig.
+- **Aus den ADRs abgeleitete 14 Regeln** in Teil C eingetragen (Versionsdisziplin, Stack-Ausschlüsse, Modulgrenzen-Pflicht, Frontend↔Externer-Service-Verbot, CLI-Bootstrap, AccessCode-Hashing/-Toggle-Verhalten, Aggregat-Schreibung, Personen-Bucket-Verbot, Async-Mandanten-Operationen, Audit-Log-Pflicht/Confirmation-Dialog, Tenant-Participation als alleinige Verknüpfung, Teilnahme-Filter-Formulierung).
+
+### 2026-05-07 21:39 – [SESSIONSTART]
+
+- **Letzter Stand:** Modus-2-Schritt 4 abgeschlossen. PR #2 (`init(modus-2): Schritt 4 abgeschlossen, architecture.md befüllt`, Commit `d2c910f`) am 2026-05-07 in `main` gemerged (Merge-Commit `5a5f21e`). Architektur-Grobschnitt mit 14 Modulen, 10 Schnittstellen S1–S10, 5 Datenflüssen F1–F5, ER-Datenmodell, NFRs und Reifegrad-Übersicht steht. Stufe-2-Klassifikation Klasse G bestätigt.
+- **Geplant für diese Session:** Modus-2-Schritt 5 – `decisions.md` von Vorlagen-Zustand auf vollständigen ADR-Satz befüllen. ADR-001 Klassifikation (G), ADR-002 Stack-Wahl, ADR-003 Architektur-Pattern, ADR-004 bis ADR-009 für die in Schublade 1 geklärten Fragen A–F. Teil A (Übersicht) und Teil C (Regeln) entsprechend pflegen. Reaktiv-Quote initialisieren.
+- **Vorabprüfung:** Modus 2 weiterhin INITIALISIERUNG. Eingangskriterien für Schritt 5: Klärungs-Session Schublade 1 vollständig (erfüllt, Logbuch-Einträge 14:25 bis 16:20), Architektur-Grobschnitt vorhanden mit Verworfenen-Alternativen-Liste in `architecture.md` Abschnitt 8 (erfüllt), Verifikations-Stempel Stack 2026-05-07 (erfüllt, `project-context.md` Abschnitt 3). `decisions.md` ist Vorlagen-Zustand. Keine offenen STOPPs.
+- **Methoden-Korrektur aus Sessionstart:** Bei der Pflichtlektüre habe ich zunächst nicht erkannt, dass Schritt 4 auf einem parallelen Worktree-Branch (`scp/trusting-tereshkova-b09abc-step-4`) bereits durchgeführt war. Nach `git fetch --all` plus User-Hinweis fand ich den Commit `d2c910f`. PR #2 wurde noch während meiner Klärung gemerged, mein Worktree-Branch via Fast-Forward auf `5a5f21e` gebracht. Lerneffekt: Pflichtlektüre nach CLAUDE.md Abschnitt 2 sollte um einen Branch-Awareness-Check ergänzt werden – Vorschlag wandert in eine spätere CLAUDE.md-Diskussion.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus.
+
 ### 2026-05-07 19:30 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 2 h (17:30–19:30).
