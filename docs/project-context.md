@@ -214,7 +214,7 @@ API-Verträge werden in `architecture.md` Abschnitt 4 detailliert. Hier nur Kate
 - **Anonyme Sessions für Einsatzkräfte** – Regel: Session-Datensatz hat ausschließlich `session_id`, `einsatz_id`, ggf. letzten Standort (mit Lebensdauer-Limit), keine User-Referenz.
 - **Aggregierte Statistiken bleiben dauerhaft, individuelle Bestell- und Standortdaten 30 Tage nach Einsatzende** – Regel: `backend/retention` läuft als zeitgesteuerter Procrastinate-Job, ausgelöst durch das Ereignis „Einsatz beendet" plus 30-Tage-Karenz; während eines laufenden Einsatzes wird nichts anonymisiert. Vor dem Löschen werden Aggregations-Tabellen gepflegt. Vision Abschnitt 6 ist hier maßgeblich.
 - **Keine PII in Logs** – Regel: zentraler Logger-Wrapper mit Redaction-Liste; Standortdaten in Logs nur als gehashter Tile-Identifier, nie als Roh-Koordinate.
-- **DSGVO-Datenexport** – Regel: API-Endpunkt `GET /api/tenants/{id}/export` liefert vollständiges JSON-Bundle der Mandanten-Daten.
+- **DSGVO-Datenexport** – Regel: asynchroner Procrastinate-Job, exponiert über das API-Tripel `POST /api/tenants/{id}/export` (startet Job), `GET /api/tenants/{id}/export/{job_id}` (Status), `GET /api/tenants/{id}/export/{job_id}/download` (ZIP-Download). Format: ZIP mit JSON pro Tabelle plus `manifest.json`. Detail siehe Abschnitt 11 (Grundsatzfrage „Datenexport-Format und Granularität").
 - **DSGVO-Art. 17 Löschung** – greift implizit über die 30-Tage-Auto-Anonymisierung; mandantenseitige Stamm- und Aggregations-Daten haben gesonderte Löschpfade über Mandanten-Deaktivierung.
 
 ### Sicherheit
@@ -351,18 +351,70 @@ Punkte, die zu Projektstart bewusst offen sind. Claude arbeitet nicht an Bereich
 
 - **Plattform-Betreiber-Governance** – wer betreibt die zentrale Multi-Tenant-Instanz nach der Initialphase: Patrick persönlich, gewerkschaftlicher Trägerverein, neutrale Stiftung? Klärung vor Produktivbetrieb.
 - **Test-Termin (reale Großlage)** – konkretes Anker-Datum im 3–6-Monats-Fenster festzulegen.
-- **Parallele Mandanten an derselben Großlage** – Verbund-Modus oder Out-of-Band-Absprache; Konzeptphasen-Detail im Fahrplan einzuplanen.
-- **Multi-Disponent-Hierarchie pro Einsatz** – Lead-Disponent oder Gleichberechtigung (exklusive Aktionen wie „Einsatz beenden", „Code aktivieren"); Konzeptphasen-Detail im Fahrplan einzuplanen.
+- **Parallele Mandanten an derselben Großlage** – ~~Verbund-Modus oder Out-of-Band-Absprache~~ **GEKLÄRT 2026-05-07:** Verbund-Modus mit gemeinsamem Auftragspool ist Ziel, wird aber nicht in Phase 1 implementiert. Stattdessen Phase 1 architektonisch verbund-tauglich vorbereiten; eigene UMSETZUNG-Phase mit ERKUNDUNG-Vorlauf später im Fahrplan.
+  - **Vision-Verhältnis:** Reinterpretation – Verbund ist opt-in-Erweiterung der Anbieterseiten-Trennung, keine Aufhebung. Solange beide Mandanten ausdrücklich zustimmen, ist die Default-Trennung nicht verletzt, sondern bewusst delegiert.
+  - **Phase-1-Architektur-Invarianten** (für spätere additive Einführbarkeit ohne Tabellen-Refactoring):
+    - **I1:** Einsatz↔Mandant über Verknüpfungstabelle `einsatz_mandant_teilnahme(einsatz_id, mandant_id, rolle)`; Phase 1 genau ein Eintrag mit `rolle='eigentümer'`. Kein direkter `einsatz.mandant_id`-Foreign-Key.
+    - **I2:** Berechtigungs-Filter „Einsätze, an denen mein Mandant teilnimmt" statt „Einsätze meines Mandanten". Phase 1 verhaltensgleich.
+    - **I3:** Fahrzeug-Zuweisung in `backend/operations.assign_vehicle()` prüft Einsatz-Kontext (Teilnahme), nicht Mandanten-ID-Match.
+    - **I4:** Aggregat (Frage C) bleibt Phase 1 mit einer `mandant_id` pro Eintrag; spätere Schema-Migration auf „verarbeitende Mandanten" wird im Architektur-Dokument als bekannte spätere Aufgabe vermerkt (keine versteckte technische Schuld).
+    - **I5:** Datenexport (Frage D) bleibt Phase 1 auf `rolle='eigentümer'` reduziert; spätere Verbund-Aufträge werden als geteilte Datensätze mit Quell-Markierung ergänzt.
+  - **Modul-Zuordnung der späteren Verbund-Erweiterung:** kein eigenes `backend/verbund`-Modul in Phase 1. Spätere Funktionalität als Erweiterung von `backend/tenants` (Verbund-Verträge: Initiative, Akzeptanz, Auflösung) und `backend/operations` (Cross-Mandanten-Disposition, gemeinsame Einsatz-URL). Falls bei der späteren Implementierung Modulgrenzen unscharf werden, wird per ADR ein eigenes Modul ausgegliedert.
+  - **Fahrplan-Konsequenz:** spätere UMSETZUNG-Phase „Verbund-Modus für parallele Mandanten-Großlagen" mit ERKUNDUNG-Vorlauf (Stakeholder-Klärung mit zwei Mandanten, Berechtigungs-Modell, Statistik-Zuordnung) wird in Modus-2-Schritt 6 als spätere Phase in den Fahrplan aufgenommen.
+  - **Begründung:** Solo-Mandant-Phase 1 bleibt klein und testbar; Verbund-Modus wird ohne spätere Tabellen-Refactor-Schulden möglich. Vision-Constraint der Anbieterseiten-Trennung bleibt als Default unangetastet. ADR folgt in Modus-2-Schritt 5.
+- **Multi-Disponent-Hierarchie pro Einsatz** – ~~Lead vs. Gleichberechtigung~~ **GEKLÄRT 2026-05-07:**
+  - **Modell:** kein Lead. Alle Disponenten am Einsatz sind voll gleichberechtigt – auch für destruktive Aktionen („Einsatz beenden", Zugangscode-Toggle, Einsatzraum-Geometrie ändern, Versorgungs-Transporter-Modus wechseln).
+  - **Audit-Log:** alle kritischen Aktionen werden in der Tabelle `einsatz_audit_log` mit Akteur (Disponenten-ID), Aktionstyp, Zeitstempel und Zielobjekt-Referenz erfasst. Sichtbar im Disponenten-UI für alle Disponenten am Einsatz und für Plattform-Administrator. Liefert gleichzeitig die Datengrundlage für die `anzahl_disponierungs…`-Felder im Aggregat (Frage C).
+  - **UX-Schutz vor versehentlichen destruktiven Aktionen:** Bestätigungs-Dialog im Disponenten-Frontend vor dem Auslösen (Implementierungs-Detail im `frontend-disponent`, kein Architektur-Block).
+  - **Begründung:** Plattform-Administrator nicht zuverlässig erreichbar; Disponenten haben den operativen Überblick und sollen ohne Eskalations-Hürde handlungsfähig sein. Schutz gegen Großschäden trägt der Bestätigungs-Dialog plus retrospektive Nachvollziehbarkeit über Audit-Log. ADR folgt in Modus-2-Schritt 5.
 - **Administrator-Architektur bei Multi-Tenancy** – ein zentraler Plattform-Administrator vs. ein Administrator pro Mandant; in der Anfangsphase ein zentraler Administrator (Patrick), Skalierungs-Frage offen.
-- **Zugangscode-Erzeugung und -Verteilung** – Code-Format (Länge, Zeichenraum, Einmal- oder Wiederverwendung), Verteilungs-Unterstützung im Disponenten-UI (Anzeige, Export, QR-Code); Konzeptphasen-Detail.
+- **Zugangscode-Erzeugung und -Verteilung** – ~~Code-Format, Wiederverwendung, UI-Unterstützung~~ **GEKLÄRT 2026-05-07:**
+  - **Format:** 6 Zeichen Crockford-Base32 (Großbuchstaben + Ziffern, ohne O/0/I/1/L) – z. B. „X7K3PQ".
+  - **Wiederverwendung:** ein Code pro Einsatz, von beliebig vielen Einsatzkräften nutzbar, läuft mit Einsatz-Ende ab.
+  - **Aktivierung während laufendem Einsatz:** wirkt nur auf neu startende Sessions / neue Bestellungen; bestehende anonyme Sessions bestellen weiter ohne Code bis Session-Ablauf.
+  - **Disponenten-UI:** Anzeige + Copy-to-Clipboard + QR-Code (rendert kombinierte Einsatz-URL inkl. Code). Druck/PDF-Export nicht in Phase 1.
+  - **Rotation:** keine systemseitige Rotation in Phase 1; bei Kompromittierungsverdacht beendet der Disponent den Einsatz und eröffnet einen neuen (URL + Code werden gemeinsam erneuert). 5.B (Rotate-Button) als Stabilisierungs-Erweiterung später nachrüstbar.
+  - **Begründung:** Vision-treu (URL bleibt Hauptfaktor, Code opt-in, niedrigschwellig), DSGVO-konsistent (kein PII-Touch), kleinster sinnvoller Funktionsumfang mit klarem Erweiterungspfad. ADR folgt in Modus-2-Schritt 5.
 - **Sperrungs-Override-Technik im Routing** – wie eine vom Disponenten freigeschaltete Strecke technisch in die TomTom-Routing-Anfragen einfließt (Custom-Areas, Route-Bias, Penalty-Map); Erkundungs-Spike vor erster Implementierung des `backend/geo`-Moduls. **Risiko-Hinweis:** jeder Override löst potenziell Re-Routing aus und belastet das API-Budget – die gewählte Technik muss das budgetschonend lösen.
 
 **Im Härtungs-Schritt zusätzlich identifiziert:**
 
 - **Schriftliche Onboarding-Unterlagen für Mandanten** (DSGVO-Vereinbarung, Nutzungsbedingungen, Haftungsklarheit) – nicht-technische Voraussetzung für die erste Mandanten-Freischaltung. Ohne diese Templates kann Self-Service-Onboarding zwar technisch laufen, aber kein Mandant produktiv freigeschaltet werden. Erstellung ist ein Asset außerhalb des Codes, muss aber im Fahrplan vor erstem Produktiv-Mandant terminiert sein.
-- **Admin-Bootstrap-Flow** – wie der allererste Plattform-Administrator angelegt wird (CLI-Befehl beim ersten Start, Umgebungsvariable, Setup-Wizard?). Architektur-Detail im `backend/auth`-Modul; muss vor erstem Deploy entschieden sein.
-- **Aggregations-Schema für dauerhafte Statistiken** – welche Felder werden vor der 30-Tage-Anonymisierung in die Aggregations-Tabellen geschrieben (Anzahl Bestellungen pro Mandant/Zeitraum, durchschnittliche Distanz, Anzahl Fahraufträge, Disponierungsmaßnahmen)? Datenmodell-Detail in `architecture.md`.
-- **Datenexport-Format und Granularität** – synchron oder asynchron, JSON oder ZIP mit CSV pro Tabelle, mit oder ohne Anhänge (Karten-Snapshots)? Bei großen Mandanten kann ein synchroner JSON-Export einen Backend-Worker blockieren; Architektur-Detail mit Performance-Implikation.
+- **Admin-Bootstrap-Flow** – ~~wie der allererste Plattform-Administrator angelegt wird~~ **GEKLÄRT 2026-05-07:** CLI-Befehl im Backend-Container (`docker compose exec backend python -m eb_digital admin create`, Username als Argument, Passwort interaktiv via getpass). Jederzeit nutzbar (kein Single-Use-Bootstrap), legt auch nachträglich weitere Plattform-Admins an. Begründung: niedrigste Angriffsfläche, kein Klartext-Passwort in ENV/Compose-File/Logs, kein frühes Web-Setup-UI nötig, hält die offene Skalierungsfrage „zentraler vs. mehrere Admins" ohne Architekturzwang offen. ADR folgt in Modus-2-Schritt 5.
+- **Aggregations-Schema für dauerhafte Statistiken** – ~~welche Felder vor 30-Tage-Anonymisierung in Aggregations-Tabellen~~ **GEKLÄRT 2026-05-07:**
+  - **Aggregations-Einheit:** pro Einsatz – ein finaler Aggregat-Eintrag beim Einsatz-Ende. Übergreifende Roll-ups (pro Mandant, pro Tag/Monat) per SQL-Sum ableitbar.
+  - **Metriken-Set pro Eintrag:** mandant_id, einsatz_id, zeitraum_start, zeitraum_ende, anzahl_einsatzraeume, anzahl_bestellungen, anzahl_fahrauftraege, anzahl_stornierungen, anzahl_buendelungen, anzahl_versorgungs_transporter_aktivierungen je Modus, anzahl_zugangscode_aktiviert, anzahl_strecken_freigaben (Sperrungs-Override), anzahl_hilfe_meldungen, gesamt_fahrdistanz_km (gerundet auf 1 km), aktive_fahrzeuge_max, aktive_disponenten_max. Keine Personen-Buckets (kein Pseudonym-Hash für Betreuer/Disponent).
+  - **Geo-Information:** Stadt-/Region-Label als String (vom Disponenten beim Einsatz-Eröffnen gesetzt, z. B. „Bremen Innenstadt"). Keine Geometrie-Persistenz in Phase 1.
+  - **Zugriff:** Mandanten-Disponenten sehen Aggregate ihres eigenen Mandanten; Plattform-Administrator sieht alle. Keine Cross-Mandanten-Veröffentlichung in Phase 1.
+  - **Anonymisierungs-Reihenfolge:** Aggregat wird sofort beim Einsatz-Ende geschrieben (Snapshot). Anonymisierungs-Job läuft 30 Tage später entkoppelt und löscht nur noch Detail-Daten.
+  - **Begründung:** balanciert DSGVO-Anspruch mit operativer Nutzbarkeit, hält Großlagen-Identität für Rückblicke ohne Re-Identifikations-Risiko, idempotente Reihenfolge ohne Race-Bedingungen. ADR folgt in Modus-2-Schritt 5.
+- **Datenexport-Format und Granularität** – ~~synchron/asynchron, Format, Anhänge~~ **GEKLÄRT 2026-05-07:**
+  - **Verfahren:** asynchron via Procrastinate-Job. API-Tripel `POST /api/tenants/{id}/export` (startet Job, liefert Job-ID), `GET /api/tenants/{id}/export/{job_id}` (Status), `GET /api/tenants/{id}/export/{job_id}/download` (ZIP-Download).
+  - **Format:** ZIP mit JSON-Datei pro Tabelle plus `manifest.json` (Schema-Version, Export-Datum, Mandanten-ID, Tabellen-Liste mit Datensatzzahl).
+  - **Inhalt:** vollständige Mandanten-Daten (Stammdaten, Disponenten-/Betreuer-Accounts ohne Passwort-Hashes, Fahrzeug-Stammdaten + Beladungs-Historie, mandantenspezifischer Artikelkatalog, Einsätze, Bestellungen + Fahraufträge der letzten 30 Tage detailliert, danach anonymisiert, Aggregations-Tabelle). Keine Karten-Snapshots, keine externen Anhänge.
+  - **Auslöser:** Self-Service durch Disponent / Mandanten-Admin-Disponent im eigenen Mandanten; Plattform-Administrator kann jeden Mandanten exportieren.
+  - **Lebensdauer:** fertiges ZIP unter `/var/eb-digital/exports/{tenant_id}/{job_id}.zip`, 7 Tage abrufbar (mehrfacher Download), danach Cleanup-Job (zweiter Procrastinate-Job).
+  - **Begründung:** asynchron nutzt vorhandenen Procrastinate-Stack und löst Worker-Block-Risiko bei großen Mandanten; ZIP+JSON+manifest ist migrations-tauglich und versioniert; vollständige Daten erfüllen DSGVO-Anspruch ohne Phase-1-Komplexität von Karten-Anhängen. ADR folgt in Modus-2-Schritt 5. **Hinweis:** Endpunkt-Skizze in Abschnitt 6 unten ist mit angepasst.
+
+### Triage-Stand 2026-05-07 (Klärungs-Session vor Modus-2-Schritt 4)
+
+Die obigen sechs „GEKLÄRT 2026-05-07"-Einträge bilden Schublade 1 der Triage. Die übrigen Punkte werden in Modus-2-Schritt 6 (Fahrplan-Befüllung) wie folgt eingearbeitet:
+
+- **Schublade 2 – ERKUNDUNG-Spikes vor jeweiliger UMSETZUNG-Phase:**
+  - Sperrungs-Override-Technik im Routing (oben gelistet, **G**)
+  - Resilience-Granularität (Vision Abschnitt 9, **H**)
+  - Geografischer Plausibilitäts-Algorithmus (Vision Abschnitt 9, **I**)
+  - Bündelungs-Trigger (Vision Abschnitt 9, **J**)
+  - Hilfe-Knopf-Semantik (Vision Abschnitt 9, **K**)
+  - Kartenmaterial-Offline-Caching-Technik (Vision Abschnitt 9, **L**)
+  - Fahrzeugbezeichnungs-Schema (Vision Abschnitt 9, **M**)
+  Detail-Skizzen pro Spike (Phasentyp ERKUNDUNG, Schritt-Art, Zeitbox, zu klärende Fragen, erwartetes Ergebnis) liegen im `[BEOBACHTUNG]`-Eintrag vom 2026-05-07 16:35 im Logbuch und werden in Modus-2-Schritt 6 in `fahrplan.md` aufgenommen.
+
+- **Schublade 3 – organisatorische Roadmap-Meilensteine ohne Code:**
+  - Plattform-Betreiber-Governance (oben gelistet, **N**) – auch Verbindung zu „Administrator-Architektur bei Multi-Tenancy" (oben gelistet), weil die Wahl der Trägerstruktur die Skalierungsfrage zentraler vs. mehrere Plattform-Admins beeinflusst.
+  - Test-Termin reale Großlage (oben gelistet, **O**)
+  - Schriftliche Onboarding-Unterlagen für Mandanten (oben gelistet, **P**)
+  Wird in Modus-2-Schritt 6 als Roadmap-Meilensteine im Fahrplan platziert (vor produktivem Mandanten-Onboarding bzw. in der STABILISIERUNG-Phase).
 
 ## 12. Glossar (projektspezifische Begriffe)
 

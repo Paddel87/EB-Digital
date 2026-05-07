@@ -7,12 +7,14 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** [YYYY-MM-DD]
-- **Laufende Phase:** [Phase-Nummer und Name]
-- **Phasentyp:** [ERKUNDUNG | UMSETZUNG | STABILISIERUNG]
-- **Aktiver Schritt:** [Schritt-ID oder „keiner"]
-- **Nächster Schritt:** [Schritt-ID, der in der folgenden Session begonnen wird]
-- **Offene STOPP-Situationen:** [falls vorhanden: Liste mit Schritt-ID und Grund]
+- **Stand vom:** 2026-05-07
+- **Laufende Phase:** Modus 2 – Initialisierung (Vorlagen-Befüllung gemäß `CLAUDE.md` Abschnitt 1A)
+- **Phasentyp:** INITIALISIERUNG
+- **Aktiver Schritt:** keiner – Klärungs-Session der offenen Grundsatzfragen aus `project-context.md` Abschnitt 11 abgeschlossen
+- **Nächster Schritt:** Modus-2-Schritt 4 – `architecture.md` mit den in Schublade 1 geklärten Entscheidungen (Fragen A–F, Stand 2026-05-07) als Reifegrad-Hypothesen befüllen. Klassifikations-Bestätigung (Stufe 2) anhand des Architektur-Grobschnitts; bei Abweichung von Klasse G zurück zu Stufe 1.
+- **Offene STOPP-Situationen:** keine.
+
+**Hinweis:** Die regulären Phasenfelder dieses Dokuments (Phasen 1, 2, …) sind noch Vorlagen-Platzhalter. Sie werden in Modus-2-Schritt 6 mit den Phasen aus dem geklärten Konzept befüllt, einschließlich der Schublade-2-ERKUNDUNG-Spikes (G–M) und Schublade-3-Roadmap-Meilensteine (N/O/P) – Detail-Skizzen siehe Logbuch-Eintrag 2026-05-07 16:35.
 
 ## Phasen-Typen
 
