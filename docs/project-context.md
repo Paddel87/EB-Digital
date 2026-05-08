@@ -132,7 +132,18 @@ Bibliotheken und Tools, die ohne separate Freigabe eingesetzt werden dürfen, so
 
 - pre-commit 4.6.x — `Verifiziert: 2026-05-07`
 - commitlint 20.5.x mit Conventional-Commits — `Verifiziert: 2026-05-07`
-- GitHub Actions: `actions/checkout@v6`, `actions/setup-python@v6`, `actions/setup-node@v6`. Für `pnpm/action-setup` und `astral-sh/setup-uv` gilt **Pin auf Patch-Tag oder Commit-Hash** (Immutable-Tag-Trend, kein floating major).
+- actionlint 1.7.x als pre-commit-Hook (rhysd/actionlint) — `Verifiziert: 2026-05-08`
+
+**GitHub Actions**
+
+Pin-Form je nach Maintainer-Praxis: **Major-Tag** für Actions aus der `actions/`-Org (dort pflegen die Maintainer Major-Tag-Stabilität); **Patch-Tag** für Actions außerhalb der `actions/`-Org (Immutable-Tag-Trend, kein floating major). Major-Updates sind ADR-pflichtig (Regel-001 + Regel-015). Verifikation in derselben Disziplin wie die übrigen Stack-Komponenten.
+
+- `actions/checkout@v6` — `Verifiziert: 2026-05-08`
+- `actions/setup-python@v6` — `Verifiziert: 2026-05-08`
+- `actions/setup-node@v6` — `Verifiziert: 2026-05-08`
+- `actions/upload-artifact@v4` — `Verifiziert: 2026-05-08` (current ist v7, v4 bleibt supported; Update folgt bei Bedarf per ADR)
+- `astral-sh/setup-uv@v8.1.0` — `Verifiziert: 2026-05-08` (Major-Update v5→v8 in ADR-010 dokumentiert)
+- `pnpm/action-setup@v6.0.5` — `Verifiziert: 2026-05-08` (Major-Update v4→v6 in ADR-010 dokumentiert)
 
 **Container-Build**
 

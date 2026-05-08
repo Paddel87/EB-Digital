@@ -49,6 +49,16 @@ repos:
         additional_dependencies: ["bandit[toml]"]
         files: ^backend/eb_digital/
 
+  # GitHub-Actions: actionlint (rhysd/actionlint, project-context.md Abschnitt 3).
+  # Verhindert Workflow-Validierungs-Fehler vor dem Push (z. B. hashFiles auf
+  # Job-Ebene, ungültige Job-Outputs, Action-Tag-Tippfehler). Schließt die
+  # Reibung aus Phase-1-Schritt-1.2 Methoden-Lerneffekt 2 (Logbuch 2026-05-08
+  # Sessionende). ADR-010 hat actionlint ins Verifikations-Regime aufgenommen.
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
   # TypeScript/Frontend: Prettier (3.8.x, project-context.md Abschnitt 3).
   # Hinweis: pre-commit/mirrors-prettier wurde archiviert und stoppt bei
   # v4.0.0-alpha.x – Community-Fork rbubley/mirrors-prettier pflegt die
