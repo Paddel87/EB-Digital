@@ -10,7 +10,7 @@
 - **Stand vom:** 2026-05-08
 - **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
-- **Aktiver Schritt:** **1.1 [IN ARBEIT]** – Repository- und Workspace-Setup. Konfig-Dateien angelegt; offene Resterledigung: (a) AGPL-3.0-Volltext im `LICENSE`-File ergänzen, (b) `uv sync` und `pnpm install` ausführen → Lock-Files erzeugen und committen, (c) Pre-Commit-Hooks lokal validieren (`pre-commit run --all-files`), (d) Test-Commits mit Conventional + Non-Conventional Message zur Akzeptanzkriterien-Verifikation.
+- **Aktiver Schritt:** **1.1 [IN ARBEIT]** – Repository- und Workspace-Setup. Konfig-Dateien angelegt, AGPL-3.0-Volltext aus GitHub-Licenses-API ergänzt; offene Resterledigung: (a) `uv sync` und `pnpm install` ausführen → Lock-Files erzeugen und committen, (b) Pre-Commit-Hooks lokal validieren (`pre-commit run --all-files`), (c) Test-Commits mit Conventional + Non-Conventional Message zur Akzeptanzkriterien-Verifikation.
 - **Nächster Schritt:** Resterledigung von 1.1 abschließen, anschließend 1.2 – CI-Pipeline aktivieren.
 - **Offene STOPP-Situationen:** keine. Lock-File-Lücke ist kein Stopp, sondern ein dokumentierter offener Akzeptanzkriterien-Punkt, der erst nach lokaler Tool-Installation (uv, pnpm) verifiziert werden kann.
 
@@ -154,8 +154,8 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 - **Notizen:** Major-Versions-Pinning ist Pflicht. `pnpm/action-setup` und `astral-sh/setup-uv` werden später in CI auf Patch-Tag oder Commit-Hash gepinnt (Regel-001 aus ADR-002).
 - **Offene Akzeptanz-Restpunkte (seit 2026-05-08):**
   1. **`uv.lock` und `pnpm-lock.yaml` fehlen** – uv und pnpm sind in der lokalen Worktree-Umgebung der KI nicht installiert. Lock-File-Erzeugung verlangt Tool-Installation auf dem Entwickler-Rechner und anschließenden Commit der Lock-Files. Ohne Lock-Files sind die Akzeptanzkriterien „`uv sync` baut Lock-File ohne Konflikte" und „`pnpm install` baut Lock-File ohne Konflikte" nicht erfüllbar.
-  2. **`LICENSE`-Volltext fehlt** – AGPL-3.0-Header steht, der vollständige FSF-Lizenztext (~660 Zeilen) muss aus `https://www.gnu.org/licenses/agpl-3.0.txt` ergänzt werden, bevor das Projekt extern verteilt wird oder Status auf „Aufbau" wechselt. Nicht in dieser Session möglich, weil die Sandbox keinen Netzzugriff hat und freies Reproduzieren des kanonischen Lizenztextes nicht zulässig ist.
-  3. **Pre-Commit-Hook-Validierung** – `pre-commit run --all-files` und Commit-Lint-Test mit Conventional vs. Non-Conventional Messages stehen aus, hängen ebenfalls an Punkt 1 (uv/pnpm + pre-commit-Installation lokal).
+  2. ~~**`LICENSE`-Volltext fehlt**~~ – **GELÖST am 2026-05-08:** AGPL-3.0-Volltext byte-genau aus der GitHub-Licenses-API (`gh api licenses/agpl-3.0 --jq '.body'`) ans `LICENSE`-File angefügt, 673 Zeilen / 35 035 Bytes. Header oben, kanonischer FSF-Text darunter.
+  3. **Pre-Commit-Hook-Validierung** – `pre-commit run --all-files` und Commit-Lint-Test mit Conventional vs. Non-Conventional Messages stehen aus, hängen an Punkt 1 (uv/pnpm + pre-commit-Installation lokal).
   4. **Versions-Verifikation** für itsdangerous (`~=2.2.0`) erfolgt in Schritt 1.6 mit dem ersten produktiven Auth-Code; uvicorn, pydantic-settings, asyncpg, procrastinate werden in Schritten 1.3/1.4/1.5 nachgepinnt mit erneuter Verifikation.
 
 #### 1.2: CI-Pipeline aktivieren (GitHub Actions)

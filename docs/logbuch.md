@@ -26,6 +26,17 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-08 14:50 – [BEOBACHTUNG]
+
+- **Methodische Korrektur — Bash-Sandbox ohne Netz ≠ keine Web-Quelle erreichbar.** Im Eintrag 14:30 hatte ich nach dem fehlgeschlagenen `curl https://www.gnu.org/licenses/agpl-3.0.txt` (Verbindungs-Timeout aus der Bash-Sandbox) vorschnell geschlossen, der AGPL-3.0-Volltext sei in dieser Session prinzipiell nicht beschaffbar, und ihn als offenen Restpunkt im LICENSE-Stub belassen. Patricks Rückfrage hat das aufgedeckt.
+- **Verfügbare alternative Routen für Web-Inhalte aus Claude-Code-Sessions** (für künftige Sessions zu merken):
+  1. **`gh api`** für alles, was über die GitHub-API erreichbar ist – authentifiziert, sandbox-erlaubt, byte-genau (kein AI-Resümee dazwischen). Für Lizenztexte: `gh api licenses/<spdx-id>` liefert das `body`-Feld als kanonischen Text.
+  2. **`WebFetch`** als deferred Tool – funktioniert auch ohne Bash-Netzwerkzugriff, schickt den Content aber durch ein kleines AI-Modell, das paraphrasieren oder summarisieren kann. **Nicht** geeignet für verbatim-pflichtige Texte (Lizenzen, Verträge, Standards), gut für „erkläre/extrahiere"-Anfragen.
+  3. **`WebSearch`** als deferred Tool – für Discovery, nicht für Volltext.
+  4. **`Bash` mit `curl`/`wget`** – in dieser Sandbox blockiert (Verbindungs-Timeout). Nicht zuverlässig.
+- **Konkrete Auflösung:** AGPL-3.0-Text via `gh api licenses/agpl-3.0 --jq '.body' > /tmp/agpl-3.0.txt` geholt (662 Zeilen / 34 524 Bytes), in `LICENSE` unter dem Projekt-Header eingefügt. Kontroll-Daten: `head -3` zeigt „GNU AFFERO GENERAL PUBLIC LICENSE / Version 3, 19 November 2007", `tail -4` zeigt das kanonische FSF-Closing („For more information on this … <https://www.gnu.org/licenses/>"). Finale Datei 673 Zeilen / 35 035 Bytes. Restpunkt 2 in `fahrplan.md` Phase 1 Schritt 1.1 als gelöst markiert (Strikethrough plus „GELÖST 2026-05-08"-Vermerk im selben Listenpunkt, weil ein Logbuch-Eintrag das Detail trägt und der Fahrplan nur den aktuellen Zustand abbildet).
+- **Festhalten als wiederkehrendes Muster:** Bei „Web-Quelle nötig, Sandbox blockt curl" zuerst prüfen, ob `gh api` (verbatim) oder `WebFetch` (paraphrasing-tolerant) die Aufgabe abdeckt – nicht direkt zu Stub + TODO greifen. Diese Lektion gehört in den projektübergreifenden CLAUDE-Methodik-Kanon, ist aber außerhalb dieser Session zu klären (vgl. ähnliche „Lerneffekt-für-CLAUDE.md"-Vermerke vom 2026-05-08 00:30).
+
 ### 2026-05-08 14:30 – [BEOBACHTUNG]
 
 - **Phase 1 Schritt 1.1 begonnen, Konfig-Skelett angelegt; Schritt bleibt `[IN ARBEIT]`.** Umgesetzt:
