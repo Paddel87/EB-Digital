@@ -16,8 +16,9 @@ on:
 env:
   PYTHON_VERSION: "3.13"
   NODE_VERSION: "24"
-  PNPM_VERSION: "11"
   UV_VERSION: "0.11.0"
+  # pnpm-Version wird ausschließlich aus packageManager in package.json gelesen
+  # (Single Source of Truth, vermeidet Multi-Version-Konflikt mit pnpm/action-setup).
 
 jobs:
   dep-audit-backend:
@@ -40,11 +41,11 @@ jobs:
   dep-audit-frontend:
     name: Frontend · Dependency Audit (pnpm audit)
     runs-on: ubuntu-latest
+    # Auditiert in Phase 1 die Root-Devdeps (commitlint). Ab Schritt 1.7 kommen
+    # Frontend-Pakete dazu, die dann automatisch mit auditiert werden.
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4.0.0
-        with:
-          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
