@@ -15,6 +15,7 @@ Jedes Modul, jede Schnittstelle und jede Architektur-Aussage trägt einen der fo
 - `[OFFEN]` – bewusst nicht entschieden. Wartet auf Erkenntnis aus einer Erkundungsphase, einen Spike oder eine externe Klärung. Kein Code in Bereichen, die von einer `[OFFEN]`-Architektur abhängen, ohne dass die Lücke vorher geschlossen wurde.
 
 **Beförderungsregel:** Ein Bestandteil wird von `[VORLÄUFIG]` auf `[BELASTBAR]` befördert, wenn:
+
 1. Die Annahme durch funktionierende Implementierung bestätigt wurde, **oder**
 2. Ein ADR die Entscheidung explizit fixiert.
 
@@ -24,22 +25,22 @@ Beide Wege sind dokumentationspflichtig: Beförderung mit Datum und kurzer Begr�
 
 **Code-Bezeichner-Konvention:** Codesprache ist Englisch (`project-context.md` Abschnitt 1). Domänenbegriffe werden 1:1 ins Englische übersetzt:
 
-| Deutsch (Glossar) | Englisch (Code) |
-|---|---|
-| Einsatz | Operation |
-| Einsatzraum | OperationArea |
-| Mandant | Tenant |
-| Plattform-Administrator | PlatformAdmin |
-| Disponent | Dispatcher |
-| Betreuer | Carer |
-| Einsatzkraft | ResponseUnitMember (Arbeitsname; finale Wahl im Auth-Modul-ADR vor erster UMSETZUNG-Phase) |
-| Versorgungs-Transporter | SupplyTransporter |
-| Geschäftsstelle | HeadOffice |
-| Zugangscode | AccessCode |
-| Bestellung | Order |
-| Fahrauftrag | OrderAssignment |
-| Sperrungs-Override | RouteOverride |
-| Audit-Log-Eintrag | AuditLogEntry |
+| Deutsch (Glossar)       | Englisch (Code)                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------ |
+| Einsatz                 | Operation                                                                                  |
+| Einsatzraum             | OperationArea                                                                              |
+| Mandant                 | Tenant                                                                                     |
+| Plattform-Administrator | PlatformAdmin                                                                              |
+| Disponent               | Dispatcher                                                                                 |
+| Betreuer                | Carer                                                                                      |
+| Einsatzkraft            | ResponseUnitMember (Arbeitsname; finale Wahl im Auth-Modul-ADR vor erster UMSETZUNG-Phase) |
+| Versorgungs-Transporter | SupplyTransporter                                                                          |
+| Geschäftsstelle         | HeadOffice                                                                                 |
+| Zugangscode             | AccessCode                                                                                 |
+| Bestellung              | Order                                                                                      |
+| Fahrauftrag             | OrderAssignment                                                                            |
+| Sperrungs-Override      | RouteOverride                                                                              |
+| Audit-Log-Eintrag       | AuditLogEntry                                                                              |
 
 Tabellennamen folgen `snake_case`, Klassennamen `PascalCase`, Modulpfade `kebab-case`/`snake_case` gemäß PEP 8 / Svelte-Konvention. Tabellen, die in der Klärungs-Session in `project-context.md` Abschnitt 11 deutsch referenziert wurden (`einsatz_mandant_teilnahme`, `einsatz_audit_log`), werden im Code als `operation_tenant_participation` und `operation_audit_log` umgesetzt. Diese Übersetzung ist Code-Konvention, kein Vision-Pivot.
 
@@ -511,6 +512,7 @@ Alle modulübergreifenden Aufrufe sind hier dokumentiert. Änderungen an `[BELAS
 4. Disponent meldet sich erstmals an, ändert Passwort.
 
 **Fehlerpfade:**
+
 - Antragsdaten unvollständig → 422 mit Feld-Validation.
 - Plattform-Admin nicht erreichbar → Antrag bleibt im `pending`-Status (kein automatisches Aging).
 - Disponenten-Anlage scheitert (Username schon belegt) → Plattform-Admin korrigiert.
@@ -529,6 +531,7 @@ Alle modulübergreifenden Aufrufe sind hier dokumentiert. Änderungen an `[BELAS
 10. Carer drückt „Übergabe abgeschlossen". `POST /api/operations/{id}/orders/{order_id}/complete`. Order-Status wechselt auf `completed`, AuditLog-Eintrag.
 
 **Fehlerpfade:**
+
 - AccessCode falsch → 401, Rate-Limit-Counter +1; nach 5 Versuchen Block.
 - Plausibilitäts-Check schlägt fehl → Order in Status `needs_moderation`, Disponent entscheidet.
 - TomTom-Routing nicht erreichbar → Fallback ohne Verkehrslage (Static-Routing aus letzter Antwort); bei vollständigem Ausfall Disponent koordiniert per Chat (Vision/`project-context.md` Abschnitt 5).
@@ -544,6 +547,7 @@ Alle modulübergreifenden Aufrufe sind hier dokumentiert. Änderungen an `[BELAS
 5. AuditLog-Daten werden beim Operation-Ende in das Aggregat (Frage C) eingerechnet (`anzahl_stornierungen` etc.).
 
 **Fehlerpfade:**
+
 - Use-Case scheitert (z. B. Auftrag bereits abgeschlossen) → 422, kein AuditLog-Eintrag.
 - Audit-Log-Schreibung scheitert → gesamte Transaktion zurückgerollt; UI zeigt Fehler.
 
@@ -556,6 +560,7 @@ Alle modulübergreifenden Aufrufe sind hier dokumentiert. Änderungen an `[BELAS
 5. Nach 30 Tagen läuft „anonymize_operation_details": löscht Detail-Daten in `order`, `order_assignment`, `anonymous_session`, `vehicle_realtime_position` für `operation_id`. Aggregat bleibt.
 
 **Fehlerpfade:**
+
 - Aggregat-Schreibung scheitert → Procrastinate-Retry mit Backoff (Standard-Konfiguration); bei dauerhaftem Scheitern Plattform-Admin-Alert.
 - 30-Tage-Job läuft nicht (Scheduler offline) → Job bleibt in Queue, läuft beim nächsten Start; Aggregat unbeeinflusst, weil bereits geschrieben.
 
@@ -569,6 +574,7 @@ Alle modulübergreifenden Aufrufe sind hier dokumentiert. Änderungen an `[BELAS
 6. Cleanup-Job (täglich) löscht Files älter als 7 Tage.
 
 **Fehlerpfade:**
+
 - Export-Job scheitert (DB-Lese-Fehler) → Status `failed`; Frontend zeigt Fehler; Disponent kann erneut starten.
 - Download-Abbruch → mehrfacher Download im Fenster möglich, kein Job-Restart nötig.
 - Volume voll → Job scheitert mit `disk_full`-Error; Plattform-Admin-Alert.
@@ -678,6 +684,7 @@ erDiagram
 **Zentrale Invariante I1 (Frage F):** `OperationTenantParticipation(operation_id, tenant_id, role)` ist die einzige Verknüpfung zwischen Operation und Tenant. Phase 1: genau ein Eintrag mit `role='owner'` pro Operation. Späterer Verbund-Modus fügt `role='participant'` additiv hinzu.
 
 **Lebensdauer-Felder:**
+
 - `AnonymousSession.last_location` mit `last_seen_at` – wird durch Heartbeat aktualisiert; nach Operation-Ende über `backend/retention` gelöscht.
 - `VehicleRealtimePosition` – aktualisiert per WebSocket-GPS-Push; nach 30 Tagen gelöscht.
 
@@ -703,61 +710,61 @@ Stack-seitige Verwerfungen sind in `project-context.md` Abschnitt 3 „Explizit 
 
 ## 9. Reifegrad-Übersicht (Stand 2026-05-07)
 
-| Bestandteil | Reifegrad | Seit | Validiert durch / wartet auf |
-|---|---|---|---|
-| Architektur-Pattern (Modular Monolith + 3 SvelteKit-Frontends + 2 Proxies) | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase mit bestandenem Funktions-/Last-Test |
-| Kommunikations-Grundmodus REST/WS/HTTP-Tile-Proxy | BELASTBAR | 2026-05-07 | Vision-Stack-fix |
-| Pub/Sub via Valkey | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG `backend/realtime` |
-| Procrastinate-Job-Engine | BELASTBAR | 2026-05-07 | Stack-fix (ADR-002) |
-| backend/auth | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase + externe Security-Review |
-| backend/auth_anonymous | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
-| backend/tenants | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
-| backend/catalog | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
-| backend/operations | VORLÄUFIG | 2026-05-07 | UMSETZUNG-Phase, mit `[OFFEN]`-Bereichen Spike I, Spike J, Spike K |
-| backend/fleet | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
-| backend/geo | VORLÄUFIG | 2026-05-07 | UMSETZUNG-Phase, mit `[OFFEN]`-Bereichen Spike G, Spike I |
-| backend/realtime | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
-| backend/resilience | VORLÄUFIG | 2026-05-07 | UMSETZUNG-Phase, mit `[OFFEN]`-Bereich Spike H |
-| backend/export | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
-| backend/retention | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
-| frontend-disponent | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
-| frontend-betreuer | VORLÄUFIG | 2026-05-07 | UMSETZUNG-Phase, mit `[OFFEN]`-Bereich Spike L |
-| frontend-einsatzkraft | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase |
-| infra/tile-proxy | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase + Smoke-Test |
-| infra/reverse-proxy | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase + Smoke-Test |
-| Schnittstelle S1 (Admin-Bootstrap-CLI) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/auth` |
-| Schnittstelle S2 (Anonymous Session API) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/auth_anonymous` |
-| Schnittstelle S3 (Operations Event Bus → Realtime) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/realtime` |
-| Schnittstelle S4 (Operations → Fleet Vehicle Assignment) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/operations` + `backend/fleet` |
-| Schnittstelle S5 (Operations → Retention Aggregat-Trigger) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/retention` |
-| Schnittstelle S6 (Tenant Data Export) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/export` |
-| Schnittstelle S7 (Geo → Tile-Proxy) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/geo`, mit `[OFFEN]`-Anteil Spike G |
-| Schnittstelle S8 (Authentifizierte REST-API) | VORLÄUFIG | 2026-05-07 | UMSETZUNG erste produktive Endpunkte |
-| Schnittstelle S9 (WebSocket-Topologie) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/realtime` |
-| Schnittstelle S10 (Tenant Participation Lookup) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/tenants` (I1/I2-Implementierung) |
-| NFR Performance p95 < 300 ms | VORLÄUFIG | 2026-05-07 | Lasttest STABILISIERUNG |
-| NFR Skalierungs-Annahme 50/500 | VORLÄUFIG | 2026-05-07 | Lasttest STABILISIERUNG |
-| NFR Tile-Cache TTL ≥ 7 Tage | BELASTBAR | 2026-05-07 | Vision-Constraint |
-| NFR Routing-Aufrufe-Disziplin | BELASTBAR | 2026-05-07 | Vision-Constraint |
-| NFR Backend ARM/x86 | BELASTBAR | 2026-05-07 | Vision-Constraint |
-| NFR PWA-Service-Worker offline-fähig | BELASTBAR | 2026-05-07 | Vision-Constraint |
-| NFR Coverage-Mindestwerte | BELASTBAR | 2026-05-07 | `project-context.md` Abschnitt 7 |
-| NFR Bedrohungsmodell | OFFEN | 2026-05-07 | Auth-Threat-Model-ADR + externe Security-Review vor Produktivstart |
-| NFR Tracing | OFFEN | 2026-05-07 | Re-Evaluation nach Lasttest, falls Latenz-Hotspots sichtbar |
-| Datenschutz-Constraints (PII, Retention, Export) | BELASTBAR | 2026-05-07 | Vision-Constraint |
-| Datenmodell-Grobschnitt (alle Entitäten in Abschnitt 7) | VORLÄUFIG | 2026-05-07 | Alembic-Migrations in UMSETZUNG-Phasen |
-| Invariante I1 (`operation_tenant_participation` als einzige Mandanten-Verknüpfung) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/tenants` |
-| Invariante I2 (abstrakter Berechtigungs-Filter) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/tenants` + `backend/operations` |
-| Invariante I3 (Fahrzeug-Zuweisung über Einsatz-Kontext) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/operations` + `backend/fleet` |
-| Invariante I4 (`operation_aggregate.tenant_id` einfach in Phase 1, Migration spätere Verbund-Phase) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/retention` |
-| Invariante I5 (Datenexport nur `role='owner'` in Phase 1) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/export` |
-| OFFEN-Bereich Spike G (Sperrungs-Override-Technik) | OFFEN | 2026-05-07 | Spike G im Fahrplan, vor UMSETZUNG `backend/geo` |
-| OFFEN-Bereich Spike H (Resilience-Granularität, RTO/RPO) | OFFEN | 2026-05-07 | Spike H im Fahrplan, vor UMSETZUNG `backend/resilience` |
-| OFFEN-Bereich Spike I (Geo-Plausibilitäts-Algorithmus) | OFFEN | 2026-05-07 | Spike I im Fahrplan, vor UMSETZUNG Einsatzkraft-Bestellpfad |
-| OFFEN-Bereich Spike J (Bündelungs-Trigger) | OFFEN | 2026-05-07 | Spike J im Fahrplan, vor UMSETZUNG Großbestellungs-Modus |
-| OFFEN-Bereich Spike K (Hilfe-Knopf-Semantik) | OFFEN | 2026-05-07 | Spike K im Fahrplan, vor UMSETZUNG Hilfe-Knopf |
-| OFFEN-Bereich Spike L (Tile-Caching-Strategie Frontend) | OFFEN | 2026-05-07 | Spike L im Fahrplan, vor UMSETZUNG `frontend-betreuer`-Karten-Anzeige produktiv |
-| OFFEN-Bereich Spike M (Fahrzeugbezeichnungs-Schema) | OFFEN | 2026-05-07 | Spike M im Fahrplan, vor erstem Roll-out |
+| Bestandteil                                                                                         | Reifegrad | Seit       | Validiert durch / wartet auf                                                    |
+| --------------------------------------------------------------------------------------------------- | --------- | ---------- | ------------------------------------------------------------------------------- |
+| Architektur-Pattern (Modular Monolith + 3 SvelteKit-Frontends + 2 Proxies)                          | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase mit bestandenem Funktions-/Last-Test                      |
+| Kommunikations-Grundmodus REST/WS/HTTP-Tile-Proxy                                                   | BELASTBAR | 2026-05-07 | Vision-Stack-fix                                                                |
+| Pub/Sub via Valkey                                                                                  | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG `backend/realtime`                                              |
+| Procrastinate-Job-Engine                                                                            | BELASTBAR | 2026-05-07 | Stack-fix (ADR-002)                                                             |
+| backend/auth                                                                                        | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase + externe Security-Review                                 |
+| backend/auth_anonymous                                                                              | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase                                                           |
+| backend/tenants                                                                                     | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase                                                           |
+| backend/catalog                                                                                     | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase                                                           |
+| backend/operations                                                                                  | VORLÄUFIG | 2026-05-07 | UMSETZUNG-Phase, mit `[OFFEN]`-Bereichen Spike I, Spike J, Spike K              |
+| backend/fleet                                                                                       | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase                                                           |
+| backend/geo                                                                                         | VORLÄUFIG | 2026-05-07 | UMSETZUNG-Phase, mit `[OFFEN]`-Bereichen Spike G, Spike I                       |
+| backend/realtime                                                                                    | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase                                                           |
+| backend/resilience                                                                                  | VORLÄUFIG | 2026-05-07 | UMSETZUNG-Phase, mit `[OFFEN]`-Bereich Spike H                                  |
+| backend/export                                                                                      | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase                                                           |
+| backend/retention                                                                                   | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase                                                           |
+| frontend-disponent                                                                                  | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase                                                           |
+| frontend-betreuer                                                                                   | VORLÄUFIG | 2026-05-07 | UMSETZUNG-Phase, mit `[OFFEN]`-Bereich Spike L                                  |
+| frontend-einsatzkraft                                                                               | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase                                                           |
+| infra/tile-proxy                                                                                    | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase + Smoke-Test                                              |
+| infra/reverse-proxy                                                                                 | VORLÄUFIG | 2026-05-07 | erste UMSETZUNG-Phase + Smoke-Test                                              |
+| Schnittstelle S1 (Admin-Bootstrap-CLI)                                                              | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/auth`                                                        |
+| Schnittstelle S2 (Anonymous Session API)                                                            | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/auth_anonymous`                                              |
+| Schnittstelle S3 (Operations Event Bus → Realtime)                                                  | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/realtime`                                                    |
+| Schnittstelle S4 (Operations → Fleet Vehicle Assignment)                                            | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/operations` + `backend/fleet`                                |
+| Schnittstelle S5 (Operations → Retention Aggregat-Trigger)                                          | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/retention`                                                   |
+| Schnittstelle S6 (Tenant Data Export)                                                               | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/export`                                                      |
+| Schnittstelle S7 (Geo → Tile-Proxy)                                                                 | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/geo`, mit `[OFFEN]`-Anteil Spike G                           |
+| Schnittstelle S8 (Authentifizierte REST-API)                                                        | VORLÄUFIG | 2026-05-07 | UMSETZUNG erste produktive Endpunkte                                            |
+| Schnittstelle S9 (WebSocket-Topologie)                                                              | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/realtime`                                                    |
+| Schnittstelle S10 (Tenant Participation Lookup)                                                     | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/tenants` (I1/I2-Implementierung)                             |
+| NFR Performance p95 < 300 ms                                                                        | VORLÄUFIG | 2026-05-07 | Lasttest STABILISIERUNG                                                         |
+| NFR Skalierungs-Annahme 50/500                                                                      | VORLÄUFIG | 2026-05-07 | Lasttest STABILISIERUNG                                                         |
+| NFR Tile-Cache TTL ≥ 7 Tage                                                                         | BELASTBAR | 2026-05-07 | Vision-Constraint                                                               |
+| NFR Routing-Aufrufe-Disziplin                                                                       | BELASTBAR | 2026-05-07 | Vision-Constraint                                                               |
+| NFR Backend ARM/x86                                                                                 | BELASTBAR | 2026-05-07 | Vision-Constraint                                                               |
+| NFR PWA-Service-Worker offline-fähig                                                                | BELASTBAR | 2026-05-07 | Vision-Constraint                                                               |
+| NFR Coverage-Mindestwerte                                                                           | BELASTBAR | 2026-05-07 | `project-context.md` Abschnitt 7                                                |
+| NFR Bedrohungsmodell                                                                                | OFFEN     | 2026-05-07 | Auth-Threat-Model-ADR + externe Security-Review vor Produktivstart              |
+| NFR Tracing                                                                                         | OFFEN     | 2026-05-07 | Re-Evaluation nach Lasttest, falls Latenz-Hotspots sichtbar                     |
+| Datenschutz-Constraints (PII, Retention, Export)                                                    | BELASTBAR | 2026-05-07 | Vision-Constraint                                                               |
+| Datenmodell-Grobschnitt (alle Entitäten in Abschnitt 7)                                             | VORLÄUFIG | 2026-05-07 | Alembic-Migrations in UMSETZUNG-Phasen                                          |
+| Invariante I1 (`operation_tenant_participation` als einzige Mandanten-Verknüpfung)                  | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/tenants`                                                     |
+| Invariante I2 (abstrakter Berechtigungs-Filter)                                                     | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/tenants` + `backend/operations`                              |
+| Invariante I3 (Fahrzeug-Zuweisung über Einsatz-Kontext)                                             | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/operations` + `backend/fleet`                                |
+| Invariante I4 (`operation_aggregate.tenant_id` einfach in Phase 1, Migration spätere Verbund-Phase) | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/retention`                                                   |
+| Invariante I5 (Datenexport nur `role='owner'` in Phase 1)                                           | VORLÄUFIG | 2026-05-07 | UMSETZUNG `backend/export`                                                      |
+| OFFEN-Bereich Spike G (Sperrungs-Override-Technik)                                                  | OFFEN     | 2026-05-07 | Spike G im Fahrplan, vor UMSETZUNG `backend/geo`                                |
+| OFFEN-Bereich Spike H (Resilience-Granularität, RTO/RPO)                                            | OFFEN     | 2026-05-07 | Spike H im Fahrplan, vor UMSETZUNG `backend/resilience`                         |
+| OFFEN-Bereich Spike I (Geo-Plausibilitäts-Algorithmus)                                              | OFFEN     | 2026-05-07 | Spike I im Fahrplan, vor UMSETZUNG Einsatzkraft-Bestellpfad                     |
+| OFFEN-Bereich Spike J (Bündelungs-Trigger)                                                          | OFFEN     | 2026-05-07 | Spike J im Fahrplan, vor UMSETZUNG Großbestellungs-Modus                        |
+| OFFEN-Bereich Spike K (Hilfe-Knopf-Semantik)                                                        | OFFEN     | 2026-05-07 | Spike K im Fahrplan, vor UMSETZUNG Hilfe-Knopf                                  |
+| OFFEN-Bereich Spike L (Tile-Caching-Strategie Frontend)                                             | OFFEN     | 2026-05-07 | Spike L im Fahrplan, vor UMSETZUNG `frontend-betreuer`-Karten-Anzeige produktiv |
+| OFFEN-Bereich Spike M (Fahrzeugbezeichnungs-Schema)                                                 | OFFEN     | 2026-05-07 | Spike M im Fahrplan, vor erstem Roll-out                                        |
 
 ## 10. Stufe-2-Klassifikations-Bestätigung
 

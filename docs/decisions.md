@@ -13,17 +13,17 @@
 
 ## Teil A: ADR-Übersicht
 
-| ADR | Datum | Status | Klassifikation | Themen | Kategorie | Kurztitel |
-|---|---|---|---|---|---|---|
-| 001 | 2026-05-07 | Aktiv | STRATEGISCH | METHODIK | Methodik | Projektgrößen-Klassifikation Klasse G |
-| 002 | 2026-05-07 | Aktiv | STRATEGISCH | STACK | Externe Abhängigkeiten | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate) |
-| 003 | 2026-05-07 | Aktiv | STRATEGISCH | METHODIK | Architekturänderungen | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends |
-| 004 | 2026-05-07 | Aktiv | STRATEGISCH | SECURITY | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl |
-| 005 | 2026-05-07 | Aktiv | STRATEGISCH | SECURITY | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32) |
-| 006 | 2026-05-07 | Aktiv | STRATEGISCH | DATENMODELL | Datenmodelländerungen | Aggregations-Schema pro Operation, ohne Personen-Buckets |
-| 007 | 2026-05-07 | Aktiv | STRATEGISCH | SCHNITTSTELLE | API-Vertragsänderungen | Datenexport asynchron via Procrastinate-Job-Tripel |
-| 008 | 2026-05-07 | Aktiv | STRATEGISCH | MODUL | Architekturänderungen | Multi-Disponent ohne Lead, vollständiges Audit-Log |
-| 009 | 2026-05-07 | Aktiv | STRATEGISCH | DATENMODELL | Datenmodelländerungen | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5 |
+| ADR | Datum      | Status | Klassifikation | Themen        | Kategorie                  | Kurztitel                                                              |
+| --- | ---------- | ------ | -------------- | ------------- | -------------------------- | ---------------------------------------------------------------------- |
+| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK      | Methodik                   | Projektgrößen-Klassifikation Klasse G                                  |
+| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK         | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate) |
+| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK      | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends        |
+| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY      | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                    |
+| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY      | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                         |
+| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL   | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets               |
+| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                     |
+| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL         | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                     |
+| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL   | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5             |
 
 ### Reaktiv-Quote
 

@@ -26,6 +26,70 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-08 22:10 – [BEOBACHTUNG]
+
+- **Phase 1 Schritt 1.1 abgeschlossen — Status `[ERLEDIGT]`.** Auslöser: Patricks Bestätigung „grünes licht" zur lokalen Akzeptanz-Verifikation in der laufenden Session (uv und pnpm waren entgegen früherer Annahme installiert: `/opt/homebrew/bin/uv`, `~/.local/bin/pnpm`).
+- **Verifikations-Sequenz (alle Akzeptanzkriterien erfüllt):**
+  1. `uv sync` → `uv.lock` mit 81 Paketen erzeugt. ruff resolved auf `0.15.12`, pydantic auf `2.13.4`, sqlalchemy `2.0.49` exakt, mypy `1.20.2` exakt – alle Patches bleiben innerhalb der `~=`-Pin-Range.
+  2. `pnpm install` → `pnpm-lock.yaml` mit `@commitlint/cli@20.5.0` und `@commitlint/config-conventional@20.5.0`.
+  3. `uv run pre-commit install --hook-type pre-commit --hook-type commit-msg` → beide Hooks installiert.
+  4. **Erster `pre-commit run --all-files`-Lauf:** `pre-commit/mirrors-prettier` v3.8.0-Tag existiert nicht mehr (Mirror archiviert, stoppt bei v4.0.0-alpha.x). Bugfix-Wechsel auf gepflegten Community-Fork `rbubley/mirrors-prettier` v3.8.0 (semantisch identisch, gleiche Prettier-Binary). Kein ADR nötig (Patch-Niveau-Repo-Wechsel ohne Architekturwirkung). Anschließend hat Prettier alle Markdown-/JSON-/YAML-/CJS-Dateien reformatiert (Tabellen-Padding, Quote-Style, Trailing-Komma) und `end-of-file-fixer` eine Final-Newline an `LICENSE` ergänzt.
+  5. **Zweiter Versuch `git commit`:** Prettier wollte `pnpm-lock.yaml` reformatieren – `.prettierignore` neu angelegt mit Ausschluss für Lock-Files, Build-/Cache-Verzeichnisse und kanonisches LICENSE-File.
+  6. **Dritter `pre-commit run --all-files`-Lauf:** alle Hooks grün. Commit `0a2257f` mit Lock-Files plus Auto-Fixer-Anpassungen.
+  7. **Test-Commit Conventional:** `test: verify commitlint accepts conventional message` → commitlint-Hook akzeptiert, Commit `9eeadcc` angelegt. Bleibt als selbst-dokumentierender Verifikations-Beweis in der Branch-Historie.
+  8. **Test-Commit Non-Conventional:** `this is a bad non-conventional commit message` → commitlint-Hook lehnt ab mit klaren Fehlermeldungen `subject may not be empty [subject-empty]` und `type may not be empty [type-empty]`. Kein Commit angelegt.
+- **Beobachtungen für nachgelagerte Schritte:**
+  - **Patch-Resolution unter `~=`-Range funktioniert wie erwartet:** ruff 0.15.0 → 0.15.12, pydantic 2.13.0 → 2.13.4. Keine Unannehmlichkeit, keine Breaking Changes – konsistent mit Regel-001 ADR-002.
+  - **Prettier-Mirror-Diskontinuität:** das Risiko archivierter pre-commit-Mirrors ist real. Künftige Pin-Updates (Schritte 1.3 ff.) prüfen bei jedem Mirror, ob er noch lebendig ist. Falls weitere Mirrors archiviert werden, bewegt sich das Repo zu lokalen Hooks via pnpm/uv (wie es schon bei eslint/svelte-check/tsc-noemit der Fall ist).
+  - **`commitlint`-Konfiguration als CJS-Datei:** funktioniert sauber mit pnpm und @commitlint/cli 20.5.0. Type-Enum-Liste auf die zehn project-context.md-Typen beschränkt; alle anderen Conventional-Defaults (subject-case, header-max-length 100) sind sinnvolle Zusatzregeln.
+  - **`apps/`-Verzeichnis ist leer:** ESLint, svelte-check, tsc-noemit-Hooks zeigen „no files to check" und werden korrekt geskipt – Phase-1-Schritt-1.7 stellt die Frontend-Skelette her.
+  - **Commit `9eeadcc` in der Branch-Historie:** ist ein Empty-Test-Commit ohne semantischen Wert für die Anwendung. Bewusste Entscheidung, ihn zu lassen, weil die Commit-Message selbst-dokumentierend ist und der Aufwand zur Entfernung (`git reset --soft HEAD~1`) eine History-Modifikation wäre. Im PR-Review-Vorgang kann er bei Bedarf zusammengefasst (Squash) werden.
+  - **Verbliebene Test-Branch `test/precommit-verification`:** beim ersten Test-Versuch existierte sie schon (Reste eines früheren Versuchs), die Tests liefen trotzdem auf der Hauptarbeitsbranch (siehe Punkt 7+8). Branch hat keinen Wert und kann gelöscht werden – Patrick entscheidet bei nächster Repo-Aufräumung.
+- **Methoden-Lerneffekt 1 — „installation in der repo wohl nicht vorhanden" ≠ „Tools fehlen":** ich hatte den User-Hinweis zu pessimistisch interpretiert (Tools nicht installiert) und Schritt 1.1 vorschnell als unvollständig ausgeflaggt. `which uv pnpm` hätte sofort Klarheit gebracht. Künftig: bei „Tool fehlt"-Annahmen erst `which`/`command -v` prüfen, dann verbalisieren.
+- **Methoden-Lerneffekt 2 — Pre-commit-Auto-Fixer beim ersten Lauf sind erwartbar, kein Fehler:** wenn Prettier oder end-of-file-fixer beim Erstauf zuschlagen, ist das ein Sign für „Hooks arbeiten korrekt", nicht für Konfig-Bug. Erwartete Pattern: Erstauf rot mit Auto-Fix, Stage + Erneuter Lauf grün.
+- **Methoden-Lerneffekt 3 — `.prettierignore` ist Pflicht von Anfang an:** ohne diese Datei formatiert Prettier alle YAML-Dateien einschließlich Lock-Files. Lock-Files dürfen aber nur vom Package-Manager geändert werden. Das war hier ein Lerneffekt, der jetzt im Vorlagen-Set vermerkt werden könnte (außerhalb dieser Session).
+
+### 2026-05-08 14:50 – [BEOBACHTUNG]
+
+- **Methodische Korrektur — Bash-Sandbox ohne Netz ≠ keine Web-Quelle erreichbar.** Im Eintrag 14:30 hatte ich nach dem fehlgeschlagenen `curl https://www.gnu.org/licenses/agpl-3.0.txt` (Verbindungs-Timeout aus der Bash-Sandbox) vorschnell geschlossen, der AGPL-3.0-Volltext sei in dieser Session prinzipiell nicht beschaffbar, und ihn als offenen Restpunkt im LICENSE-Stub belassen. Patricks Rückfrage hat das aufgedeckt.
+- **Verfügbare alternative Routen für Web-Inhalte aus Claude-Code-Sessions** (für künftige Sessions zu merken):
+  1. **`gh api`** für alles, was über die GitHub-API erreichbar ist – authentifiziert, sandbox-erlaubt, byte-genau (kein AI-Resümee dazwischen). Für Lizenztexte: `gh api licenses/<spdx-id>` liefert das `body`-Feld als kanonischen Text.
+  2. **`WebFetch`** als deferred Tool – funktioniert auch ohne Bash-Netzwerkzugriff, schickt den Content aber durch ein kleines AI-Modell, das paraphrasieren oder summarisieren kann. **Nicht** geeignet für verbatim-pflichtige Texte (Lizenzen, Verträge, Standards), gut für „erkläre/extrahiere"-Anfragen.
+  3. **`WebSearch`** als deferred Tool – für Discovery, nicht für Volltext.
+  4. **`Bash` mit `curl`/`wget`** – in dieser Sandbox blockiert (Verbindungs-Timeout). Nicht zuverlässig.
+- **Konkrete Auflösung:** AGPL-3.0-Text via `gh api licenses/agpl-3.0 --jq '.body' > /tmp/agpl-3.0.txt` geholt (662 Zeilen / 34 524 Bytes), in `LICENSE` unter dem Projekt-Header eingefügt. Kontroll-Daten: `head -3` zeigt „GNU AFFERO GENERAL PUBLIC LICENSE / Version 3, 19 November 2007", `tail -4` zeigt das kanonische FSF-Closing („For more information on this … <https://www.gnu.org/licenses/>"). Finale Datei 673 Zeilen / 35 035 Bytes. Restpunkt 2 in `fahrplan.md` Phase 1 Schritt 1.1 als gelöst markiert (Strikethrough plus „GELÖST 2026-05-08"-Vermerk im selben Listenpunkt, weil ein Logbuch-Eintrag das Detail trägt und der Fahrplan nur den aktuellen Zustand abbildet).
+- **Festhalten als wiederkehrendes Muster:** Bei „Web-Quelle nötig, Sandbox blockt curl" zuerst prüfen, ob `gh api` (verbatim) oder `WebFetch` (paraphrasing-tolerant) die Aufgabe abdeckt – nicht direkt zu Stub + TODO greifen. Diese Lektion gehört in den projektübergreifenden CLAUDE-Methodik-Kanon, ist aber außerhalb dieser Session zu klären (vgl. ähnliche „Lerneffekt-für-CLAUDE.md"-Vermerke vom 2026-05-08 00:30).
+
+### 2026-05-08 14:30 – [BEOBACHTUNG]
+
+- **Phase 1 Schritt 1.1 begonnen, Konfig-Skelett angelegt; Schritt bleibt `[IN ARBEIT]`.** Umgesetzt:
+  - `LICENSE` als AGPL-3.0-Header-Stub mit dokumentiertem TODO für den Volltext (Sandbox ohne Netzzugriff – Reproduktion des kanonischen FSF-Lizenztextes nicht zulässig). Volltext-Ergänzung als offener Akzeptanz-Restpunkt im Fahrplan.
+  - `.gitignore` (Python: `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `dist`, `build`, `.venv`, `.uv-cache`; Node: `node_modules`, `.pnpm-store`; SvelteKit/Vite: `.svelte-kit`, `.vite`, `apps/*/build`, `.output`; Secrets: `.env*` außer `.env.example`; OS/IDE-Standard).
+  - `.editorconfig` mit LF/UTF-8, 4-Spaces für Python (`max_line_length = 100`), 2-Spaces für TypeScript/Svelte/JSON/YAML, Markdown ohne `trim_trailing_whitespace`, Tab für Makefile.
+  - `.env.example` mit allen Settings-Feldern aus Phase-1-Schritt-1.3 (`SECRET_KEY`, `SESSION_COOKIE_NAME`, `LOG_LEVEL`, `DATABASE_URL`, `VALKEY_URL`, `TOMTOM_API_KEY`, `MAPTILER_API_KEY`, `TILE_PROXY_BASE`, `PUBLIC_DOMAIN`) plus Postgres-Container-Init-Variablen für das spätere dev-Profil.
+  - `pyproject.toml` mit uv-basierter Konfiguration, Python `>=3.13,<3.14`, License-Trove `AGPL-3.0-or-later`, Hatchling als Build-Backend mit `packages = ["backend/eb_digital"]`. Runtime-Deps mit Verifikations-Stempel 2026-05-07 gepinnt: fastapi `~=0.136.0`, sqlalchemy[asyncio] `~=2.0.49`, alembic `~=1.18.0`, pydantic `~=2.13.0`, httpx `~=0.28.0`, argon2-cffi `~=25.1.0`, itsdangerous `~=2.2.0` (Pin auf plausible Major, Verifikation in Schritt 1.6). uvicorn, pydantic-settings, asyncpg, procrastinate **bewusst nicht** in 1.1-pyproject.toml – werden in 1.3/1.4/1.5 mit erneuter Verifikation nachgepinnt. Dev-Group: pytest `~=9.0.0`, pytest-asyncio `~=1.3.0`, pytest-cov `~=7.1.0`, ruff `~=0.15.0`, mypy `==1.20.2` (exakt – „bewusst nicht 2.0.x"), bandit[toml] `~=1.9.0`, pip-audit `~=2.10.0`, pre-commit `~=4.6.0`. Tool-Konfigurationen für ruff (Regelset aus `project-context.md` Abschnitt 7), mypy `--strict`, pytest mit `asyncio_mode = "auto"` und `--cov-fail-under=80`, coverage mit Branch-Coverage, bandit-Test-Dir-Ausschluss.
+  - `pnpm-workspace.yaml` mit drei Paketen `apps/frontend-{disponent,betreuer,einsatzkraft}` (Initialisierung in Schritt 1.7).
+  - Root-`package.json` mit `packageManager: pnpm@11.0.0`, Engine-Constraints (`node >=24 <25`, `pnpm >=11 <12`), devDependencies `@commitlint/cli@20.5.0` und `@commitlint/config-conventional@20.5.0`. Workspace-Scripts (`lint`, `format`, `check`, `build`, `test`, `commitlint`).
+  - `commitlint.config.cjs` extends `@commitlint/config-conventional`, Type-Enum auf zehn Typen aus `project-context.md` Abschnitt 7 beschränkt (`feat, fix, refactor, docs, test, chore, perf, build, ci, init`), Header-Max 100 Zeichen.
+  - `.pre-commit-config.yaml` aus Modus-2-Schritt 10 um lokalen `commit-msg`-Hook für commitlint ergänzt; übrige Hooks (Hygiene, ruff, mypy, bandit, prettier, eslint/svelte-check/tsc-noemit) decken Phase-1-Anforderungen bereits ab und wurden unverändert gelassen.
+  - `backend/eb_digital/__init__.py` mit `__version__ = "0.1.0"` als Backend-Package-Root angelegt (Hatchling-Wheel-Target verlangt das Paket-Verzeichnis).
+- **Bewusst nicht angelegt in 1.1:**
+  - `apps/frontend-*` – SvelteKit-Initialisierung erst in Schritt 1.7.
+  - `infra/{tile-proxy,reverse-proxy}` – erst in Schritt 1.8.
+  - Zusätzliche Module unter `backend/eb_digital/` (`app.py`, `settings.py`, `logging.py`, `db/`, `auth/`) – Schritt 1.3 ff.
+- **Offene Akzeptanz-Restpunkte (Auflösung außerhalb dieser Session):**
+  1. **`uv` und `pnpm` lokal installieren**, dann `uv sync` und `pnpm install` ausführen → Lock-Files committen. Bestätigung Patrick: Tools sind aktuell nicht im Repo-Worktree verfügbar.
+  2. **AGPL-3.0-Volltext** ans `LICENSE`-File anhängen (von `https://www.gnu.org/licenses/agpl-3.0.txt`).
+  3. **Pre-Commit-Hooks lokal validieren:** `pre-commit install`, `pre-commit run --all-files`, plus Test-Commits mit Conventional und Non-Conventional Message zur Verifikation des commitlint-Hooks.
+- **Methoden-Notiz:** Phase-1-Schritt-1.1 ist nach CLAUDE.md Abschnitt 9 ohne Akzeptanzkriterien-Erfüllung (Lock-Files + Pre-Commit-Run + Commit-Lint-Test) **nicht `[ERLEDIGT]`-fähig**. Die Konfig-Dateien sind syntaktisch korrekt und intern konsistent, aber „grünes Pre-Commit-Run" lässt sich erst nach lokaler Tool-Installation verifizieren. Statt eines verfrühten `[ERLEDIGT]`-Markers bleibt der Status `[IN ARBEIT]` und die Restpunkte sind im Fahrplan-Eintrag konkret aufgeführt – konsistent mit CLAUDE.md Abschnitt 6 „Keine Erfolgsmeldungen ohne Verifikation".
+
+### 2026-05-08 13:50 – [SESSIONSTART]
+
+- **Letzter Stand:** Modus 2 (Initialisierung) am 2026-05-08 00:30 abgeschlossen, PR #3 gemerged auf `main` (Merge-Commit `5f5c7db`), zusätzlicher Sessionende-Commit `494a657 docs: Sessionende-Eintrag und Übergang Modus 2 -> Phase 1` ist bereits in `main`. Worktree `scp/competent-black-c11212` ist clean und auf Stand von `origin/main`. Repository enthält bislang: `CLAUDE.md`, `README.md`, `.pre-commit-config.yaml`, `.github/workflows/{ci,security}.yml`, `docs/` (vollständig), `templates/`. **Kein** `pyproject.toml`, `pnpm-workspace.yaml`, `package.json`, `.editorconfig`, `.gitignore`, `LICENSE`, `.env.example`, kein `backend/`, kein `apps/`, kein `infra/`.
+- **Geplant für diese Session:** Phase 1 Schritt 1.1 – Repository- und Workspace-Setup (`fahrplan.md` Phase 1, Schritt 1.1). Erweitert um `LICENSE` (AGPL-3.0) und `.env.example` aus dem Sessionende-Vermerk vom 2026-05-08 00:30. Konkret: `pyproject.toml` (uv-basiert, Python 3.13, Dependencies aus `project-context.md` Abschnitt 3 verifiziert), `pnpm-workspace.yaml` mit drei Frontend-Paketen, Root-`package.json` (pnpm 11.x), `.editorconfig`, `.gitignore`, `commitlint.config.cjs`, Skelett-Verzeichnisse `backend/`, `apps/`, `infra/`. Ergänzend: `.pre-commit-config.yaml` aus Modus-2-Schritt 10 prüfen, ob es Schritt-1.1-Anforderungen vollständig deckt; nachsteuern statt Komplett-Überschreibung.
+- **Vorabprüfung:** Phase 1 = UMSETZUNG. Sonderregel aus `fahrplan.md` Phase 1 abgemildert (Modul-Schnitt ist durch ADR-002, ADR-003, ADR-004 strategisch fixiert). Schritt 1.1 hat keine Abhängigkeiten und ist nicht freigabepflichtig (`project-context.md` Abschnitt 7 + 10 + ADR-002 fixieren das Tooling). Eingangskriterien erfüllt: Modus-2-Initialisierung abgeschlossen ✓, Tooling-Vorgaben in `project-context.md` Abschnitt 7 ✓, Repo-Regeln in `project-context.md` Abschnitt 10 ✓. Keine aktiven Blocker (`blockers.md`), keine offenen STOPP-Situationen (`fahrplan.md` Aktueller Stand). Reaktiv-Quote 0/9, weit unter 20 %-Schwellenwert.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus, Worktree `scp/competent-black-c11212` (1M-Kontext-Modell).
+
 ### 2026-05-08 00:30 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 3 h (21:39 am 2026-05-07 – 00:30 am 2026-05-08).
@@ -279,16 +343,16 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 Verbindliche Typen, andere nur in Ausnahmefällen:
 
-| Typ | Wann | Pflicht? |
-|---|---|---|
-| `[SESSIONSTART]` | Zu Beginn jeder Session | Ja |
-| `[SESSIONENDE]` | Vor Sessionabschluss | Ja |
-| `[PROBLEM-GELÖST]` | Nach Behebung eines Problems, das Reibung war | Empfohlen, alle Mini-Probleme erfassen |
-| `[PROBLEM-OFFEN → BLOCKER]` | Wenn ein Problem zum Blocker eskaliert | Ja, mit Verweis auf `blockers.md` |
-| `[BLOCKER-AUFGELÖST]` | Wenn ein Blocker gelöst wurde | Ja, mit Verweis auf den ursprünglichen Logbuch- und Blocker-Eintrag |
-| `[REIFEGRAD-WECHSEL]` | Bei jeder Reifegrad-Änderung in `architecture.md` | Ja |
-| `[ADR-ANGELEGT]` | Bei Anlage eines neuen ADR | Ja |
-| `[BEOBACHTUNG]` | Wenn etwas auffällt, das später nützlich sein könnte | Optional, KI proaktiv |
+| Typ                         | Wann                                                 | Pflicht?                                                            |
+| --------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| `[SESSIONSTART]`            | Zu Beginn jeder Session                              | Ja                                                                  |
+| `[SESSIONENDE]`             | Vor Sessionabschluss                                 | Ja                                                                  |
+| `[PROBLEM-GELÖST]`          | Nach Behebung eines Problems, das Reibung war        | Empfohlen, alle Mini-Probleme erfassen                              |
+| `[PROBLEM-OFFEN → BLOCKER]` | Wenn ein Problem zum Blocker eskaliert               | Ja, mit Verweis auf `blockers.md`                                   |
+| `[BLOCKER-AUFGELÖST]`       | Wenn ein Blocker gelöst wurde                        | Ja, mit Verweis auf den ursprünglichen Logbuch- und Blocker-Eintrag |
+| `[REIFEGRAD-WECHSEL]`       | Bei jeder Reifegrad-Änderung in `architecture.md`    | Ja                                                                  |
+| `[ADR-ANGELEGT]`            | Bei Anlage eines neuen ADR                           | Ja                                                                  |
+| `[BEOBACHTUNG]`             | Wenn etwas auffällt, das später nützlich sein könnte | Optional, KI proaktiv                                               |
 
 ## Hinweise zur Pflege
 

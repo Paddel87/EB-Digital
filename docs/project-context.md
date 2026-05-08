@@ -188,10 +188,10 @@ Was bewusst ausgeschlossen ist, mit Begründung. Verhindert, dass die KI nahelie
 
 ### Services
 
-| Service | Zweck | Authentifizierung | Ausfallverhalten |
-|---|---|---|---|
-| **MapTiler** | Vektor-Tiles, Geocoding | API-Key (Backend-Seite, niemals im Client) | Fallback: Tiles aus nginx-Cache; Geocoding-Ausfall → Disponent setzt Position manuell auf Karte |
-| **TomTom** | Routing inkl. Verkehrsdaten | API-Key (Backend-Seite, niemals im Client) | Fallback: ohne Verkehrslage routen (Static-Routing aus letzter Antwort); bei vollständigem Ausfall → Disponent koordiniert per Chat |
+| Service      | Zweck                       | Authentifizierung                          | Ausfallverhalten                                                                                                                    |
+| ------------ | --------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **MapTiler** | Vektor-Tiles, Geocoding     | API-Key (Backend-Seite, niemals im Client) | Fallback: Tiles aus nginx-Cache; Geocoding-Ausfall → Disponent setzt Position manuell auf Karte                                     |
+| **TomTom**   | Routing inkl. Verkehrsdaten | API-Key (Backend-Seite, niemals im Client) | Fallback: ohne Verkehrslage routen (Static-Routing aus letzter Antwort); bei vollständigem Ausfall → Disponent koordiniert per Chat |
 
 ### APIs
 
@@ -408,13 +408,13 @@ Die obigen sechs „GEKLÄRT 2026-05-07"-Einträge bilden Schublade 1 der Triage
   - Hilfe-Knopf-Semantik (Vision Abschnitt 9, **K**)
   - Kartenmaterial-Offline-Caching-Technik (Vision Abschnitt 9, **L**)
   - Fahrzeugbezeichnungs-Schema (Vision Abschnitt 9, **M**)
-  Detail-Skizzen pro Spike (Phasentyp ERKUNDUNG, Schritt-Art, Zeitbox, zu klärende Fragen, erwartetes Ergebnis) liegen im `[BEOBACHTUNG]`-Eintrag vom 2026-05-07 16:35 im Logbuch und werden in Modus-2-Schritt 6 in `fahrplan.md` aufgenommen.
+    Detail-Skizzen pro Spike (Phasentyp ERKUNDUNG, Schritt-Art, Zeitbox, zu klärende Fragen, erwartetes Ergebnis) liegen im `[BEOBACHTUNG]`-Eintrag vom 2026-05-07 16:35 im Logbuch und werden in Modus-2-Schritt 6 in `fahrplan.md` aufgenommen.
 
 - **Schublade 3 – organisatorische Roadmap-Meilensteine ohne Code:**
   - Plattform-Betreiber-Governance (oben gelistet, **N**) – auch Verbindung zu „Administrator-Architektur bei Multi-Tenancy" (oben gelistet), weil die Wahl der Trägerstruktur die Skalierungsfrage zentraler vs. mehrere Plattform-Admins beeinflusst.
   - Test-Termin reale Großlage (oben gelistet, **O**)
   - Schriftliche Onboarding-Unterlagen für Mandanten (oben gelistet, **P**)
-  Wird in Modus-2-Schritt 6 als Roadmap-Meilensteine im Fahrplan platziert (vor produktivem Mandanten-Onboarding bzw. in der STABILISIERUNG-Phase).
+    Wird in Modus-2-Schritt 6 als Roadmap-Meilensteine im Fahrplan platziert (vor produktivem Mandanten-Onboarding bzw. in der STABILISIERUNG-Phase).
 
 ## 12. Glossar (projektspezifische Begriffe)
 

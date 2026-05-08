@@ -1,0 +1,25 @@
+{
+  "name": "eb-digital",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EB Digital Workspace-Root. Enthält Tooling für commitlint und Frontend-Pakete (apps/frontend-*).",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "packageManager": "pnpm@11.0.0",
+  "engines": {
+    "node": ">=24.0.0 <25.0.0",
+    "pnpm": ">=11.0.0 <12.0.0"
+  },
+  "scripts": {
+    "commitlint": "commitlint --edit",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format",
+    "check": "pnpm -r check",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "20.5.0",
+    "@commitlint/config-conventional": "20.5.0"
+  }
+}

@@ -46,7 +46,7 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
      - blockers.md (Aktive Blocker)
      Inkonsistenzen sind Bugs und werden vor Sessionende behoben. -->
 
-- **Projektphase:** Modus 2 (Initialisierung) abgeschlossen am 2026-05-08 mit PR #3. Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG) ist nächster Schritt.
+- **Projektphase:** Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG); Schritt 1.1 (Repository- und Workspace-Setup) am 2026-05-08 `[ERLEDIGT]`, Schritt 1.2 (CI-Pipeline aktivieren) als nächster Schritt. Modus 2 (Initialisierung) am 2026-05-08 mit PR #3 abgeschlossen.
 - **Version:** v0.1.0
 - **Status:** Konzeption
 - **Letzte Änderung:** 2026-05-08
@@ -135,16 +135,16 @@ graph LR
 
 ## Dokumentation
 
-| Dokument | Inhalt |
-|---|---|
-| [`docs/vision.md`](docs/vision.md) | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss) |
-| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards |
-| [`docs/architecture.md`](docs/architecture.md) | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht |
-| [`docs/fahrplan.md`](docs/fahrplan.md) | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert |
-| [`docs/decisions.md`](docs/decisions.md) | 9 ADRs (Klassifikation, Stack, Pattern, Fragen A–F) plus 14 Entscheidungsregeln |
-| [`docs/blockers.md`](docs/blockers.md) | Aktive Blocker (aktuell keine) und Erkennungs-Heuristiken |
-| [`docs/logbuch.md`](docs/logbuch.md) | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen |
-| [`CLAUDE.md`](CLAUDE.md) | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus) |
+| Dokument                                             | Inhalt                                                                                 |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [`docs/vision.md`](docs/vision.md)                   | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss)                       |
+| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards                           |
+| [`docs/architecture.md`](docs/architecture.md)       | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht    |
+| [`docs/fahrplan.md`](docs/fahrplan.md)               | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert      |
+| [`docs/decisions.md`](docs/decisions.md)             | 9 ADRs (Klassifikation, Stack, Pattern, Fragen A–F) plus 14 Entscheidungsregeln        |
+| [`docs/blockers.md`](docs/blockers.md)               | Aktive Blocker (aktuell keine) und Erkennungs-Heuristiken                              |
+| [`docs/logbuch.md`](docs/logbuch.md)                 | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen |
+| [`CLAUDE.md`](CLAUDE.md)                             | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus)                            |
 
 ## Lizenz
 

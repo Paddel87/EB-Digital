@@ -8,10 +8,10 @@
 ## Aktueller Stand
 
 - **Stand vom:** 2026-05-08
-- **Laufende Phase:** Übergang zu Phase 1 – Modus 2 (Initialisierung) **abgeschlossen** mit PR #3 am 2026-05-08, Merge-Commit `5f5c7db` auf `main`. Reguläre Arbeit beginnt mit Phase 1 in der nächsten Session.
-- **Phasentyp:** zwischen INITIALISIERUNG (abgeschlossen) und Phase-1 UMSETZUNG (noch nicht begonnen).
-- **Aktiver Schritt:** keiner. Modus-2-Schritte 1–12 vollständig abgeschlossen.
-- **Nächster Schritt:** Phase 1 Schritt 1.1 – Repository- und Workspace-Setup (uv-Workspace mit `pyproject.toml`, pnpm-Workspace mit drei Frontend-Paketen, EditorConfig, `.gitignore`, pre-commit-Installation, commitlint-Konfiguration). Voller Schritt-Inhalt siehe Phase 1 unten.
+- **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
+- **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
+- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** am 2026-05-08 – alle Akzeptanzkriterien erfüllt (uv.lock + pnpm-lock.yaml konfliktfrei erzeugt, `pre-commit run --all-files` grün, commitlint akzeptiert Conventional + lehnt Non-Conventional ab).
+- **Nächster Schritt:** **1.2 – CI-Pipeline aktivieren** (`.github/workflows/ci.yml` und `security.yml` aus Modus-2-Schritt 10 sind angelegt; Branch-Protection auf `main` plus Verifikation der Required Status Checks stehen aus).
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
@@ -83,16 +83,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel | Typ | Spikes / Roadmap | Status |
-|---|---|---|---|---|
-| 1 | Repository-Bootstrap & Tech-Foundations | UMSETZUNG | – | OFFEN |
-| 2 | Auth + Tenants + Verbund-Tauglichkeit | UMSETZUNG | – | OFFEN |
-| 3 | Spikes Wave 1 – Operations-Vorklärungen | ERKUNDUNG | I, J | OFFEN |
-| 4 | Operations Core + Realtime + Einsatzkraft-PWA | UMSETZUNG | – | OFFEN |
-| 5 | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out | ERKUNDUNG | G, H, K, L, M | OFFEN |
-| 6 | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export | UMSETZUNG | – | OFFEN |
-| 7 | Stabilisierung, Roll-out-Vorbereitung, Validierung | STABILISIERUNG | – (Roadmap N/O/P) | OFFEN |
-| X | Verbund-Modus für parallele Mandanten-Großlagen *(spätere Erweiterung)* | ERKUNDUNG → UMSETZUNG | (eigener Spike) | OFFEN |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                  |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | --------------------------------------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1 erledigt; 1.2–1.8 offen) |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                   |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                   |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                   |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                   |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                   |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                   |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                   |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -126,11 +126,11 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 - Architektur-Pattern (Modular Monolith + 3 SvelteKit-Frontends): bleibt `[VORLÄUFIG]` (Last-/Funktionstest steht aus).
 - Coverage-Mindestwerte aktiv und durchgesetzt; CI-Pipeline ist `[BELASTBAR]` durch ihre Existenz auf `main`.
 
-**Hinweis Sonderregel:** Für Phase 1 gilt die UMSETZUNG-Eingangs-Disziplin (alle berührten Architektur-Bestandteile auf `[BELASTBAR]`) **abgemildert**, weil die Phase die initialen Skelette herstellt, ohne die produktive Tragfähigkeit der Module zu beanspruchen. Berührter *Modul-Schnitt* ist durch ADR-002, ADR-003, ADR-004 strategisch fixiert; das genügt als Eingangsbedingung.
+**Hinweis Sonderregel:** Für Phase 1 gilt die UMSETZUNG-Eingangs-Disziplin (alle berührten Architektur-Bestandteile auf `[BELASTBAR]`) **abgemildert**, weil die Phase die initialen Skelette herstellt, ohne die produktive Tragfähigkeit der Module zu beanspruchen. Berührter _Modul-Schnitt_ ist durch ADR-002, ADR-003, ADR-004 strategisch fixiert; das genügt als Eingangsbedingung.
 
 #### 1.1: Repository- und Workspace-Setup
 
-- **Status:** OFFEN
+- **Status:** ERLEDIGT (2026-05-08)
 - **Phasentyp-Kontext:** UMSETZUNG
 - **Abhängigkeiten:** keine
 - **Freigabepflichtig:** nein (`project-context.md` Abschnitt 7 + Abschnitt 10 sind durch ADR-002 fixiert)
@@ -150,8 +150,19 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
   - `git commit` mit Test-Conventional-Message wird vom Hook nicht abgelehnt; mit Test-Non-Conventional-Message wird er abgelehnt.
 - **Betroffene Module:** Repository-Root (kein produktives Modul); Vorbereitung für alle späteren Module.
 - **Reifegrad-Wirkung:** keine direkte (Skelett ohne Modul-Implementation).
-- **Artefakte:** `pyproject.toml`, `uv.lock`, `pnpm-workspace.yaml`, `package.json`, `pnpm-lock.yaml`, `.editorconfig`, `.gitignore`, `.pre-commit-config.yaml`, `commitlint.config.cjs`, leere Verzeichnisse mit `.gitkeep` falls nötig.
+- **Artefakte:** `pyproject.toml`, `uv.lock`, `pnpm-workspace.yaml`, `package.json`, `pnpm-lock.yaml`, `.editorconfig`, `.gitignore`, `.pre-commit-config.yaml`, `commitlint.config.cjs`, `LICENSE` (AGPL-3.0), `.env.example`, `backend/eb_digital/__init__.py`.
 - **Notizen:** Major-Versions-Pinning ist Pflicht. `pnpm/action-setup` und `astral-sh/setup-uv` werden später in CI auf Patch-Tag oder Commit-Hash gepinnt (Regel-001 aus ADR-002).
+- **Verifikation am 2026-05-08 (alle Akzeptanzkriterien erfüllt):**
+  1. ✅ `uv sync` lief konfliktfrei (81 Pakete inkl. `fastapi`, `sqlalchemy`, `alembic`, `pydantic`, `httpx`, `argon2-cffi`, `itsdangerous` plus Dev-Tooling). `uv.lock` committet (Commit `0a2257f`).
+  2. ✅ `pnpm install` lief konfliktfrei (`@commitlint/cli@20.5.0`, `@commitlint/config-conventional@20.5.0`). `pnpm-lock.yaml` committet (Commit `0a2257f`).
+  3. ✅ AGPL-3.0-Volltext byte-genau aus GitHub-Licenses-API in `LICENSE` (Commit `20e2e28`).
+  4. ✅ `pre-commit install --hook-type pre-commit --hook-type commit-msg` erfolgreich.
+  5. ✅ `pre-commit run --all-files` zweiter Lauf grün; alle Hooks (Hygiene, ruff lint+format, mypy `--strict`, bandit, prettier, commitlint, lokale Frontend-Hooks) passieren bzw. werden korrekt geskipt (kein Frontend-Code in 1.1).
+  6. ✅ Conventional Test-Commit (`test: verify commitlint accepts conventional message`, `9eeadcc`) durchgegangen.
+  7. ✅ Non-Conventional Test-Commit (`this is a bad non-conventional commit message`) korrekt vom commit-msg-Hook abgelehnt mit `subject-empty` + `type-empty`.
+  8. ✅ `.prettierignore` ergänzt (Lock-Files, Build-Caches, kanonisches LICENSE-File ausgeschlossen).
+  9. ✅ Bugfix in `.pre-commit-config.yaml`: prettier-Hook-Repo von archiviertem `pre-commit/mirrors-prettier` auf gepflegten `rbubley/mirrors-prettier`-Fork (gleiche v3.8.0).
+- **Versions-Verifikation für nachgelagerte Schritte:** itsdangerous (`~=2.2.0`) wird in Schritt 1.6 mit dem ersten produktiven Auth-Code re-verifiziert; uvicorn, pydantic-settings, asyncpg, procrastinate werden in Schritten 1.3/1.4/1.5 nachgepinnt mit erneuter Verifikation.
 
 #### 1.2: CI-Pipeline aktivieren (GitHub Actions)
 
@@ -427,7 +438,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ---
 
-### Phase X: Verbund-Modus für parallele Mandanten-Großlagen *(spätere Erweiterung)* – Typ: ERKUNDUNG → UMSETZUNG
+### Phase X: Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ – Typ: ERKUNDUNG → UMSETZUNG
 
 **Ziel:** Verbund-Modus produktiv (ADR-009 setzt das Fundament). Aktivierung erst nach Phase 7 plus konkretem Stakeholder-Bedarf von zwei Mandanten.
 

@@ -1,0 +1,20 @@
+# Generated lock files — werden vom jeweiligen Package-Manager gepflegt.
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+uv.lock
+
+# Build-Output und Cache-Verzeichnisse.
+node_modules/
+.svelte-kit/
+build/
+dist/
+.vite/
+.output/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Kanonische Lizenztexte werden byte-genau gespiegelt; kein Reformatieren.
+LICENSE

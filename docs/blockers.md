@@ -39,19 +39,21 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
   [Was funktioniert nicht, unter welchen Bedingungen tritt das Problem auf.
   Konkret, prüfbar. Keine Spekulation ohne Kennzeichnung.]
 - **Reproduktion:**
-  ```
-  [Exakte Schritte zur Reproduktion, mit Kommandos/Inputs/erwarteter vs. tatsächlicher Ausgabe]
-  ```
+```
+
+[Exakte Schritte zur Reproduktion, mit Kommandos/Inputs/erwarteter vs. tatsächlicher Ausgabe]
+
+```
 - **Versuchte Ansätze (bei Dreifach-Fehlschlag):**
-  1. [Ansatz 1] – Ergebnis: [...] – Grund des Scheiterns: [...]
-  2. [Ansatz 2] – Ergebnis: [...] – Grund des Scheiterns: [...]
-  3. [Ansatz 3] – Ergebnis: [...] – Grund des Scheiterns: [...]
+1. [Ansatz 1] – Ergebnis: [...] – Grund des Scheiterns: [...]
+2. [Ansatz 2] – Ergebnis: [...] – Grund des Scheiterns: [...]
+3. [Ansatz 3] – Ergebnis: [...] – Grund des Scheiterns: [...]
 - **Offene Hypothesen:**
-  - [Was könnte noch versucht werden, braucht aber eine Entscheidung/Information/Freigabe]
+- [Was könnte noch versucht werden, braucht aber eine Entscheidung/Information/Freigabe]
 - **Benötigt zur Auflösung:**
-  - [Konkrete Information, Freigabe, externe Klärung – ohne Auslassungen]
+- [Konkrete Information, Freigabe, externe Klärung – ohne Auslassungen]
 - **Vorgeschlagene Entscheidungsfrage:**
-  [Die spezifische Frage, die der Mensch beantworten soll, in einer Form, aus der eine Antwort direkt abgeleitet werden kann]
+[Die spezifische Frage, die der Mensch beantworten soll, in einer Form, aus der eine Antwort direkt abgeleitet werden kann]
 ```
 
 **Nummerierungs-Regel:** durchgehend, keine Lücken, auch gelöste Blocker behalten ihre Nummer. Erster Eintrag wäre `#001`.
@@ -63,7 +65,7 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
 [Nach Auflösung hierher verschieben. Ergänzungen: "Lösungsdatum", "Lösung", "ADR-Referenz falls zutreffend".
 Bei hoher Anzahl: nach `docs/archiv/blockers-YYYY-MM.md` auslagern.]
 
-*Bisher keine Blocker aufgelöst, weil bisher keine Blocker aufgetreten sind.*
+_Bisher keine Blocker aufgelöst, weil bisher keine Blocker aufgetreten sind._
 
 ### Eintrags-Format gelöste Blocker (Vorlage)
 

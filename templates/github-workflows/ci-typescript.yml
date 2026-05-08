@@ -12,8 +12,8 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: "20"  # TBD: aus project-context.md Abschnitt 3
-  PNPM_VERSION: "9"   # TBD: oder npm/yarn — Package Manager aus project-context.md
+  NODE_VERSION: "20" # TBD: aus project-context.md Abschnitt 3
+  PNPM_VERSION: "9" # TBD: oder npm/yarn — Package Manager aus project-context.md
 
 jobs:
   setup:
@@ -80,7 +80,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Dependency audit
-        run: pnpm audit --audit-level=high  # TBD: Schwellenwert aus project-context.md
+        run: pnpm audit --audit-level=high # TBD: Schwellenwert aus project-context.md
 
   test:
     name: Tests & Coverage
@@ -97,7 +97,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Vitest with coverage
-        run: pnpm test --coverage  # TBD: Schwellenwert in vitest.config.ts (coverage.thresholds)
+        run: pnpm test --coverage # TBD: Schwellenwert in vitest.config.ts (coverage.thresholds)
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:

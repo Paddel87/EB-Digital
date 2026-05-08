@@ -12,7 +12,7 @@ on:
     branches: [main]
 
 env:
-  PYTHON_VERSION: "3.12"  # TBD: aus project-context.md Abschnitt 3
+  PYTHON_VERSION: "3.12" # TBD: aus project-context.md Abschnitt 3
 
 jobs:
   lint:
@@ -40,7 +40,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
       - run: pip install -e ".[dev]"
-      - run: mypy --strict src/  # TBD: Pfad anpassen
+      - run: mypy --strict src/ # TBD: Pfad anpassen
 
   security:
     name: Security-Scan
@@ -53,7 +53,7 @@ jobs:
           cache: pip
       - run: pip install -e ".[dev]"
       - name: Bandit
-        run: bandit -r src/ -c pyproject.toml  # TBD: Pfad und Konfig anpassen
+        run: bandit -r src/ -c pyproject.toml # TBD: Pfad und Konfig anpassen
       - name: Dependency audit
         run: pip-audit
 
@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.12"]  # TBD: bei Multi-Version-Support erweitern
+        python-version: ["3.12"] # TBD: bei Multi-Version-Support erweitern
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -71,7 +71,7 @@ jobs:
           cache: pip
       - run: pip install -e ".[dev]"
       - name: Pytest with coverage
-        run: pytest --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80  # TBD: Schwellenwert aus project-context.md
+        run: pytest --cov=src --cov-report=xml --cov-report=term --cov-fail-under=80 # TBD: Schwellenwert aus project-context.md
       - name: Upload coverage
         if: matrix.python-version == '3.12'
         uses: actions/upload-artifact@v4

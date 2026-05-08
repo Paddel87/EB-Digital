@@ -50,11 +50,16 @@ repos:
         files: ^backend/eb_digital/
 
   # TypeScript/Frontend: Prettier (3.8.x, project-context.md Abschnitt 3).
-  - repo: https://github.com/pre-commit/mirrors-prettier
+  # Hinweis: pre-commit/mirrors-prettier wurde archiviert und stoppt bei
+  # v4.0.0-alpha.x – Community-Fork rbubley/mirrors-prettier pflegt die
+  # stabilen v3.x-Tags weiter und ist semantisch identisch (gleiche
+  # Prettier-Binary-Version). Bugfix-Wechsel am 2026-05-08, kein ADR nötig.
+  - repo: https://github.com/rbubley/mirrors-prettier
     rev: v3.8.0
     hooks:
       - id: prettier
-        types_or: [javascript, jsx, ts, tsx, svelte, json, css, scss, markdown, yaml]
+        types_or:
+          [javascript, jsx, ts, tsx, svelte, json, css, scss, markdown, yaml]
         # Frontend-Workspace plus Doku/Konfig im Repo-Root.
         additional_dependencies:
           - prettier@3.8.0
@@ -87,4 +92,15 @@ repos:
         language: system
         types_or: [ts, tsx]
         files: ^apps/
+        pass_filenames: false
+
+  # Commit-Message-Validierung (Conventional Commits, project-context.md Abschnitt 7).
+  # Läuft über pnpm/commitlint im Repo-Root (devDependency in package.json).
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: commitlint (Conventional Commits)
+        entry: pnpm exec commitlint --edit
+        language: system
+        stages: [commit-msg]
         pass_filenames: false
