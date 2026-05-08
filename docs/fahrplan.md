@@ -10,8 +10,8 @@
 - **Stand vom:** 2026-05-08
 - **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
-- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** am 2026-05-08 – alle Akzeptanzkriterien erfüllt (uv.lock + pnpm-lock.yaml konfliktfrei erzeugt, `pre-commit run --all-files` grün, commitlint akzeptiert Conventional + lehnt Non-Conventional ab).
-- **Nächster Schritt:** **1.2 – CI-Pipeline aktivieren** (`.github/workflows/ci.yml` und `security.yml` aus Modus-2-Schritt 10 sind angelegt; Branch-Protection auf `main` plus Verifikation der Required Status Checks stehen aus).
+- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** am 2026-05-08, **1.2 [ERLEDIGT]** am 2026-05-08 (PR #5 gemerged, Merge-Commit `1cd72df`; Branch-Protection auf `main` aktiv mit 8 Required Status Checks).
+- **Nächster Schritt:** **1.3 – Backend-Skelett (FastAPI + Settings + Logging)** – `backend/eb_digital/__main__.py`, `app.py`, `logging.py`, `settings.py` plus erste Tests in `backend/tests/`. Ab dem ersten Test wird `Backend · Tests & Coverage` (jetzt geskipt) regulär ausgeführt.
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
@@ -83,16 +83,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                  |
-| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | --------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1 erledigt; 1.2–1.8 offen) |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                   |
-| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                   |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                   |
-| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                   |
-| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                   |
-| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                   |
-| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                   |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                      |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ------------------------------------------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1+1.2 erledigt; 1.3–1.8 offen) |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                       |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                       |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                       |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                       |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                       |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                       |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                       |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -166,7 +166,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 #### 1.2: CI-Pipeline aktivieren (GitHub Actions)
 
-- **Status:** OFFEN
+- **Status:** ERLEDIGT (2026-05-08)
 - **Phasentyp-Kontext:** UMSETZUNG
 - **Abhängigkeiten:** 1.1
 - **Freigabepflichtig:** nein – Konfigurationsdateien für Build-/Deploy-Pipeline sind in `project-context.md` Abschnitt 7 grob vorgegeben, ihre konkrete YAML-Form ist OPERATIV.
@@ -185,6 +185,15 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 - **Reifegrad-Wirkung:** CI-Pipeline-Existenz ist `[BELASTBAR]`; geht nicht über die in der Reifegrad-Übersicht geführten Bestandteile hinaus.
 - **Artefakte:** `.github/workflows/ci.yml`, `.github/workflows/security.yml`, dokumentierte Branch-Protection-Konfiguration in `project-context.md` Abschnitt 10 (sofern Detail-Anpassung nötig).
 - **Notizen:** Status-Wechsel `Konzeption` → `Aufbau` ist nicht hier, sondern in Phase 7 vorgesehen. Branch-Protection darf Initialisierungs-Phase aber nicht blockieren – Patrick bleibt bis zum Status-Wechsel direkter-Push-berechtigt (`project-context.md` Abschnitt 10).
+- **Verifikation am 2026-05-08 (alle Akzeptanzkriterien erfüllt):**
+  1. ✅ Push auf `scp/dreamy-liskov-be0c78` löst `ci.yml` aus, alle Jobs `success` (Backend Lint+Type-Check, Detect-Vorschalt) oder `skipped` (Frontend-Jobs + test-backend, weil `apps/` und `backend/tests/` noch leer; Skip via `needs:`+`if:`-Output-Vergleich aus dem Vorschalt-Job `detect-presence`). Run: https://github.com/Paddel87/EB-Digital/actions/runs/25579380487
+  2. ✅ Branch-Protection auf `main` aktiv mit 8 Required Status Checks (alle ci.yml-Jobs inkl. `Detect · Code-Präsenz prüfen`); `enforce_admins: false` (Patrick behält direkten Push laut `project-context.md` Abschnitt 10), `required_pull_request_reviews: null`, `allow_force_pushes: false`, `allow_deletions: false`. Geskipte Jobs zählen als erfolgreich für Required Checks.
+  3. ✅ `gh workflow run security.yml` manuell ausgelöst, alle drei Audits (`pip-audit`, `pnpm audit`, `bandit`) `success`. Run: https://github.com/Paddel87/EB-Digital/actions/runs/25579458539
+  4. ✅ Coverage-Mindestwert Backend 80 % via `--cov-fail-under=80` in `pyproject.toml`; Frontend-Coverage-Mindestwert wird in Schritt 1.7 mit `vitest.config.ts` pro Frontend-Paket aktiviert.
+- **Während 1.2 behobene Reibungen** (alle dokumentiert im Logbuch-Eintrag des Sessionendes):
+  - **`hashFiles()` auf Job-Ebene nicht erlaubt** (actionlint-Befund). Erster Fix-Versuch (`f94ee93`) führte zu „workflow file issue"-Validierungsfehler ohne Job-Start. Lösung: Vorschalt-Job `detect-presence` mit Step-Skript-Check und Outputs `has_frontend`/`has_backend_tests`; Frontend- und `test-backend`-Jobs nutzen `needs:`+`if:` mit Output-Vergleich (Commit `632cead`).
+  - **pnpm-Multi-Version-Konflikt** (`pnpm/action-setup@v4.0.0` + `version`-Arg + `packageManager` in `package.json` = "Multiple versions of pnpm specified"). Lösung: `version`-Arg aus allen `pnpm/action-setup`-Steps entfernt; `packageManager: pnpm@11.0.0` ist Single Source of Truth. `PNPM_VERSION`-env-Variable in beiden Workflows entfernt.
+- **Beobachtung zur Aktion-Versionierung (Folge-Entscheidung außerhalb 1.2):** Security-Run-Annotation flaggt **Node.js-20-Deprecation** für `astral-sh/setup-uv@v5.0.0` und `pnpm/action-setup@v4.0.0` ab 2026-06-02. In ~3 Wochen werden diese Action-Pins funktional eingeschränkt. Major-Update auf `astral-sh/setup-uv@v8` und `pnpm/action-setup@v6` ist freigabepflichtig (CLAUDE.md Abschnitt 4 Punkt 3, Major-Vorbehalt) – als separater Mini-ADR vor 2026-06-02 zu erledigen.
 
 #### 1.3: Backend-Skelett (FastAPI + Settings + Logging)
 
