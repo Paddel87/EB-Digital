@@ -10,9 +10,9 @@
 - **Stand vom:** 2026-05-08
 - **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
-- **Aktiver Schritt:** **1.1 [IN ARBEIT]** – Repository- und Workspace-Setup. Konfig-Dateien angelegt, AGPL-3.0-Volltext aus GitHub-Licenses-API ergänzt; offene Resterledigung: (a) `uv sync` und `pnpm install` ausführen → Lock-Files erzeugen und committen, (b) Pre-Commit-Hooks lokal validieren (`pre-commit run --all-files`), (c) Test-Commits mit Conventional + Non-Conventional Message zur Akzeptanzkriterien-Verifikation.
-- **Nächster Schritt:** Resterledigung von 1.1 abschließen, anschließend 1.2 – CI-Pipeline aktivieren.
-- **Offene STOPP-Situationen:** keine. Lock-File-Lücke ist kein Stopp, sondern ein dokumentierter offener Akzeptanzkriterien-Punkt, der erst nach lokaler Tool-Installation (uv, pnpm) verifiziert werden kann.
+- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** am 2026-05-08 – alle Akzeptanzkriterien erfüllt (uv.lock + pnpm-lock.yaml konfliktfrei erzeugt, `pre-commit run --all-files` grün, commitlint akzeptiert Conventional + lehnt Non-Conventional ab).
+- **Nächster Schritt:** **1.2 – CI-Pipeline aktivieren** (`.github/workflows/ci.yml` und `security.yml` aus Modus-2-Schritt 10 sind angelegt; Branch-Protection auf `main` plus Verifikation der Required Status Checks stehen aus).
+- **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
 
@@ -83,16 +83,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status    |
-| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | --------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN     |
-| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN     |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN     |
-| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN     |
-| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN     |
-| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN     |
-| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN     |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                  |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | --------------------------------------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1 erledigt; 1.2–1.8 offen) |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                   |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                   |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                   |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                   |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                   |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                   |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                   |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -130,7 +130,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 #### 1.1: Repository- und Workspace-Setup
 
-- **Status:** IN ARBEIT (seit 2026-05-08)
+- **Status:** ERLEDIGT (2026-05-08)
 - **Phasentyp-Kontext:** UMSETZUNG
 - **Abhängigkeiten:** keine
 - **Freigabepflichtig:** nein (`project-context.md` Abschnitt 7 + Abschnitt 10 sind durch ADR-002 fixiert)
@@ -152,11 +152,17 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 - **Reifegrad-Wirkung:** keine direkte (Skelett ohne Modul-Implementation).
 - **Artefakte:** `pyproject.toml`, `uv.lock`, `pnpm-workspace.yaml`, `package.json`, `pnpm-lock.yaml`, `.editorconfig`, `.gitignore`, `.pre-commit-config.yaml`, `commitlint.config.cjs`, `LICENSE` (AGPL-3.0), `.env.example`, `backend/eb_digital/__init__.py`.
 - **Notizen:** Major-Versions-Pinning ist Pflicht. `pnpm/action-setup` und `astral-sh/setup-uv` werden später in CI auf Patch-Tag oder Commit-Hash gepinnt (Regel-001 aus ADR-002).
-- **Offene Akzeptanz-Restpunkte (seit 2026-05-08):**
-  1. **`uv.lock` und `pnpm-lock.yaml` fehlen** – uv und pnpm sind in der lokalen Worktree-Umgebung der KI nicht installiert. Lock-File-Erzeugung verlangt Tool-Installation auf dem Entwickler-Rechner und anschließenden Commit der Lock-Files. Ohne Lock-Files sind die Akzeptanzkriterien „`uv sync` baut Lock-File ohne Konflikte" und „`pnpm install` baut Lock-File ohne Konflikte" nicht erfüllbar.
-  2. ~~**`LICENSE`-Volltext fehlt**~~ – **GELÖST am 2026-05-08:** AGPL-3.0-Volltext byte-genau aus der GitHub-Licenses-API (`gh api licenses/agpl-3.0 --jq '.body'`) ans `LICENSE`-File angefügt, 673 Zeilen / 35 035 Bytes. Header oben, kanonischer FSF-Text darunter.
-  3. **Pre-Commit-Hook-Validierung** – `pre-commit run --all-files` und Commit-Lint-Test mit Conventional vs. Non-Conventional Messages stehen aus, hängen an Punkt 1 (uv/pnpm + pre-commit-Installation lokal).
-  4. **Versions-Verifikation** für itsdangerous (`~=2.2.0`) erfolgt in Schritt 1.6 mit dem ersten produktiven Auth-Code; uvicorn, pydantic-settings, asyncpg, procrastinate werden in Schritten 1.3/1.4/1.5 nachgepinnt mit erneuter Verifikation.
+- **Verifikation am 2026-05-08 (alle Akzeptanzkriterien erfüllt):**
+  1. ✅ `uv sync` lief konfliktfrei (81 Pakete inkl. `fastapi`, `sqlalchemy`, `alembic`, `pydantic`, `httpx`, `argon2-cffi`, `itsdangerous` plus Dev-Tooling). `uv.lock` committet (Commit `0a2257f`).
+  2. ✅ `pnpm install` lief konfliktfrei (`@commitlint/cli@20.5.0`, `@commitlint/config-conventional@20.5.0`). `pnpm-lock.yaml` committet (Commit `0a2257f`).
+  3. ✅ AGPL-3.0-Volltext byte-genau aus GitHub-Licenses-API in `LICENSE` (Commit `20e2e28`).
+  4. ✅ `pre-commit install --hook-type pre-commit --hook-type commit-msg` erfolgreich.
+  5. ✅ `pre-commit run --all-files` zweiter Lauf grün; alle Hooks (Hygiene, ruff lint+format, mypy `--strict`, bandit, prettier, commitlint, lokale Frontend-Hooks) passieren bzw. werden korrekt geskipt (kein Frontend-Code in 1.1).
+  6. ✅ Conventional Test-Commit (`test: verify commitlint accepts conventional message`, `9eeadcc`) durchgegangen.
+  7. ✅ Non-Conventional Test-Commit (`this is a bad non-conventional commit message`) korrekt vom commit-msg-Hook abgelehnt mit `subject-empty` + `type-empty`.
+  8. ✅ `.prettierignore` ergänzt (Lock-Files, Build-Caches, kanonisches LICENSE-File ausgeschlossen).
+  9. ✅ Bugfix in `.pre-commit-config.yaml`: prettier-Hook-Repo von archiviertem `pre-commit/mirrors-prettier` auf gepflegten `rbubley/mirrors-prettier`-Fork (gleiche v3.8.0).
+- **Versions-Verifikation für nachgelagerte Schritte:** itsdangerous (`~=2.2.0`) wird in Schritt 1.6 mit dem ersten produktiven Auth-Code re-verifiziert; uvicorn, pydantic-settings, asyncpg, procrastinate werden in Schritten 1.3/1.4/1.5 nachgepinnt mit erneuter Verifikation.
 
 #### 1.2: CI-Pipeline aktivieren (GitHub Actions)
 

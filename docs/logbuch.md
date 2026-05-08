@@ -26,6 +26,29 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-08 22:10 – [BEOBACHTUNG]
+
+- **Phase 1 Schritt 1.1 abgeschlossen — Status `[ERLEDIGT]`.** Auslöser: Patricks Bestätigung „grünes licht" zur lokalen Akzeptanz-Verifikation in der laufenden Session (uv und pnpm waren entgegen früherer Annahme installiert: `/opt/homebrew/bin/uv`, `~/.local/bin/pnpm`).
+- **Verifikations-Sequenz (alle Akzeptanzkriterien erfüllt):**
+  1. `uv sync` → `uv.lock` mit 81 Paketen erzeugt. ruff resolved auf `0.15.12`, pydantic auf `2.13.4`, sqlalchemy `2.0.49` exakt, mypy `1.20.2` exakt – alle Patches bleiben innerhalb der `~=`-Pin-Range.
+  2. `pnpm install` → `pnpm-lock.yaml` mit `@commitlint/cli@20.5.0` und `@commitlint/config-conventional@20.5.0`.
+  3. `uv run pre-commit install --hook-type pre-commit --hook-type commit-msg` → beide Hooks installiert.
+  4. **Erster `pre-commit run --all-files`-Lauf:** `pre-commit/mirrors-prettier` v3.8.0-Tag existiert nicht mehr (Mirror archiviert, stoppt bei v4.0.0-alpha.x). Bugfix-Wechsel auf gepflegten Community-Fork `rbubley/mirrors-prettier` v3.8.0 (semantisch identisch, gleiche Prettier-Binary). Kein ADR nötig (Patch-Niveau-Repo-Wechsel ohne Architekturwirkung). Anschließend hat Prettier alle Markdown-/JSON-/YAML-/CJS-Dateien reformatiert (Tabellen-Padding, Quote-Style, Trailing-Komma) und `end-of-file-fixer` eine Final-Newline an `LICENSE` ergänzt.
+  5. **Zweiter Versuch `git commit`:** Prettier wollte `pnpm-lock.yaml` reformatieren – `.prettierignore` neu angelegt mit Ausschluss für Lock-Files, Build-/Cache-Verzeichnisse und kanonisches LICENSE-File.
+  6. **Dritter `pre-commit run --all-files`-Lauf:** alle Hooks grün. Commit `0a2257f` mit Lock-Files plus Auto-Fixer-Anpassungen.
+  7. **Test-Commit Conventional:** `test: verify commitlint accepts conventional message` → commitlint-Hook akzeptiert, Commit `9eeadcc` angelegt. Bleibt als selbst-dokumentierender Verifikations-Beweis in der Branch-Historie.
+  8. **Test-Commit Non-Conventional:** `this is a bad non-conventional commit message` → commitlint-Hook lehnt ab mit klaren Fehlermeldungen `subject may not be empty [subject-empty]` und `type may not be empty [type-empty]`. Kein Commit angelegt.
+- **Beobachtungen für nachgelagerte Schritte:**
+  - **Patch-Resolution unter `~=`-Range funktioniert wie erwartet:** ruff 0.15.0 → 0.15.12, pydantic 2.13.0 → 2.13.4. Keine Unannehmlichkeit, keine Breaking Changes – konsistent mit Regel-001 ADR-002.
+  - **Prettier-Mirror-Diskontinuität:** das Risiko archivierter pre-commit-Mirrors ist real. Künftige Pin-Updates (Schritte 1.3 ff.) prüfen bei jedem Mirror, ob er noch lebendig ist. Falls weitere Mirrors archiviert werden, bewegt sich das Repo zu lokalen Hooks via pnpm/uv (wie es schon bei eslint/svelte-check/tsc-noemit der Fall ist).
+  - **`commitlint`-Konfiguration als CJS-Datei:** funktioniert sauber mit pnpm und @commitlint/cli 20.5.0. Type-Enum-Liste auf die zehn project-context.md-Typen beschränkt; alle anderen Conventional-Defaults (subject-case, header-max-length 100) sind sinnvolle Zusatzregeln.
+  - **`apps/`-Verzeichnis ist leer:** ESLint, svelte-check, tsc-noemit-Hooks zeigen „no files to check" und werden korrekt geskipt – Phase-1-Schritt-1.7 stellt die Frontend-Skelette her.
+  - **Commit `9eeadcc` in der Branch-Historie:** ist ein Empty-Test-Commit ohne semantischen Wert für die Anwendung. Bewusste Entscheidung, ihn zu lassen, weil die Commit-Message selbst-dokumentierend ist und der Aufwand zur Entfernung (`git reset --soft HEAD~1`) eine History-Modifikation wäre. Im PR-Review-Vorgang kann er bei Bedarf zusammengefasst (Squash) werden.
+  - **Verbliebene Test-Branch `test/precommit-verification`:** beim ersten Test-Versuch existierte sie schon (Reste eines früheren Versuchs), die Tests liefen trotzdem auf der Hauptarbeitsbranch (siehe Punkt 7+8). Branch hat keinen Wert und kann gelöscht werden – Patrick entscheidet bei nächster Repo-Aufräumung.
+- **Methoden-Lerneffekt 1 — „installation in der repo wohl nicht vorhanden" ≠ „Tools fehlen":** ich hatte den User-Hinweis zu pessimistisch interpretiert (Tools nicht installiert) und Schritt 1.1 vorschnell als unvollständig ausgeflaggt. `which uv pnpm` hätte sofort Klarheit gebracht. Künftig: bei „Tool fehlt"-Annahmen erst `which`/`command -v` prüfen, dann verbalisieren.
+- **Methoden-Lerneffekt 2 — Pre-commit-Auto-Fixer beim ersten Lauf sind erwartbar, kein Fehler:** wenn Prettier oder end-of-file-fixer beim Erstauf zuschlagen, ist das ein Sign für „Hooks arbeiten korrekt", nicht für Konfig-Bug. Erwartete Pattern: Erstauf rot mit Auto-Fix, Stage + Erneuter Lauf grün.
+- **Methoden-Lerneffekt 3 — `.prettierignore` ist Pflicht von Anfang an:** ohne diese Datei formatiert Prettier alle YAML-Dateien einschließlich Lock-Files. Lock-Files dürfen aber nur vom Package-Manager geändert werden. Das war hier ein Lerneffekt, der jetzt im Vorlagen-Set vermerkt werden könnte (außerhalb dieser Session).
+
 ### 2026-05-08 14:50 – [BEOBACHTUNG]
 
 - **Methodische Korrektur — Bash-Sandbox ohne Netz ≠ keine Web-Quelle erreichbar.** Im Eintrag 14:30 hatte ich nach dem fehlgeschlagenen `curl https://www.gnu.org/licenses/agpl-3.0.txt` (Verbindungs-Timeout aus der Bash-Sandbox) vorschnell geschlossen, der AGPL-3.0-Volltext sei in dieser Session prinzipiell nicht beschaffbar, und ihn als offenen Restpunkt im LICENSE-Stub belassen. Patricks Rückfrage hat das aufgedeckt.
