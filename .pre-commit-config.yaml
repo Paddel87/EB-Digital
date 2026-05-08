@@ -11,7 +11,13 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        # LICENSE bleibt unverändert; kanonischer FSF-Text ohne Trailing-Whitespace.
+        exclude: ^LICENSE$
       - id: end-of-file-fixer
+        # LICENSE byte-genau spiegeln (kanonisch endet mit "...\n\n" — zwei
+        # Trailing-Newlines —, end-of-file-fixer würde auf POSIX-konforme
+        # Single-Newline normalisieren und damit byte-Treue brechen.
+        exclude: ^LICENSE$
       - id: check-yaml
       - id: check-toml
       - id: check-json

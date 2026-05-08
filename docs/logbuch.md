@@ -26,6 +26,13 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-08 22:40 – [BEOBACHTUNG]
+
+- **Lizenz-Byte-Treue korrigiert.** Auf Patricks Rückfrage „prüfe lizenz" verglichen: `tail -n +12 LICENSE | diff - /tmp/agpl-canonical.txt` zeigte einen Unterschied von einer Zeile (eine Trailing-Leerzeile am Datei-Ende). Ursache: `end-of-file-fixer` hat im ersten pre-commit-Lauf das kanonische `…\n\n` auf POSIX-konformes `…\n` normalisiert. Inhaltlich folgenlos (FSF verlangt keine Trailing-Leerzeile, alle Lizenz-Validatoren erkennen weiterhin AGPL-3.0), aber die Header-Aussage „byte-genau übernommen" stimmte strenggenommen nicht mehr. Korrektur:
+  1. `printf '\n' >> LICENSE` → kanonisches `…\n\n`-Ende wiederhergestellt; `diff` gegen `gh api licenses/agpl-3.0` jetzt clean.
+  2. `.pre-commit-config.yaml`: `trailing-whitespace` und `end-of-file-fixer` mit `exclude: ^LICENSE$` versehen, damit künftige pre-commit-Runs die byte-Treue nicht erneut brechen. Begründung in beiden Hook-Einträgen als Kommentar dokumentiert.
+- **Lerneffekt — Lizenztexte und Hygiene-Hooks:** kanonische Lizenztexte sind „import" der FSF und sollen byte-genau bleiben. Repository-Hygiene-Hooks (end-of-file-fixer, prettier, trim-trailing-whitespace) müssen sie ausnehmen, sonst entstehen Mikro-Drifts, die einzeln folgenlos sind, kollektiv aber „leise mutierte" Lizenzdateien erzeugen. `.prettierignore` deckte das schon ab; bei pre-commit-hooks/end-of-file-fixer war es übersehen worden — jetzt nachgezogen. Generelles Muster für andere kanonische Imports (z. B. später NOTICE, CODE_OF_CONDUCT.md falls aus offizieller Quelle übernommen): immer beide Schichten (`.prettierignore` + pre-commit-Hook-Exclude) prüfen.
+
 ### 2026-05-08 22:10 – [BEOBACHTUNG]
 
 - **Phase 1 Schritt 1.1 abgeschlossen — Status `[ERLEDIGT]`.** Auslöser: Patricks Bestätigung „grünes licht" zur lokalen Akzeptanz-Verifikation in der laufenden Session (uv und pnpm waren entgegen früherer Annahme installiert: `/opt/homebrew/bin/uv`, `~/.local/bin/pnpm`).
