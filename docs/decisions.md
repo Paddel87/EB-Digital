@@ -24,10 +24,11 @@
 | 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                     |
 | 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL         | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                     |
 | 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL   | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5             |
+| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.  | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                     |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 0 / 9 = 0 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
+- **Aktueller Wert:** 0 / 10 = 0 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 
@@ -316,6 +317,28 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - Spätere UMSETZUNG-Phase „Verbund-Modus für parallele Mandanten-Großlagen" mit ERKUNDUNG-Vorlauf (Stakeholder-Klärung mit zwei Mandanten, Berechtigungs-Modell-Verfeinerung, Statistik-Zuordnung) wird in Modus-2-Schritt 6 in `fahrplan.md` als spätere Phase aufgenommen.
 - **Abgeleitete Regel:** Regel-013 (Operation↔Mandant ausschließlich über `operation_tenant_participation`) und Regel-014 (Berechtigungs-Filter als Teilnahme-Filter formulieren) – siehe Teil C.
 
+#### ADR-010: GitHub-Actions Major-Update plus Verifikations-Regime
+
+- **Datum:** 2026-05-08
+- **Status:** Aktiv
+- **Tags:** `[OPERATIV]` `[STACK]` `[DEPLOYMENT]`
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 1, im Anschluss an Schritt 1.2)
+- **Reifegrad-Wirkung:** keine direkten Architektur-Reifegrad-Beförderungen; festigt aber den Status der CI-Pipeline (`[BELASTBAR]` durch Existenz auf `main`) gegen die kommende Node-20-Deprecation.
+- **Kategorie:** Externe Abhängigkeiten (CLAUDE.md Abschnitt 4 Punkt 3 – Major-Update bestehender Abhängigkeiten ist freigabepflichtig).
+- **Kontext:** In Modus-2-Schritt 10 (2026-05-07) wurden zwei GitHub-Actions als **Annahme** gepinnt (`astral-sh/setup-uv@v5.0.0`, `pnpm/action-setup@v4.0.0`) mit dem Vermerk „in Phase 1 Schritt 1.2 zu verifizieren". Bei der Verifikation in Schritt 1.2 (2026-05-08) wurde sichtbar, dass diese Pins **zwei Major-Versionen hinter dem aktuellen Stand** liegen (heute v8.1.0 und v6.0.5) und dass die GitHub-Annotations bereits **Node.js-20-Deprecation ab 2026-06-02** flaggen. Zusätzlich wurde aufgedeckt, dass das `Verifiziert: YYYY-MM-DD`-Regime aus `project-context.md` Abschnitt 3 GitHub-Actions bisher **nicht** umfasst – die Disziplin endete bei Sprachen, Bibliotheken, Datenbanken, Infrastruktur und Package-Managern. Das ist eine strukturelle Lücke, die diese Entscheidung mit schließt.
+- **Optionen:**
+  - **A:** Bei v5.0.0/v4.0.0 bleiben, Major-Update aufschieben. – Konsequenzen: Node-20-Deprecation ab 2026-06-02 erzwingt das Update später unter Zeitdruck, möglicherweise mitten in einer anderen UMSETZUNG-Phase. Verifikations-Lücke bliebe offen.
+  - **B:** Sofort auf aktuelle Major-Linie aktualisieren (`astral-sh/setup-uv@v8.1.0`, `pnpm/action-setup@v6.0.5`) und Verifikations-Regime auf GitHub-Actions ausdehnen. – Konsequenzen: Major-Update ist ADR-pflichtig (CLAUDE.md Abschnitt 4 Punkt 3) und braucht einen Re-Test der CI-Pipeline. Schließt die strukturelle Lücke. Eliminiert die Deprecation-Frist.
+  - **C:** Weg von externen Action-Wrappern (manuelles `pip install uv` und `corepack enable pnpm` in den Workflow-Steps). – Konsequenzen: weniger Abhängigkeiten, mehr Workflow-Code, schlechteres Caching. Kein Mehrwert gegenüber B.
+- **Entscheidung:** **Option B – sofort updaten plus Verifikations-Regime erweitern**. Pin auf konkreten Patch-Tag (Immutable-Tag-Trend, vgl. Modus-2-Schritt 10): `astral-sh/setup-uv@v8.1.0` (released 2026-04-16), `pnpm/action-setup@v6.0.5` (released 2026-05-02). `actions/checkout@v6`, `actions/setup-python@v6`, `actions/setup-node@v6`, `actions/upload-artifact@v4` bleiben als Major-Tag-Pin (GitHub-Org-Maintainer-Praxis hat dort Tag-Stabilität).
+- **Konsequenzen:**
+  - **Workflow-Pins aktualisiert** in `.github/workflows/ci.yml` und `.github/workflows/security.yml`. Re-Test der gesamten Pipeline auf dem PR-Branch.
+  - **`project-context.md` Abschnitt 3** um Sub-Block „GitHub Actions" erweitert mit Verifikations-Stempel `Verifiziert: 2026-05-08` für jede Action. Damit greift Regel-001 (Versionsdisziplin) automatisch auch für Actions.
+  - **`actionlint` als Pre-Commit-Hook** in `.pre-commit-config.yaml` ergänzt. Dieser Hook hätte den `hashFiles`-Job-Level-Bug aus Schritt 1.2 (Commit `f94ee93`) vor dem Push gefangen. Lokale Tooling-Disziplin senkt CI-Reibung.
+  - **Klassifikation `[OPERATIV]`, nicht `[REAKTIV]`:** planmäßige Antwort auf bekannte Deprecation-Frist mit Vorlauf, kein Pivot wegen Implementierungsbug. Reaktiv-Quote bleibt 0/10.
+  - **Action-Verifikations-Termine:** alle GitHub-Actions tragen ab dieser Entscheidung dieselben `Verifiziert: YYYY-MM-DD`-Stempel wie andere Stack-Komponenten. Major-Updates erfordern ADR, Patch-/Minor-Updates sind freigabefrei mit Stempel-Refresh.
+- **Abgeleitete Regel:** Regel-015 (GitHub-Actions im Verifikations-Regime) – siehe Teil C.
+
 ---
 
 ## Teil C: Entscheidungsregeln
@@ -449,3 +472,11 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
 - **Regel:** Filter werden als „Operations, an denen Mandant X teilnimmt" formuliert (`JOIN operation_tenant_participation … WHERE tenant_id = …`), **nicht** als „Operations, deren `tenant_id` X ist". In Phase 1 verhaltensgleich, in späterer Verbund-Phase additiv erweiterbar ohne Refactoring der Filter.
 - **Ausnahmen:** keine.
 - **Gegenbeispiel:** `SELECT * FROM operation WHERE tenant_id = $1` – verboten.
+
+#### Regel-015: GitHub-Actions im Verifikations-Regime
+
+- **Herkunft:** ADR-010
+- **Gilt für:** jede Action, die in `.github/workflows/*.yml` per `uses:` eingebunden ist.
+- **Regel:** Alle GitHub-Actions stehen unter demselben Verifikations-Regime wie die anderen Stack-Komponenten (`project-context.md` Abschnitt 3): jede Action trägt einen `Verifiziert: YYYY-MM-DD`-Stempel im Sub-Block „GitHub Actions". Pin-Form je nach Maintainer-Praxis: **Patch-Tag** (z. B. `@v8.1.0`) für Repos außerhalb der `actions/`-Org (Immutable-Tag-Trend); **Major-Tag** (z. B. `@v6`) für Actions aus der `actions/`-Org (dort pflegen die Maintainer Major-Tag-Stabilität). Patch- und Minor-Updates sind freigabefrei mit Stempel-Refresh; Major-Updates erfordern ADR mit Begründung (Regel-001 analog für Sprachen/Bibliotheken). Bei Deprecation-Warnings in CI-Annotations: Mini-ADR vor Ablauf der Frist anlegen.
+- **Ausnahmen:** keine.
+- **Gegenbeispiel:** Eine Action ohne `Verifiziert`-Stempel im `project-context.md`-Block aufnehmen – verboten. Major-Sprung (z. B. `actions/checkout@v6` → `@v7`) ohne ADR – verboten.
