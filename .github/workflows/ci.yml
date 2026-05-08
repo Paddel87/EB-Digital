@@ -15,10 +15,40 @@ on:
 env:
   PYTHON_VERSION: "3.13"
   NODE_VERSION: "24"
-  PNPM_VERSION: "11"
   UV_VERSION: "0.11.0"
+  # pnpm-Version wird ausschließlich aus packageManager in package.json gelesen
+  # (Single Source of Truth, vermeidet Multi-Version-Konflikt mit pnpm/action-setup).
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # Vorschalt-Job: prüft, welche Code-Bereiche existieren.
+  # Nutzt Step-Level-Skripts statt Job-Level-hashFiles (hashFiles ist auf
+  # Job-Ebene nicht erlaubt, vgl. actionlint expression-Regel).
+  # Frontend-Pakete kommen in Phase 1 Schritt 1.7, Backend-Tests in 1.3.
+  # Geskipte Jobs werden für Branch-Protection als erfolgreich gewertet.
+  # ---------------------------------------------------------------------------
+
+  detect-presence:
+    name: Detect · Code-Präsenz prüfen
+    runs-on: ubuntu-latest
+    outputs:
+      has_frontend: ${{ steps.check.outputs.has_frontend }}
+      has_backend_tests: ${{ steps.check.outputs.has_backend_tests }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: check
+        run: |
+          if find apps -name package.json -print -quit 2>/dev/null | grep -q .; then
+            echo "has_frontend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_frontend=false" >> "$GITHUB_OUTPUT"
+          fi
+          if find backend/tests -name '*.py' -print -quit 2>/dev/null | grep -q .; then
+            echo "has_backend_tests=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_backend_tests=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # ---------------------------------------------------------------------------
   # Backend (Python 3.13 mit uv)
   # ---------------------------------------------------------------------------
@@ -60,10 +90,10 @@ jobs:
   test-backend:
     name: Backend · Tests & Coverage
     runs-on: ubuntu-latest
+    needs: detect-presence
     # Skip solange keine Tests in backend/tests/ existieren (Phase 1 Schritt 1.3
-    # legt sie an). Geskipte Jobs werden für Branch-Protection als erfolgreich
-    # gewertet. Ohne Guard würde --cov-fail-under=80 bei 0 % Coverage fehlschlagen.
-    if: hashFiles('backend/tests/**/*.py') != ''
+    # legt sie an). Ohne Guard würde --cov-fail-under=80 bei 0 % Coverage fehlschlagen.
+    if: needs.detect-presence.outputs.has_backend_tests == 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v5.0.0
@@ -94,16 +124,15 @@ jobs:
   lint-frontend:
     name: Frontend · Lint & Format
     runs-on: ubuntu-latest
+    needs: detect-presence
     # Skip solange keine Frontend-Pakete in apps/ existieren (Phase 1 Schritt 1.7
     # legt sie an). Geskipte Jobs werden für Branch-Protection als erfolgreich
     # gewertet, sodass die Required-Status-Check-Konfiguration jetzt schon
     # vollständig stehen kann.
-    if: hashFiles('apps/**/package.json') != ''
+    if: needs.detect-presence.outputs.has_frontend == 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4.0.0
-        with:
-          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -117,12 +146,11 @@ jobs:
   typecheck-frontend:
     name: Frontend · Type-Check
     runs-on: ubuntu-latest
-    if: hashFiles('apps/**/package.json') != ''
+    needs: detect-presence
+    if: needs.detect-presence.outputs.has_frontend == 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4.0.0
-        with:
-          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -136,7 +164,8 @@ jobs:
   test-frontend:
     name: Frontend · Tests & Coverage
     runs-on: ubuntu-latest
-    if: hashFiles('apps/**/package.json') != ''
+    needs: detect-presence
+    if: needs.detect-presence.outputs.has_frontend == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -147,8 +176,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4.0.0
-        with:
-          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -167,12 +194,11 @@ jobs:
   build-frontend:
     name: Frontend · Build
     runs-on: ubuntu-latest
-    if: hashFiles('apps/**/package.json') != ''
+    needs: detect-presence
+    if: needs.detect-presence.outputs.has_frontend == 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4.0.0
-        with:
-          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
