@@ -40,6 +40,10 @@ jobs:
   dep-audit-frontend:
     name: Frontend · Dependency Audit (pnpm audit)
     runs-on: ubuntu-latest
+    # Skip solange keine Frontend-Pakete in apps/ existieren (Phase 1 Schritt 1.7
+    # legt sie an). Root-package.json hat nur commitlint als devDependency,
+    # eigene Frontend-Audits werden ab Schritt 1.7 sinnvoll.
+    if: hashFiles('apps/**/package.json') != ''
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4.0.0

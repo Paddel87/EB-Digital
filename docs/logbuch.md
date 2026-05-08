@@ -26,6 +26,16 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-08 22:22 – [SESSIONSTART]
+
+- **Letzter Stand:** Phase 1 Schritt 1.1 am 2026-05-08 abgeschlossen (Status `[ERLEDIGT]` im Fahrplan), PR #4 `init(phase-1): Schritt 1.1 — Repository- und Workspace-Setup [ERLEDIGT]` am 2026-05-08 20:07 in `main` gemerged. Anschließend Bugfix-Commit `667377d fix(phase-1): LICENSE auf byte-Treue zur kanonischen AGPL-3.0 zurueckgesetzt` direkt auf `main`. Aktueller Stand `c47d293`. Reaktiv-Quote weiter 0/9, keine aktiven Blocker. CI-/Pre-Commit-Skelette aus Modus-2-Schritt 10 plus Phase-1-1.1-Anpassungen liegen lauffähig vor (lokale Pre-Commit-Verifikation in 1.1 erfolgt).
+- **Geplant für diese Session:** Phase 1 Schritt 1.2 – CI-Pipeline aktivieren (`fahrplan.md` Phase 1 Schritt 1.2). Konkret: bestehende `.github/workflows/ci.yml` und `security.yml` gegen die 1.2-Akzeptanzkriterien abgleichen, Action-Pinning für `astral-sh/setup-uv` und `pnpm/action-setup` verifizieren (Annahme aus Modus-2-Schritt 10 war `v5.0.0`/`v4.0.0` — laut Logbuch beim ersten Run zu prüfen), Coverage-Mindestwert prüfen, Push auf Test-Branch zur Verifikation der Workflow-Auslösung, Branch-Protection auf `main` setzen (separater Schritt mit Patrick-Bestätigung wegen shared-state-Wirkung).
+- **Vorabprüfung:**
+  - **Methoden-Reibung beim Sessionstart:** Pflichtlektüre nach CLAUDE.md Abschnitt 2 erfolgte zunächst ohne `git fetch --all`. Der Worktree-Branch `scp/dreamy-liskov-be0c78` lag 6 Commits hinter `origin/main` (Stand vor PR #4). Folge: Schritt 1.1 wurde fälschlich als „noch offen" interpretiert und ein STOPP wegen Schritt-1.2-Eingabe vs. Fahrplan-Stand vorgeschlagen. Patricks Hinweis „1.1 ist doch erledigt, prüfe die Dokumentation" hat das aufgedeckt. **Exakt der Lerneffekt 1 vom 2026-05-08 00:30** (Branch-Awareness fehlt in Pflichtlektüre Abschnitt 2). Bestätigt damit erneut, dass die CLAUDE.md-Methodik-Anpassung „parallele Worktree-Branches und offene PRs prüfen" notwendig ist — bleibt aber außerhalb dieser Session zu klären (Methodik, nicht Projekt). Korrektur in dieser Session: `git fetch --all` + `git pull --ff-only` durchgeführt, falscher SESSIONSTART verworfen, dieser Eintrag ersetzt ihn.
+  - Phase 1 = UMSETZUNG. Schritt 1.2 hat Eingangskriterien: Schritt 1.1 abgeschlossen ✓, Tooling-Konfigs existieren ✓, lokale Pre-Commit-Hooks laufen grün ✓. Nicht freigabepflichtig laut Fahrplan. Sonderregel Phase 1 (Eingangsdisziplin abgemildert) gilt weiter.
+  - Keine aktiven Blocker, keine offenen STOPP-Situationen. Reaktiv-Quote 0/9.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus, Worktree `scp/dreamy-liskov-be0c78` (1M-Kontext-Modell).
+
 ### 2026-05-08 22:10 – [BEOBACHTUNG]
 
 - **Phase 1 Schritt 1.1 abgeschlossen — Status `[ERLEDIGT]`.** Auslöser: Patricks Bestätigung „grünes licht" zur lokalen Akzeptanz-Verifikation in der laufenden Session (uv und pnpm waren entgegen früherer Annahme installiert: `/opt/homebrew/bin/uv`, `~/.local/bin/pnpm`).
