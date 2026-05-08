@@ -88,3 +88,14 @@ repos:
         types_or: [ts, tsx]
         files: ^apps/
         pass_filenames: false
+
+  # Commit-Message-Validierung (Conventional Commits, project-context.md Abschnitt 7).
+  # Läuft über pnpm/commitlint im Repo-Root (devDependency in package.json).
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: commitlint (Conventional Commits)
+        entry: pnpm exec commitlint --edit
+        language: system
+        stages: [commit-msg]
+        pass_filenames: false

@@ -1,0 +1,123 @@
+# Backend-Workspace EB Digital. Verwaltet via uv (project-context.md Abschnitt 3).
+# Build-Backend: hatchling (Standard, keine Native-Compilation für reines Python).
+
+[project]
+name = "eb-digital"
+version = "0.1.0"
+description = "Multi-Tenant-Plattform zur Echtzeit-Koordination ehrenamtlicher Einsatzbetreuung bei polizeilichen Großlagen."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Patrick Schulz" }]
+keywords = ["multi-tenant", "real-time", "operations", "logistics", "agplv3"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications",
+    "Typing :: Typed",
+]
+
+# Runtime-Dependencies. Pflicht-Pin auf Minor-Linien aus project-context.md Abschnitt 3
+# mit Verifikations-Stempel 2026-05-07. Patch-Updates frei (Regel-001 ADR-002).
+# Nicht enthalten: uvicorn, pydantic-settings, asyncpg, procrastinate — werden in
+# Phase 1 Schritten 1.3/1.4/1.5 nach erneuter Versions-Verifikation hinzugefügt.
+dependencies = [
+    "fastapi~=0.136.0",        # Verifiziert: 2026-05-07
+    "sqlalchemy[asyncio]~=2.0.49",  # Verifiziert: 2026-05-07
+    "alembic~=1.18.0",          # Verifiziert: 2026-05-07
+    "pydantic~=2.13.0",         # Verifiziert: 2026-05-07
+    "httpx~=0.28.0",            # Verifiziert: 2026-05-07
+    "argon2-cffi~=25.1.0",      # Verifiziert: 2026-05-07
+    "itsdangerous~=2.2.0",      # project-context.md "aktuelle stabile Minor"; Verifikation Schritt 1.6
+]
+
+[dependency-groups]
+# Dev-Tooling. Pflicht-Pin auf Minor-Linien aus project-context.md Abschnitt 3+7.
+dev = [
+    "pytest~=9.0.0",            # Verifiziert: 2026-05-07
+    "pytest-asyncio~=1.3.0",    # Verifiziert: 2026-05-07
+    "pytest-cov~=7.1.0",        # Verifiziert: 2026-05-07
+    "ruff~=0.15.0",             # Verifiziert: 2026-05-07
+    "mypy==1.20.2",             # exakt — project-context.md "bewusst nicht 2.0.x"
+    "bandit[toml]~=1.9.0",      # Verifiziert: 2026-05-07
+    "pip-audit~=2.10.0",        # Verifiziert: 2026-05-07
+    "pre-commit~=4.6.0",        # Verifiziert: 2026-05-07
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backend/eb_digital"]
+
+# ───────────────────────────────────────────────────────────────────────────
+# Tool-Konfiguration
+# ───────────────────────────────────────────────────────────────────────────
+
+[tool.uv]
+# Lock auf alle Plattformen, die im Stack laufen (Hetzner CCX-Reihe + Entwickler).
+# project-context.md Abschnitt 6: Backend lauffähig auf x86_64 und arm64.
+required-version = ">=0.11.0,<0.12"
+
+[tool.ruff]
+line-length = 100  # project-context.md Abschnitt 7
+src = ["backend"]
+target-version = "py313"
+
+[tool.ruff.lint]
+# Regelset aus project-context.md Abschnitt 7 (Python).
+select = [
+    "E", "F", "I", "B", "UP", "SIM", "RUF", "N", "S", "A", "C4",
+    "T20", "PT", "RET", "SLF", "ANN",
+]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+# Tests dürfen Asserts und nicht-typisierte Fixtures verwenden.
+"backend/tests/**" = ["S101", "ANN"]
+
+[tool.ruff.format]
+# Default: double quotes, 4-Space-Indent — sind PEP 8 + project-context.md.
+
+[tool.mypy]
+# project-context.md Abschnitt 7: --strict
+strict = true
+python_version = "3.13"
+files = ["backend/eb_digital"]
+plugins = []
+# Externe Bibliotheken ohne Type-Stubs werden in 1.3+ ergänzt.
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["backend/tests"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=backend/eb_digital",
+    "--cov-report=term-missing",
+    "--cov-fail-under=80",      # globaler Mindestwert (project-context.md Abschnitt 7)
+]
+
+[tool.coverage.run]
+source = ["backend/eb_digital"]
+branch = true
+
+[tool.coverage.report]
+# Modul-spezifische strengere Schwellen folgen in Phase 1 Schritt 1.3 als
+# `[tool.coverage.report]` per-Modul-Konfiguration (Logbuch 2026-05-07 23:55):
+# auth ≥ 95 %, operations ≥ 90 %, retention ≥ 95 %, resilience ≥ 90 %.
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.bandit]
+# project-context.md Abschnitt 7: bandit als Security-Scanner.
+# Test-Verzeichnis ausgeschlossen — Asserts dort sind kein Security-Risiko.
+exclude_dirs = ["backend/tests"]

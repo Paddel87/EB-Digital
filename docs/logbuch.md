@@ -26,6 +26,36 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-08 14:30 – [BEOBACHTUNG]
+
+- **Phase 1 Schritt 1.1 begonnen, Konfig-Skelett angelegt; Schritt bleibt `[IN ARBEIT]`.** Umgesetzt:
+  - `LICENSE` als AGPL-3.0-Header-Stub mit dokumentiertem TODO für den Volltext (Sandbox ohne Netzzugriff – Reproduktion des kanonischen FSF-Lizenztextes nicht zulässig). Volltext-Ergänzung als offener Akzeptanz-Restpunkt im Fahrplan.
+  - `.gitignore` (Python: `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `dist`, `build`, `.venv`, `.uv-cache`; Node: `node_modules`, `.pnpm-store`; SvelteKit/Vite: `.svelte-kit`, `.vite`, `apps/*/build`, `.output`; Secrets: `.env*` außer `.env.example`; OS/IDE-Standard).
+  - `.editorconfig` mit LF/UTF-8, 4-Spaces für Python (`max_line_length = 100`), 2-Spaces für TypeScript/Svelte/JSON/YAML, Markdown ohne `trim_trailing_whitespace`, Tab für Makefile.
+  - `.env.example` mit allen Settings-Feldern aus Phase-1-Schritt-1.3 (`SECRET_KEY`, `SESSION_COOKIE_NAME`, `LOG_LEVEL`, `DATABASE_URL`, `VALKEY_URL`, `TOMTOM_API_KEY`, `MAPTILER_API_KEY`, `TILE_PROXY_BASE`, `PUBLIC_DOMAIN`) plus Postgres-Container-Init-Variablen für das spätere dev-Profil.
+  - `pyproject.toml` mit uv-basierter Konfiguration, Python `>=3.13,<3.14`, License-Trove `AGPL-3.0-or-later`, Hatchling als Build-Backend mit `packages = ["backend/eb_digital"]`. Runtime-Deps mit Verifikations-Stempel 2026-05-07 gepinnt: fastapi `~=0.136.0`, sqlalchemy[asyncio] `~=2.0.49`, alembic `~=1.18.0`, pydantic `~=2.13.0`, httpx `~=0.28.0`, argon2-cffi `~=25.1.0`, itsdangerous `~=2.2.0` (Pin auf plausible Major, Verifikation in Schritt 1.6). uvicorn, pydantic-settings, asyncpg, procrastinate **bewusst nicht** in 1.1-pyproject.toml – werden in 1.3/1.4/1.5 mit erneuter Verifikation nachgepinnt. Dev-Group: pytest `~=9.0.0`, pytest-asyncio `~=1.3.0`, pytest-cov `~=7.1.0`, ruff `~=0.15.0`, mypy `==1.20.2` (exakt – „bewusst nicht 2.0.x"), bandit[toml] `~=1.9.0`, pip-audit `~=2.10.0`, pre-commit `~=4.6.0`. Tool-Konfigurationen für ruff (Regelset aus `project-context.md` Abschnitt 7), mypy `--strict`, pytest mit `asyncio_mode = "auto"` und `--cov-fail-under=80`, coverage mit Branch-Coverage, bandit-Test-Dir-Ausschluss.
+  - `pnpm-workspace.yaml` mit drei Paketen `apps/frontend-{disponent,betreuer,einsatzkraft}` (Initialisierung in Schritt 1.7).
+  - Root-`package.json` mit `packageManager: pnpm@11.0.0`, Engine-Constraints (`node >=24 <25`, `pnpm >=11 <12`), devDependencies `@commitlint/cli@20.5.0` und `@commitlint/config-conventional@20.5.0`. Workspace-Scripts (`lint`, `format`, `check`, `build`, `test`, `commitlint`).
+  - `commitlint.config.cjs` extends `@commitlint/config-conventional`, Type-Enum auf zehn Typen aus `project-context.md` Abschnitt 7 beschränkt (`feat, fix, refactor, docs, test, chore, perf, build, ci, init`), Header-Max 100 Zeichen.
+  - `.pre-commit-config.yaml` aus Modus-2-Schritt 10 um lokalen `commit-msg`-Hook für commitlint ergänzt; übrige Hooks (Hygiene, ruff, mypy, bandit, prettier, eslint/svelte-check/tsc-noemit) decken Phase-1-Anforderungen bereits ab und wurden unverändert gelassen.
+  - `backend/eb_digital/__init__.py` mit `__version__ = "0.1.0"` als Backend-Package-Root angelegt (Hatchling-Wheel-Target verlangt das Paket-Verzeichnis).
+- **Bewusst nicht angelegt in 1.1:**
+  - `apps/frontend-*` – SvelteKit-Initialisierung erst in Schritt 1.7.
+  - `infra/{tile-proxy,reverse-proxy}` – erst in Schritt 1.8.
+  - Zusätzliche Module unter `backend/eb_digital/` (`app.py`, `settings.py`, `logging.py`, `db/`, `auth/`) – Schritt 1.3 ff.
+- **Offene Akzeptanz-Restpunkte (Auflösung außerhalb dieser Session):**
+  1. **`uv` und `pnpm` lokal installieren**, dann `uv sync` und `pnpm install` ausführen → Lock-Files committen. Bestätigung Patrick: Tools sind aktuell nicht im Repo-Worktree verfügbar.
+  2. **AGPL-3.0-Volltext** ans `LICENSE`-File anhängen (von `https://www.gnu.org/licenses/agpl-3.0.txt`).
+  3. **Pre-Commit-Hooks lokal validieren:** `pre-commit install`, `pre-commit run --all-files`, plus Test-Commits mit Conventional und Non-Conventional Message zur Verifikation des commitlint-Hooks.
+- **Methoden-Notiz:** Phase-1-Schritt-1.1 ist nach CLAUDE.md Abschnitt 9 ohne Akzeptanzkriterien-Erfüllung (Lock-Files + Pre-Commit-Run + Commit-Lint-Test) **nicht `[ERLEDIGT]`-fähig**. Die Konfig-Dateien sind syntaktisch korrekt und intern konsistent, aber „grünes Pre-Commit-Run" lässt sich erst nach lokaler Tool-Installation verifizieren. Statt eines verfrühten `[ERLEDIGT]`-Markers bleibt der Status `[IN ARBEIT]` und die Restpunkte sind im Fahrplan-Eintrag konkret aufgeführt – konsistent mit CLAUDE.md Abschnitt 6 „Keine Erfolgsmeldungen ohne Verifikation".
+
+### 2026-05-08 13:50 – [SESSIONSTART]
+
+- **Letzter Stand:** Modus 2 (Initialisierung) am 2026-05-08 00:30 abgeschlossen, PR #3 gemerged auf `main` (Merge-Commit `5f5c7db`), zusätzlicher Sessionende-Commit `494a657 docs: Sessionende-Eintrag und Übergang Modus 2 -> Phase 1` ist bereits in `main`. Worktree `scp/competent-black-c11212` ist clean und auf Stand von `origin/main`. Repository enthält bislang: `CLAUDE.md`, `README.md`, `.pre-commit-config.yaml`, `.github/workflows/{ci,security}.yml`, `docs/` (vollständig), `templates/`. **Kein** `pyproject.toml`, `pnpm-workspace.yaml`, `package.json`, `.editorconfig`, `.gitignore`, `LICENSE`, `.env.example`, kein `backend/`, kein `apps/`, kein `infra/`.
+- **Geplant für diese Session:** Phase 1 Schritt 1.1 – Repository- und Workspace-Setup (`fahrplan.md` Phase 1, Schritt 1.1). Erweitert um `LICENSE` (AGPL-3.0) und `.env.example` aus dem Sessionende-Vermerk vom 2026-05-08 00:30. Konkret: `pyproject.toml` (uv-basiert, Python 3.13, Dependencies aus `project-context.md` Abschnitt 3 verifiziert), `pnpm-workspace.yaml` mit drei Frontend-Paketen, Root-`package.json` (pnpm 11.x), `.editorconfig`, `.gitignore`, `commitlint.config.cjs`, Skelett-Verzeichnisse `backend/`, `apps/`, `infra/`. Ergänzend: `.pre-commit-config.yaml` aus Modus-2-Schritt 10 prüfen, ob es Schritt-1.1-Anforderungen vollständig deckt; nachsteuern statt Komplett-Überschreibung.
+- **Vorabprüfung:** Phase 1 = UMSETZUNG. Sonderregel aus `fahrplan.md` Phase 1 abgemildert (Modul-Schnitt ist durch ADR-002, ADR-003, ADR-004 strategisch fixiert). Schritt 1.1 hat keine Abhängigkeiten und ist nicht freigabepflichtig (`project-context.md` Abschnitt 7 + 10 + ADR-002 fixieren das Tooling). Eingangskriterien erfüllt: Modus-2-Initialisierung abgeschlossen ✓, Tooling-Vorgaben in `project-context.md` Abschnitt 7 ✓, Repo-Regeln in `project-context.md` Abschnitt 10 ✓. Keine aktiven Blocker (`blockers.md`), keine offenen STOPP-Situationen (`fahrplan.md` Aktueller Stand). Reaktiv-Quote 0/9, weit unter 20 %-Schwellenwert.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus, Worktree `scp/competent-black-c11212` (1M-Kontext-Modell).
+
 ### 2026-05-08 00:30 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 3 h (21:39 am 2026-05-07 – 00:30 am 2026-05-08).

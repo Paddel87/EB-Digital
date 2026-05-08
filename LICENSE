@@ -1,0 +1,28 @@
+EB Digital — Multi-Tenant-Plattform zur Echtzeit-Koordination
+ehrenamtlicher Einsatzbetreuung bei polizeilichen Großlagen.
+Copyright (C) 2026 Patrick Schulz
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, version 3 of the License.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+================================================================================
+TODO (Phase 1, Schritt 1.1, offene Resterledigung):
+Der vollständige Text der GNU Affero General Public License v3.0 (~660 Zeilen)
+muss unterhalb dieses Headers eingefügt werden, bevor das Projekt extern verteilt
+oder der Status auf „Aufbau" gewechselt wird (project-context.md Abschnitt 1).
+
+Kanonische Quelle: https://www.gnu.org/licenses/agpl-3.0.txt
+
+Diese Datei wurde im Initial-Setup ohne Volltext angelegt, weil die
+Arbeitsumgebung beim Anlegen keinen Netzzugriff hatte und das Reproduzieren
+des kanonischen Lizenztextes aus dem Gedächtnis Abweichungs-Risiken birgt.
+================================================================================

@@ -46,7 +46,7 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
      - blockers.md (Aktive Blocker)
      Inkonsistenzen sind Bugs und werden vor Sessionende behoben. -->
 
-- **Projektphase:** Modus 2 (Initialisierung) abgeschlossen am 2026-05-08 mit PR #3. Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG) ist nächster Schritt.
+- **Projektphase:** Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG) begonnen am 2026-05-08; Schritt 1.1 (Repository- und Workspace-Setup) `[IN ARBEIT]`. Modus 2 (Initialisierung) am 2026-05-08 mit PR #3 abgeschlossen.
 - **Version:** v0.1.0
 - **Status:** Konzeption
 - **Letzte Änderung:** 2026-05-08

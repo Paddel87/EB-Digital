@@ -1,0 +1,7 @@
+# pnpm-Workspace für drei SvelteKit-Frontends.
+# Pakete werden in Phase 1 Schritt 1.7 als SvelteKit-Projekte initialisiert.
+# project-context.md Abschnitt 3 + 7.
+packages:
+  - "apps/frontend-disponent"
+  - "apps/frontend-betreuer"
+  - "apps/frontend-einsatzkraft"
