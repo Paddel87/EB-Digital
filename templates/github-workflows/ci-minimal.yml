@@ -17,10 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Python  # TBD: Sprache und Version anpassen
+      - name: Setup Python # TBD: Sprache und Version anpassen
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"  # TBD: aus project-context.md Abschnitt 3
+          python-version: "3.12" # TBD: aus project-context.md Abschnitt 3
           cache: pip
 
       - name: Install dependencies
@@ -28,7 +28,7 @@ jobs:
           pip install -e ".[dev]"  # TBD: Installationsbefehl an Package Manager anpassen
 
       - name: Lint
-        run: ruff check .  # TBD: Linter aus project-context.md Abschnitt 7
+        run: ruff check . # TBD: Linter aus project-context.md Abschnitt 7
 
       - name: Test
-        run: pytest  # TBD: Test-Runner aus project-context.md Abschnitt 7
+        run: pytest # TBD: Test-Runner aus project-context.md Abschnitt 7

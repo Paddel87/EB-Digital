@@ -83,16 +83,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel | Typ | Spikes / Roadmap | Status |
-|---|---|---|---|---|
-| 1 | Repository-Bootstrap & Tech-Foundations | UMSETZUNG | – | IN ARBEIT |
-| 2 | Auth + Tenants + Verbund-Tauglichkeit | UMSETZUNG | – | OFFEN |
-| 3 | Spikes Wave 1 – Operations-Vorklärungen | ERKUNDUNG | I, J | OFFEN |
-| 4 | Operations Core + Realtime + Einsatzkraft-PWA | UMSETZUNG | – | OFFEN |
-| 5 | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out | ERKUNDUNG | G, H, K, L, M | OFFEN |
-| 6 | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export | UMSETZUNG | – | OFFEN |
-| 7 | Stabilisierung, Roll-out-Vorbereitung, Validierung | STABILISIERUNG | – (Roadmap N/O/P) | OFFEN |
-| X | Verbund-Modus für parallele Mandanten-Großlagen *(spätere Erweiterung)* | ERKUNDUNG → UMSETZUNG | (eigener Spike) | OFFEN |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status    |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | --------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN     |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN     |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN     |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN     |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN     |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN     |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN     |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -126,7 +126,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 - Architektur-Pattern (Modular Monolith + 3 SvelteKit-Frontends): bleibt `[VORLÄUFIG]` (Last-/Funktionstest steht aus).
 - Coverage-Mindestwerte aktiv und durchgesetzt; CI-Pipeline ist `[BELASTBAR]` durch ihre Existenz auf `main`.
 
-**Hinweis Sonderregel:** Für Phase 1 gilt die UMSETZUNG-Eingangs-Disziplin (alle berührten Architektur-Bestandteile auf `[BELASTBAR]`) **abgemildert**, weil die Phase die initialen Skelette herstellt, ohne die produktive Tragfähigkeit der Module zu beanspruchen. Berührter *Modul-Schnitt* ist durch ADR-002, ADR-003, ADR-004 strategisch fixiert; das genügt als Eingangsbedingung.
+**Hinweis Sonderregel:** Für Phase 1 gilt die UMSETZUNG-Eingangs-Disziplin (alle berührten Architektur-Bestandteile auf `[BELASTBAR]`) **abgemildert**, weil die Phase die initialen Skelette herstellt, ohne die produktive Tragfähigkeit der Module zu beanspruchen. Berührter _Modul-Schnitt_ ist durch ADR-002, ADR-003, ADR-004 strategisch fixiert; das genügt als Eingangsbedingung.
 
 #### 1.1: Repository- und Workspace-Setup
 
@@ -432,7 +432,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ---
 
-### Phase X: Verbund-Modus für parallele Mandanten-Großlagen *(spätere Erweiterung)* – Typ: ERKUNDUNG → UMSETZUNG
+### Phase X: Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ – Typ: ERKUNDUNG → UMSETZUNG
 
 **Ziel:** Verbund-Modus produktiv (ADR-009 setzt das Fundament). Aktivierung erst nach Phase 7 plus konkretem Stakeholder-Bedarf von zwei Mandanten.
 

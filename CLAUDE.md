@@ -106,7 +106,7 @@ Diese Strenge ist Absicht: Sie schützt vor unbemerktem Übergang, der in der Pr
     - **Klasse M/G:** `templates/github-workflows/ci-<sprache>.yml` → `.github/workflows/ci.yml` (bei mehreren Sprachen mehrere Workflow-Dateien oder Job-Komposition); bei G zusätzlich `security.yml` und `release.yml` ableiten.
     - **Klasse V:** `ci-<sprache>.yml` pro Service nach `.github/workflows/ci-<service>.yml` mit Path-Filtern, plus eigene `integration.yml`.
     - **Pre-Commit:** `templates/pre-commit/<sprache>.yaml` → `.pre-commit-config.yaml` im Repo-Root.
-    Alle `# TBD:`-Platzhalter (Sprachversion, Pfade, Coverage-Schwellen, Tool-Versionen) durch konkrete Werte aus `project-context.md` Abschnitt 7 ersetzen. GitHub Actions ist **Diagnoseschicht zusätzlich zu lokalen Hooks**, kein Ersatz.
+      Alle `# TBD:`-Platzhalter (Sprachversion, Pfade, Coverage-Schwellen, Tool-Versionen) durch konkrete Werte aus `project-context.md` Abschnitt 7 ersetzen. GitHub Actions ist **Diagnoseschicht zusätzlich zu lokalen Hooks**, kein Ersatz.
 11. **`docs/vision.md` Überführungs-Status** am Dateiende abhaken.
 12. **Initialisierungs-Commit** mit allen Dokumenten und der Workflow-/Hook-Konfiguration. Commit-Message: `init: Projekt initialisiert aus vision.md, Klasse [K/M/G/V], ADR-001 bis ADR-NNN`.
 
@@ -279,17 +279,17 @@ Auch bei kleinen Änderungen wird die Mindest-Lektüre vollständig durchlaufen.
 
 ## 3. Dokumenten-Index
 
-| Datei | Zweck | Aktualisierungstrigger |
-|---|---|---|
-| `docs/vision.md` | Eingangs-Idee, Ziel, Erfolgskriterien, Abgrenzungen | Einmalig zu Projektstart (siehe Abschnitt 1A); danach unverändert |
-| `docs/project-context.md` | Projektdefinition, Stack, Status, Constraints | Statuswechsel, Stack-Änderung, neue Constraints |
-| `docs/fahrplan.md` | Arbeitsschritte, Fortschritt, Status | Nach jedem Schritt; zu Sessionende; bei Replanning |
-| `docs/architecture.md` | Module, Schnittstellen, Datenflüsse, NFRs | Bei jeder Architekturänderung (freigabepflichtig) |
-| `docs/decisions.md` | ADRs, Entscheidungsregeln | Bei jeder freigabepflichtigen Entscheidung |
-| `docs/blockers.md` | Ungelöste Probleme, gescheiterte Ansätze | Bei jedem Blocker; bei Auflösung verschieben |
-| `docs/logbuch.md` | Chronologische Ereignis-Aufzeichnung: Sessionrahmen, Problemlösungen, Reifegrad-Wechsel, ADRs, Beobachtungen | Bei Sessionstart, bei jedem nennenswerten Ereignis während der Session, bei Sessionende |
-| `README.md` | Aktuelles Statusbild des Projekts: Vision-Auszug, Status-Block aus Pflicht-Dokumenten, Quick Start, Badge-Zone, Architektur-Skizze, nächste Schritte | Bei jedem nutzerrelevanten `[ERLEDIGT]`-Schritt; vor jedem Sessionende mit Synchronisations-Prüfung; bei Statuswechsel und Versionserhöhung |
-| `CHANGELOG.md` | Nutzerrelevante Änderungen, SemVer-Einträge | Bei jedem Release, bei Breaking Changes |
+| Datei                     | Zweck                                                                                                                                                | Aktualisierungstrigger                                                                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/vision.md`          | Eingangs-Idee, Ziel, Erfolgskriterien, Abgrenzungen                                                                                                  | Einmalig zu Projektstart (siehe Abschnitt 1A); danach unverändert                                                                           |
+| `docs/project-context.md` | Projektdefinition, Stack, Status, Constraints                                                                                                        | Statuswechsel, Stack-Änderung, neue Constraints                                                                                             |
+| `docs/fahrplan.md`        | Arbeitsschritte, Fortschritt, Status                                                                                                                 | Nach jedem Schritt; zu Sessionende; bei Replanning                                                                                          |
+| `docs/architecture.md`    | Module, Schnittstellen, Datenflüsse, NFRs                                                                                                            | Bei jeder Architekturänderung (freigabepflichtig)                                                                                           |
+| `docs/decisions.md`       | ADRs, Entscheidungsregeln                                                                                                                            | Bei jeder freigabepflichtigen Entscheidung                                                                                                  |
+| `docs/blockers.md`        | Ungelöste Probleme, gescheiterte Ansätze                                                                                                             | Bei jedem Blocker; bei Auflösung verschieben                                                                                                |
+| `docs/logbuch.md`         | Chronologische Ereignis-Aufzeichnung: Sessionrahmen, Problemlösungen, Reifegrad-Wechsel, ADRs, Beobachtungen                                         | Bei Sessionstart, bei jedem nennenswerten Ereignis während der Session, bei Sessionende                                                     |
+| `README.md`               | Aktuelles Statusbild des Projekts: Vision-Auszug, Status-Block aus Pflicht-Dokumenten, Quick Start, Badge-Zone, Architektur-Skizze, nächste Schritte | Bei jedem nutzerrelevanten `[ERLEDIGT]`-Schritt; vor jedem Sessionende mit Synchronisations-Prüfung; bei Statuswechsel und Versionserhöhung |
+| `CHANGELOG.md`            | Nutzerrelevante Änderungen, SemVer-Einträge                                                                                                          | Bei jedem Release, bei Breaking Changes                                                                                                     |
 
 Struktur und Umfang der Dokumente ergeben sich aus dem Projektkontext (CLI bis verteiltes System). Alle Dokumente existieren als Vorlagen mit Initialisierungshinweisen. Bei der **ersten Session nach Projektanlage** passt Claude jede Vorlage an die Projektkomplexität an und hält die Anpassung als **ADR-001** in `decisions.md` fest.
 
@@ -299,7 +299,7 @@ Die folgenden Kategorien werden **niemals** eigenständig umgesetzt. Claude form
 
 1. **Architekturänderungen:** neue Schichten, Änderung von Modulgrenzen, Änderung der Kommunikationsmuster zwischen Modulen, Wechsel synchron↔asynchron.
 2. **Neue Module oder Komponenten:** jede Einheit, die eine neue Verantwortung im System übernimmt.
-3. **Externe Abhängigkeiten:** neue Bibliotheken, SaaS-Dienste, APIs, CLI-Tools, Container-Images. Versions-*Updates* bestehender Abhängigkeiten sind nur dann freigabepflichtig, wenn sie Major-Versionen sind oder Breaking Changes enthalten.
+3. **Externe Abhängigkeiten:** neue Bibliotheken, SaaS-Dienste, APIs, CLI-Tools, Container-Images. Versions-_Updates_ bestehender Abhängigkeiten sind nur dann freigabepflichtig, wenn sie Major-Versionen sind oder Breaking Changes enthalten.
 4. **Datenmodelländerungen:** neue Entitäten, Schema-Migrationen, Änderungen an Primär-/Fremdschlüsseln, Änderungen an Indexstrategien.
 5. **API-Vertragsänderungen:** jede Änderung an öffentlichen Schnittstellen (HTTP-Routes, CLI-Flags, Bibliotheks-Exporte), die nicht rein additiv und rückwärtskompatibel ist.
 6. **Sicherheit und Datenschutz:** Authentifizierungs-/Autorisierungslogik, Umgang mit Geheimnissen, personenbezogenen Daten, Kryptographie, Logging sensibler Informationen.
@@ -427,6 +427,7 @@ Was als „derselbe Ansatz" zählt: gleiche Grundidee mit Variation in Details (
 ## 11. Commit- und Branch-Konvention
 
 **Commit-Format:**
+
 ```
 <bereich>: <kurze beschreibung im imperativ>
 
@@ -436,6 +437,7 @@ Fahrplan: [eintrags-id oder phase/schritt-nummer]
 ```
 
 **Regeln:**
+
 - Atomare Commits: eine logische Änderung pro Commit.
 - Imperativ, Präsens: „füge X hinzu", nicht „hinzugefügt" oder „adds X".
 - Keine `WIP`-Commits auf Hauptbranches.
@@ -443,6 +445,7 @@ Fahrplan: [eintrags-id oder phase/schritt-nummer]
 - Bei freigabepflichtigen Änderungen: ADR-Nummer im Commit-Body referenzieren.
 
 **Branches:**
+
 - Hauptbranch: wie im Repo konfiguriert. Umbenennung ist freigabepflichtig.
 - Feature-Branches: `feat/<kurztitel>`, Bugfix: `fix/<kurztitel>`, Refactor: `refactor/<kurztitel>`.
 - Push-Regeln auf Hauptbranch werden in `project-context.md` festgelegt.
@@ -533,18 +536,18 @@ Vor jedem Sessionende läuft eine Synchronisations-Prüfung gegen die Pflicht-Do
 
 Synchronisations-Quellen und -Ziele:
 
-| README-Block | Quelle | Bei Drift |
-|---|---|---|
-| Status-Block: Projektphase | `fahrplan.md` „Aktueller Stand" + Phasentyp | README anpassen |
-| Status-Block: Version | `project-context.md` Abschnitt 1 | README anpassen |
-| Status-Block: Status | `project-context.md` Abschnitt 1 | README anpassen + Status-Badge |
-| Status-Block: Architektur-Reife | `architecture.md` Abschnitt 9 (Reifegrad-Übersicht) | README-Kurzfassung anpassen |
-| Status-Block: Aktive Blocker | `blockers.md` (Anzahl aus „Aktive Blocker") | README-Zähler anpassen |
-| Über das Projekt | `vision.md` Abschnitte 1–3 | nur bei Vision-Pivot anpassen |
-| Quick Start | `project-context.md` Abschnitt 8 + Stack | bei Stack- oder Setup-Änderungen |
-| Architektur-Skizze | `architecture.md` Abschnitt 1 + 2 | bei Architektur-Änderungen |
-| Nächste Schritte | `fahrplan.md` (nächste 1–3 Schritte/Phasen) | nach jedem `[ERLEDIGT]` |
-| Badges | wie in der Tabelle pro Badge | bei Quell-Änderung |
+| README-Block                    | Quelle                                              | Bei Drift                        |
+| ------------------------------- | --------------------------------------------------- | -------------------------------- |
+| Status-Block: Projektphase      | `fahrplan.md` „Aktueller Stand" + Phasentyp         | README anpassen                  |
+| Status-Block: Version           | `project-context.md` Abschnitt 1                    | README anpassen                  |
+| Status-Block: Status            | `project-context.md` Abschnitt 1                    | README anpassen + Status-Badge   |
+| Status-Block: Architektur-Reife | `architecture.md` Abschnitt 9 (Reifegrad-Übersicht) | README-Kurzfassung anpassen      |
+| Status-Block: Aktive Blocker    | `blockers.md` (Anzahl aus „Aktive Blocker")         | README-Zähler anpassen           |
+| Über das Projekt                | `vision.md` Abschnitte 1–3                          | nur bei Vision-Pivot anpassen    |
+| Quick Start                     | `project-context.md` Abschnitt 8 + Stack            | bei Stack- oder Setup-Änderungen |
+| Architektur-Skizze              | `architecture.md` Abschnitt 1 + 2                   | bei Architektur-Änderungen       |
+| Nächste Schritte                | `fahrplan.md` (nächste 1–3 Schritte/Phasen)         | nach jedem `[ERLEDIGT]`          |
+| Badges                          | wie in der Tabelle pro Badge                        | bei Quell-Änderung               |
 
 **Drift zwischen README und Pflicht-Dokumenten ist ein Bug**, kein Stilfehler. Wird er bei der Sessionende-Prüfung gefunden, wird er vor dem Sessionende-Commit behoben.
 

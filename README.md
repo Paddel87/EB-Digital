@@ -135,16 +135,16 @@ graph LR
 
 ## Dokumentation
 
-| Dokument | Inhalt |
-|---|---|
-| [`docs/vision.md`](docs/vision.md) | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss) |
-| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards |
-| [`docs/architecture.md`](docs/architecture.md) | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht |
-| [`docs/fahrplan.md`](docs/fahrplan.md) | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert |
-| [`docs/decisions.md`](docs/decisions.md) | 9 ADRs (Klassifikation, Stack, Pattern, Fragen A–F) plus 14 Entscheidungsregeln |
-| [`docs/blockers.md`](docs/blockers.md) | Aktive Blocker (aktuell keine) und Erkennungs-Heuristiken |
-| [`docs/logbuch.md`](docs/logbuch.md) | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen |
-| [`CLAUDE.md`](CLAUDE.md) | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus) |
+| Dokument                                             | Inhalt                                                                                 |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [`docs/vision.md`](docs/vision.md)                   | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss)                       |
+| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards                           |
+| [`docs/architecture.md`](docs/architecture.md)       | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht    |
+| [`docs/fahrplan.md`](docs/fahrplan.md)               | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert      |
+| [`docs/decisions.md`](docs/decisions.md)             | 9 ADRs (Klassifikation, Stack, Pattern, Fragen A–F) plus 14 Entscheidungsregeln        |
+| [`docs/blockers.md`](docs/blockers.md)               | Aktive Blocker (aktuell keine) und Erkennungs-Heuristiken                              |
+| [`docs/logbuch.md`](docs/logbuch.md)                 | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen |
+| [`CLAUDE.md`](CLAUDE.md)                             | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus)                            |
 
 ## Lizenz
 

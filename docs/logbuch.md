@@ -320,16 +320,16 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 Verbindliche Typen, andere nur in Ausnahmefällen:
 
-| Typ | Wann | Pflicht? |
-|---|---|---|
-| `[SESSIONSTART]` | Zu Beginn jeder Session | Ja |
-| `[SESSIONENDE]` | Vor Sessionabschluss | Ja |
-| `[PROBLEM-GELÖST]` | Nach Behebung eines Problems, das Reibung war | Empfohlen, alle Mini-Probleme erfassen |
-| `[PROBLEM-OFFEN → BLOCKER]` | Wenn ein Problem zum Blocker eskaliert | Ja, mit Verweis auf `blockers.md` |
-| `[BLOCKER-AUFGELÖST]` | Wenn ein Blocker gelöst wurde | Ja, mit Verweis auf den ursprünglichen Logbuch- und Blocker-Eintrag |
-| `[REIFEGRAD-WECHSEL]` | Bei jeder Reifegrad-Änderung in `architecture.md` | Ja |
-| `[ADR-ANGELEGT]` | Bei Anlage eines neuen ADR | Ja |
-| `[BEOBACHTUNG]` | Wenn etwas auffällt, das später nützlich sein könnte | Optional, KI proaktiv |
+| Typ                         | Wann                                                 | Pflicht?                                                            |
+| --------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------- |
+| `[SESSIONSTART]`            | Zu Beginn jeder Session                              | Ja                                                                  |
+| `[SESSIONENDE]`             | Vor Sessionabschluss                                 | Ja                                                                  |
+| `[PROBLEM-GELÖST]`          | Nach Behebung eines Problems, das Reibung war        | Empfohlen, alle Mini-Probleme erfassen                              |
+| `[PROBLEM-OFFEN → BLOCKER]` | Wenn ein Problem zum Blocker eskaliert               | Ja, mit Verweis auf `blockers.md`                                   |
+| `[BLOCKER-AUFGELÖST]`       | Wenn ein Blocker gelöst wurde                        | Ja, mit Verweis auf den ursprünglichen Logbuch- und Blocker-Eintrag |
+| `[REIFEGRAD-WECHSEL]`       | Bei jeder Reifegrad-Änderung in `architecture.md`    | Ja                                                                  |
+| `[ADR-ANGELEGT]`            | Bei Anlage eines neuen ADR                           | Ja                                                                  |
+| `[BEOBACHTUNG]`             | Wenn etwas auffällt, das später nützlich sein könnte | Optional, KI proaktiv                                               |
 
 ## Hinweise zur Pflege
 
