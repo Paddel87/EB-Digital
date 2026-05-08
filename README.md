@@ -52,7 +52,7 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
 - **Letzte Änderung:** 2026-05-08
 - **Architektur-Reife:** 9 Bestandteile `[BELASTBAR]` (Stack-/NFR-/Datenschutz-Constraints), ca. 35 `[VORLÄUFIG]` (Module, Schnittstellen, Datenmodell-Invarianten), 9 `[OFFEN]` (Spikes G–M, Bedrohungsmodell, Tracing). Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends bleibt bis zum Last-/Funktionstest in Phase 7 `[VORLÄUFIG]`.
 - **Aktive Blocker:** 0 ([`docs/blockers.md`](docs/blockers.md)).
-- **ADRs:** 9 (alle `[STRATEGISCH]`, INITIALISIERUNG); Reaktiv-Quote 0/9 (Schwellenwert 20 % nicht überschritten).
+- **ADRs:** 10 (9 `[STRATEGISCH]` aus INITIALISIERUNG + ADR-010 `[OPERATIV]` zu GitHub-Actions Major-Update + Verifikations-Regime); Reaktiv-Quote 0/10 (Schwellenwert 20 % nicht überschritten).
 - **Klassifikation:** Klasse G (Groß) – ADR-001.
 
 ## Quick Start
@@ -142,16 +142,16 @@ graph LR
 
 ## Dokumentation
 
-| Dokument                                             | Inhalt                                                                                 |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| [`docs/vision.md`](docs/vision.md)                   | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss)                       |
-| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards                           |
-| [`docs/architecture.md`](docs/architecture.md)       | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht    |
-| [`docs/fahrplan.md`](docs/fahrplan.md)               | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert      |
-| [`docs/decisions.md`](docs/decisions.md)             | 9 ADRs (Klassifikation, Stack, Pattern, Fragen A–F) plus 14 Entscheidungsregeln        |
-| [`docs/blockers.md`](docs/blockers.md)               | Aktive Blocker (aktuell keine) und Erkennungs-Heuristiken                              |
-| [`docs/logbuch.md`](docs/logbuch.md)                 | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen |
-| [`CLAUDE.md`](CLAUDE.md)                             | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus)                            |
+| Dokument                                             | Inhalt                                                                                           |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [`docs/vision.md`](docs/vision.md)                   | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss)                                 |
+| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards                                     |
+| [`docs/architecture.md`](docs/architecture.md)       | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht              |
+| [`docs/fahrplan.md`](docs/fahrplan.md)               | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert                |
+| [`docs/decisions.md`](docs/decisions.md)             | 10 ADRs (Klassifikation, Stack, Pattern, Fragen A–F, Actions-Update) plus 15 Entscheidungsregeln |
+| [`docs/blockers.md`](docs/blockers.md)               | Aktive Blocker (aktuell keine) und Erkennungs-Heuristiken                                        |
+| [`docs/logbuch.md`](docs/logbuch.md)                 | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen           |
+| [`CLAUDE.md`](CLAUDE.md)                             | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus)                                      |
 
 ## Lizenz
 

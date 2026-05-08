@@ -26,6 +26,29 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-08 23:55 – [SESSIONENDE]
+
+- **Session-Dauer (Folgeblock nach 23:25):** ca. 30 min (23:25 – 23:55).
+- **Bearbeitet:** Folge-Aktion zu Schritt 1.2: **ADR-010 plus Verifikations-Lücke geschlossen**. Auslöser war Patricks direkte Reaktion auf das Sessionende-Bulletin („das scheint ernst zu sein, eigentlich wollte ich mit der versions verifikation genau sowas verhindern, veraltete software"). Mein Vorschlag A (drei Aktionen in einem PR) wurde freigegeben.
+- **Erreicht:**
+  - **ADR-010 `[OPERATIV] [STACK] [DEPLOYMENT]`** – Major-Update GitHub-Actions plus Aufnahme aller Actions ins Verifikations-Regime. Reaktiv-Quote bleibt **0/10** (planmäßiges Update gegen bekannte Deprecation-Frist, kein Pivot). Plus **Regel-015** (GitHub-Actions im Verifikations-Regime).
+  - **`project-context.md` Abschnitt 3** um Sub-Block „GitHub Actions" erweitert. Sechs Actions tragen jetzt `Verifiziert: 2026-05-08`-Stempel: `actions/checkout@v6`, `actions/setup-python@v6`, `actions/setup-node@v6`, `actions/upload-artifact@v4`, `astral-sh/setup-uv@v8.1.0`, `pnpm/action-setup@v6.0.5`. Plus actionlint 1.7.x im Repository-Tooling-Block.
+  - **Workflow-Pin-Updates:** `astral-sh/setup-uv@v5.0.0` → `@v8.1.0`, `pnpm/action-setup@v4.0.0` → `@v6.0.5` in `ci.yml` und `security.yml`.
+  - **`actionlint`-Pre-Commit-Hook** (`rhysd/actionlint@v1.7.12`) in `.pre-commit-config.yaml`. Schließt die Reibung aus Lerneffekt 2 vom 23:25-Sessionende-Eintrag.
+  - **PR #7** erstellt und als Merge-Commit `22b6a0f` in `main` gemerged. Erster Merge-Versuch lief in einen GitHub-API-Race („base branch policy prohibits the merge", obwohl `mergeStateStatus: CLEAN`); zweiter Versuch sofort erfolgreich. Keine Branch-Protection-Aufweichung nötig.
+  - **Verifikation:** lokal `actionlint` 0 Findings; pre-commit-Run inkl. neuem actionlint-Hook grün; CI-Run https://github.com/Paddel87/EB-Digital/actions/runs/25580741945 alle Backend-Jobs `success`, Frontend-Jobs `skipped`; Security-Run https://github.com/Paddel87/EB-Digital/actions/runs/25580771681 alle drei Audits `success`. **Wichtig: keine Node-20-Deprecation-Annotations mehr** — Major-Update wirkt. Einzige Annotation jetzt: harmlose Cache-Race-Warning beim ersten Lauf mit der neuen setup-uv-Major-Version, beim nächsten Lauf weg.
+- **Methoden-Lerneffekt — Verifikations-Lücke war strukturell, nicht ein einmaliger Übersehen-Fehler:**
+  - Modus-2-Schritt 2a (Versions-Verifikation) deckte explizit nur Sprachen, Bibliotheken, Datenbanken, Infrastruktur, Package-Manager ab. GitHub-Actions waren in `project-context.md` Abschnitt 3 nur als Hinweis in Abschnitt 7 erwähnt, ohne Versionen und ohne Stempel.
+  - In Modus-2-Schritt 10 wurden zwei Actions als Annahme gepinnt (`v5.0.0`/`v4.0.0`) mit Verschiebung der Verifikation auf 1.2.
+  - Bei der 1.2-Verifikation habe ich gesehen, dass die Major-Linien aktuell v8/v6 sind, aber „bei der Annahme bleiben" empfohlen mit falscher Berufung auf „Stabilität vor Aktualität". Das Prinzip „Stabilität vor Aktualität" gilt für **bewusste Zurückhaltung mit Begründung** (Postgres 18 jung, mypy 2.0 frisch), nicht für **unverifizierte Annahmen aus Modus 2**.
+  - Patricks Eskalation („das scheint ernst zu sein") hat den Fehler aufgedeckt. Ohne ihn wäre die Node-20-Deprecation am 2026-06-02 als CI-Reibung in einer späteren Phase aufgeschlagen.
+  - Strukturkorrektur: ADR-010 + Regel-015 + Sub-Block in `project-context.md` Abschnitt 3 schließen die Lücke dauerhaft. Künftige Action-Updates folgen demselben Verifikations-Regime wie alles andere.
+- **Methoden-Lerneffekt — actionlint-Hook gehört von Anfang an dazu, nicht erst nach erstem Bug:**
+  - Die hashFiles-Job-Level-Reibung in 1.2 (Commit `f94ee93`) hat eine Push-Iteration gekostet plus Forensik via API. `actionlint` hätte das vor dem Push gefangen.
+  - Hook ist jetzt im Pre-Commit-Repo verankert, künftige Workflow-Edits werden lokal validiert.
+- **Reaktiv-Quote nach dieser Session:** **0/10 (0 %)**. Schwellenwert 20 % nicht erreicht. ADR-010 ist klar `[OPERATIV]`, kein `[REAKTIV]`-Pivot.
+- **Nächster Schritt unverändert:** Phase 1 Schritt 1.3 (Backend-Skelett FastAPI + Settings + Logging).
+
 ### 2026-05-08 23:25 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 1 h (22:22 – 23:25).
