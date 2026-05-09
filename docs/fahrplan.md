@@ -7,11 +7,11 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** 2026-05-09
+- **Stand vom:** 2026-05-10
 - **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
-- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09, **1.4 [ERLEDIGT]** 2026-05-09, **1.5 [ERLEDIGT]** 2026-05-09 (`backend/eb_digital/jobs/{__init__,ping}.py` mit Procrastinate-App und ping-Test-Job; `__main__.py worker`-Subcommand mit echtem Worker-Run und sauberem SIGTERM-Handling; Procrastinate-Schema-Migration `add_procrastinate_schema` mit Statement-Splitter (Workaround für asyncpg-Multi-Statement-Limit) und `include_object`-Filter im env.py; `eb-worker`-Service im Compose-`dev`-Profil + multi-stage `docker/Dockerfile.backend` (auch für FastAPI-Server in 1.8 wiederverwendet); 21 neue Tests, Coverage 92 % gesamt; procrastinate 3.8.1 + psycopg 3.3.4 verifiziert und gepinnt; **ADR-011 + Regel-016** für psycopg-LGPL-Akzeptanz und Sub-Dep-Lizenz-Prüfungs-Regime).
-- **Nächster Schritt:** **1.6 – backend/auth Admin-Bootstrap-CLI** _oder_ **1.7 – Frontend-Workspaces + PWA-Skelett** (laut Parallelisierungs-Notiz unabhängig voneinander). Eingangskriterien beider Schritte erfüllt: 1.6 hängt an 1.4 ✓ + 1.3 ✓; 1.7 hängt an 1.1 ✓. Versions-Re-Verifikation für `argon2-cffi` (1.6) bzw. `svelte`/`@sveltejs/kit`/`vite` (1.7) zu Sessionstart.
+- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09, **1.4 [ERLEDIGT]** 2026-05-09, **1.5 [ERLEDIGT]** 2026-05-09, **1.6 [ERLEDIGT]** 2026-05-10 (`backend/eb_digital/auth/{models,hashing,cli}.py` mit `PlatformAdmin`-ORM, Argon2id-Hashing-Wrapper über `argon2-cffi`, asynchroner `create_platform_admin`-Use-Case mit Idempotenz-SELECT vor INSERT; CLI-Subcommand `python -m eb_digital admin create --username NAME` mit interaktivem getpass-Passwort, `created admin user: <name>`-stdout, JSON-Log `platform_admin_created` ohne Klartext/Hash/Salt; Migration `add_platform_admin` mit Naming-Convention-konformen Constraints inkl. `CHECK (created_via IN ('bootstrap_cli','admin_cli'))`; 30 neue Tests, Coverage `backend/auth/*` **100 %**, gesamt 94 %; argon2-cffi 25.1.0 re-bestätigt + itsdangerous 2.2.0 erst-verifiziert. **Schnittstelle S1** in `architecture.md` von `[VORLÄUFIG]` auf `[BELASTBAR]` befördert.
+- **Nächster Schritt:** **1.7 – Frontend-Workspaces + PWA-Skelett** _oder_ **1.8 – Infrastruktur (Caddy + nginx) + Compose dev-Profil** (1.7 ist parallelisierbar, hängt nur an 1.1 ✓; 1.8 wartet bis 1.7 erledigt ist). Versions-Re-Verifikation für `svelte`/`@sveltejs/kit`/`vite` zu Sessionstart 1.7 (Modus-2-Schritt-2a-Disziplin).
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
@@ -85,7 +85,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 | Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                      |
 | ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ------------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1–1.5 erledigt; 1.6–1.8 offen) |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1–1.6 erledigt; 1.7–1.8 offen) |
 | 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                       |
 | 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                       |
 | 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                       |
@@ -316,7 +316,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 #### 1.6: backend/auth Admin-Bootstrap-CLI
 
-- **Status:** OFFEN
+- **Status:** ERLEDIGT (2026-05-10)
 - **Phasentyp-Kontext:** UMSETZUNG
 - **Abhängigkeiten:** 1.4 (DB), 1.3 (Settings)
 - **Freigabepflichtig:** nein – ADR-004 fixiert das Verfahren strategisch; konkrete Implementierung ist OPERATIV.

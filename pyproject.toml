@@ -33,8 +33,8 @@ dependencies = [
     "procrastinate~=3.8.1",         # Verifiziert: 2026-05-09 (Schritt 1.5); PsycopgConnector (Default, psycopg3-Pool transitiv)
     "psycopg[binary,pool]~=3.3.4",  # Verifiziert: 2026-05-09 (Schritt 1.5). LGPL-3.0-only — explizit per ADR-011 akzeptiert (transitive Pflicht-Dep zu procrastinate). binary-Extra: kein System-libpq nötig auf macOS/Docker.
     "httpx~=0.28.0",                # Verifiziert: 2026-05-07
-    "argon2-cffi~=25.1.0",          # Verifiziert: 2026-05-07
-    "itsdangerous~=2.2.0",          # project-context.md "aktuelle stabile Minor"; Verifikation Schritt 1.6
+    "argon2-cffi~=25.1.0",          # Verifiziert: 2026-05-07; Re-Bestätigung 2026-05-09 (Schritt 1.6)
+    "itsdangerous~=2.2.0",          # Verifiziert: 2026-05-09 (Schritt 1.6); BSD-3-Clause; einzige stabile 2.x-Linie seit 2024-04-16, kein 2.3 in Sicht
 ]
 
 [dependency-groups]
@@ -80,8 +80,9 @@ select = [
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-# Tests dürfen Asserts und nicht-typisierte Fixtures verwenden.
-"backend/tests/**" = ["S101", "ANN"]
+# Tests dürfen Asserts, nicht-typisierte Fixtures, hartkodierte „Passwörter"
+# (Test-Strings, niemals echt) und Zugriffe auf Modul-Privates verwenden.
+"backend/tests/**" = ["S101", "S105", "S106", "S107", "SLF001", "ANN"]
 
 [tool.ruff.format]
 # Default: double quotes, 4-Space-Indent — sind PEP 8 + project-context.md.

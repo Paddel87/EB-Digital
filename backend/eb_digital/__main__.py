@@ -3,7 +3,7 @@
 Subcommands:
   serve   — start the HTTP server (Schritt 1.3).
   worker  — start the Procrastinate background worker (Schritt 1.5).
-  admin   — platform-administrator CLI (Schritt 1.6, stub here).
+  admin   — platform-administrator CLI (Schritt 1.6, ADR-004).
 """
 
 from __future__ import annotations
@@ -39,8 +39,17 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Reload on source changes (development only).",
     )
 
-    admin = sub.add_parser("admin", help="Platform-administrator CLI (Schritt 1.6).")
-    admin.add_subparsers(dest="admin_command", metavar="{create,...}")
+    admin = sub.add_parser("admin", help="Platform-administrator CLI.")
+    admin_sub = admin.add_subparsers(dest="admin_command", required=True, metavar="{create}")
+    admin_create = admin_sub.add_parser(
+        "create",
+        help="Create a new platform administrator (interactive password prompt).",
+    )
+    admin_create.add_argument(
+        "--username",
+        required=True,
+        help="Username for the new administrator (must be unique).",
+    )
 
     worker = sub.add_parser("worker", help="Procrastinate background worker.")
     worker.add_argument(
@@ -81,10 +90,20 @@ def _cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
-def _cmd_admin(_args: argparse.Namespace) -> int:
-    sys.stderr.write(
-        "TODO(fahrplan-ref: 1.6): admin CLI is implemented in Phase 1 step 1.6.\n",
-    )
+def _cmd_admin(args: argparse.Namespace) -> int:
+    from eb_digital.auth.cli import cmd_admin_create
+    from eb_digital.logging import configure_logging
+    from eb_digital.settings import get_settings
+
+    # JSON-Logging vor dem ersten log-Aufruf konfigurieren, damit die
+    # Bootstrap-Erfolg-Zeile als strukturiertes JSON geht (Schritt 1.6).
+    configure_logging(get_settings().log_level)
+
+    if args.admin_command == "create":
+        return cmd_admin_create(args)
+    # argparse(required=True) erzwingt ein admin_command — diese Zeile dient
+    # nur als Defense-in-depth.
+    sys.stderr.write(f"Unbekannter admin-Subcommand: {args.admin_command}\n")
     return 2
 
 

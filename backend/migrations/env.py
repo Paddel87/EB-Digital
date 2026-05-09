@@ -11,6 +11,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from eb_digital.auth import models as _auth_models  # noqa: F401  # register ORM models
 from eb_digital.db import (
     Base,
     models,  # noqa: F401  # register ORM models with metadata

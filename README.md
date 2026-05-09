@@ -46,18 +46,18 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
      - blockers.md (Aktive Blocker)
      Inkonsistenzen sind Bugs und werden vor Sessionende behoben. -->
 
-- **Projektphase:** Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG); Schritte 1.1 (Repository- und Workspace-Setup), 1.2 (CI-Pipeline aktivieren), 1.3 (Backend-Skelett FastAPI + Settings + Logging), 1.4 (Datenbank + Alembic + ORM-Konventionen) und 1.5 (Procrastinate-Worker + ping-Test-Job + Worker-Container) `[ERLEDIGT]`. Schritte 1.6 (backend/auth Admin-Bootstrap-CLI) oder 1.7 (Frontend-Workspaces) als nächste, parallelisierbar.
+- **Projektphase:** Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG); Schritte 1.1 (Repository- und Workspace-Setup), 1.2 (CI-Pipeline aktivieren), 1.3 (Backend-Skelett FastAPI + Settings + Logging), 1.4 (Datenbank + Alembic + ORM-Konventionen), 1.5 (Procrastinate-Worker + ping-Test-Job + Worker-Container) und 1.6 (backend/auth Admin-Bootstrap-CLI mit Argon2id + JSON-Audit-Log) `[ERLEDIGT]`. Schritt 1.7 (Frontend-Workspaces) als nächster, parallelisierbar zu 1.8.
 - **Version:** v0.1.0
 - **Status:** Konzeption
-- **Letzte Änderung:** 2026-05-09
-- **Architektur-Reife:** 9 Bestandteile `[BELASTBAR]` (Stack-/NFR-/Datenschutz-Constraints), ca. 35 `[VORLÄUFIG]` (Module, Schnittstellen, Datenmodell-Invarianten), 9 `[OFFEN]` (Spikes G–M, Bedrohungsmodell, Tracing). Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends bleibt bis zum Last-/Funktionstest in Phase 7 `[VORLÄUFIG]`.
+- **Letzte Änderung:** 2026-05-10
+- **Architektur-Reife:** 10 Bestandteile `[BELASTBAR]` (Stack-/NFR-/Datenschutz-Constraints + Schnittstelle S1 Admin-Bootstrap-CLI seit 2026-05-10), ca. 34 `[VORLÄUFIG]` (Module, restliche Schnittstellen, Datenmodell-Invarianten), 9 `[OFFEN]` (Spikes G–M, Bedrohungsmodell, Tracing). Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends bleibt bis zum Last-/Funktionstest in Phase 7 `[VORLÄUFIG]`.
 - **Aktive Blocker:** 0 ([`docs/blockers.md`](docs/blockers.md)).
 - **ADRs:** 11 (9 `[STRATEGISCH]` aus INITIALISIERUNG + ADR-010 `[OPERATIV]` zu GitHub-Actions Major-Update + Verifikations-Regime + ADR-011 `[OPERATIV]` zu psycopg-LGPL-Akzeptanz und Sub-Dep-Lizenz-Regime); Reaktiv-Quote 0/11 (Schwellenwert 20 % nicht überschritten).
 - **Klassifikation:** Klasse G (Groß) – ADR-001.
 
 ## Quick Start
 
-> **Hinweis Konzeptionsphase:** Das Repository enthält die Pflicht-Dokumente, das Tooling-Skelett (uv-/pnpm-Workspace, Pre-Commit-Hooks, CI-Pipeline auf GitHub Actions), seit Schritt 1.3 das Backend-Skelett (FastAPI + Settings + JSON-Logging mit PII-Redaction + `/health`-Endpoint), seit Schritt 1.4 die Datenbank-Plumbing-Schicht (SQLAlchemy 2.0 Async-Engine + asyncpg, Alembic mit Async-Template, PostgreSQL-17.9-Service im Compose-`dev`-Profil mit Digest-Pin) und seit Schritt 1.5 die Procrastinate-Job-Engine (ping-Test-Job, Worker-Subcommand `python -m eb_digital worker`, Worker-Container im `dev`-Profil mit Multi-Stage-Backend-Image `docker/Dockerfile.backend`). Restlicher Anwendungscode (Auth-CLI, Frontend-Skelette, Caddy + Tile-Proxy) folgt mit Phase-1-Schritten 1.6–1.8; siehe [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
+> **Hinweis Konzeptionsphase:** Das Repository enthält die Pflicht-Dokumente, das Tooling-Skelett (uv-/pnpm-Workspace, Pre-Commit-Hooks, CI-Pipeline auf GitHub Actions), seit Schritt 1.3 das Backend-Skelett (FastAPI + Settings + JSON-Logging mit PII-Redaction + `/health`-Endpoint), seit Schritt 1.4 die Datenbank-Plumbing-Schicht (SQLAlchemy 2.0 Async-Engine + asyncpg, Alembic mit Async-Template, PostgreSQL-17.9-Service im Compose-`dev`-Profil mit Digest-Pin), seit Schritt 1.5 die Procrastinate-Job-Engine (ping-Test-Job, Worker-Subcommand `python -m eb_digital worker`, Worker-Container im `dev`-Profil mit Multi-Stage-Backend-Image `docker/Dockerfile.backend`) und seit Schritt 1.6 die `backend/auth`-Bootstrap-Schiene (`PlatformAdmin`-Tabelle, Argon2id-Hashing, CLI `python -m eb_digital admin create`). Restlicher Anwendungscode (Frontend-Skelette, Caddy + Tile-Proxy) folgt mit Phase-1-Schritten 1.7–1.8; siehe [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
 
 ### Voraussetzungen
 
@@ -98,7 +98,11 @@ uv run alembic upgrade head                          # Schema auf den aktuellen 
 docker compose --profile dev up -d worker            # eb-digital-backend:dev → python -m eb_digital worker
 docker compose --profile dev logs -f worker          # JSON-Logs der Job-Engine
 
-uv run pytest                                        # 66 Tests, Coverage ≥ 80 % (aktuell 92 %)
+# Plattform-Administrator anlegen (ab Schritt 1.6)
+uv run python -m eb_digital admin create --username patrick   # interaktive Passwort-Eingabe via getpass
+# → "created admin user: patrick" plus JSON-Audit-Log {message: "platform_admin_created", …}
+
+uv run pytest                                        # 101 Tests, Coverage ≥ 80 % (aktuell 94 %)
 ```
 
 ## Architektur (Überblick)
@@ -141,10 +145,9 @@ graph LR
 
 ## Nächste Schritte
 
-1. **Phase 1 Schritt 1.6 – backend/auth Admin-Bootstrap-CLI**: `python -m eb_digital admin create --username …` mit Argon2id-Hashing und interaktiver Passwort-Eingabe; `platform_admin`-Tabelle (ADR-004 + Regel-005). Detail in [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
-2. **Phase 1 Schritt 1.7 – Frontend-Workspaces + PWA-Skelett** (parallelisierbar zu 1.6): drei SvelteKit-Projekte (Disponent, Betreuer, Einsatzkraft) mit Vite 8, vite-plugin-pwa für Betreuer/Einsatzkraft, Health-Page pro Frontend.
-3. **Phase 1 Schritt 1.8** (UMSETZUNG): Compose-`dev`-Profil komplettiert mit Caddy + Tile-Proxy + Frontend-Dev-Servern + Smoke-Test-Skript.
-4. **Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2)** (UMSETZUNG): Vollständige Auth-Schicht, Mandanten-Onboarding, `operation_tenant_participation` als alleinige Operation↔Mandant-Verknüpfung (ADR-009 Invariante I1), abstrakter Berechtigungs-Filter (Invariante I2).
+1. **Phase 1 Schritt 1.7 – Frontend-Workspaces + PWA-Skelett**: drei SvelteKit-Projekte (Disponent, Betreuer, Einsatzkraft) mit Vite 8, vite-plugin-pwa für Betreuer/Einsatzkraft, Health-Page pro Frontend. Detail in [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
+2. **Phase 1 Schritt 1.8** (parallelisierbar zu 1.7, blockiert auf 1.7-Abschluss): Compose-`dev`-Profil komplettiert mit Caddy + Tile-Proxy + Frontend-Dev-Servern + Smoke-Test-Skript.
+3. **Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2)** (UMSETZUNG): Vollständige Auth-Schicht (Login, Sessions, Rate-Limit, Multi-User-Verwaltung über die Bootstrap-Schiene aus 1.6 hinaus), Mandanten-Onboarding, `operation_tenant_participation` als alleinige Operation↔Mandant-Verknüpfung (ADR-009 Invariante I1), abstrakter Berechtigungs-Filter (Invariante I2).
 
 → Vollständiger Fahrplan mit 7 regulären Phasen plus späterer Verbund-Erweiterungs-Phase X: [`docs/fahrplan.md`](docs/fahrplan.md)
 
