@@ -45,6 +45,10 @@ apps/*/dist/
 *.swp
 *.swo
 
+# Claude-Code-Tooling (Browser-Smoke-Konfig, lokale Worktree-Settings).
+# Tool-spezifisch, nicht Pflicht-Artefakt.
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
