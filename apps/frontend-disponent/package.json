@@ -14,8 +14,9 @@
     "tsc": "svelte-kit sync && tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --check .",
+    "format:check": "prettier --check .",
     "format:write": "prettier --write .",
-    "test": "vitest run --passWithNoTests"
+    "test": "svelte-kit sync && vitest run --passWithNoTests"
   },
   "devDependencies": {
     "@eslint/js": "~10.0.0",
