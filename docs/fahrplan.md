@@ -10,8 +10,8 @@
 - **Stand vom:** 2026-05-09
 - **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
-- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09 (`backend/eb_digital/{settings,logging,app,__main__}.py` plus 26 Tests in `backend/tests/`, Coverage 94 %; uvicorn 0.46 + pydantic-settings 2.13.1 verifiziert und gepinnt).
-- **Nächster Schritt:** **1.4 – Datenbank + Alembic + ORM-Konventionen** – PostgreSQL-Container im Compose-`dev`-Profil, SQLAlchemy 2.0 Async-Engine, Alembic-Init mit Async-Template, ein Test-ORM-Modell zur Setup-Validierung. Eingangskriterium erfüllt: Backend-Skelett mit Settings-Modul existiert.
+- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09, **1.4 [ERLEDIGT]** 2026-05-09 (`backend/eb_digital/db/{__init__.py,models.py}` mit Async-Engine, Session-Factory, DeclarativeBase + Naming-Convention, TimestampMixin und HealthMarker-Sentinel; Alembic mit Async-Template + Baseline + Health-Marker-Migration; PostgreSQL-17.9-Service im Compose-`dev`-Profil mit Digest-Pin und Healthcheck; 19 neue Tests, Coverage 95 %; asyncpg 0.31.0 verifiziert und gepinnt).
+- **Nächster Schritt:** **1.5 – Procrastinate-Setup + Worker** oder **1.7 – Frontend-Workspaces + PWA-Skelett** (laut Parallelisierungs-Notiz unabhängig voneinander). Eingangskriterien: 1.5 hängt an 1.4 ✓; 1.7 hängt an 1.1 ✓.
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
@@ -83,16 +83,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                          |
-| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ----------------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1+1.2+1.3 erledigt; 1.4–1.8 offen) |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                           |
-| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                           |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                           |
-| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                           |
-| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                           |
-| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                           |
-| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                           |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                      |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ------------------------------------------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1–1.4 erledigt; 1.5–1.8 offen) |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                       |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                       |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                       |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                       |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                       |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                       |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                       |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -238,7 +238,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 #### 1.4: Datenbank + Alembic + ORM-Konventionen
 
-- **Status:** OFFEN
+- **Status:** ERLEDIGT (2026-05-09)
 - **Phasentyp-Kontext:** UMSETZUNG
 - **Abhängigkeiten:** 1.3
 - **Freigabepflichtig:** nein
@@ -257,6 +257,21 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 - **Reifegrad-Wirkung:** keine direkten Beförderungen; Datenmodell-Grobschnitt bleibt `[VORLÄUFIG]`.
 - **Artefakte:** `backend/eb_digital/db/`, `migrations/`, `alembic.ini`, Compose-Snippet für PostgreSQL.
 - **Notizen:** Mandanten-spezifische Tabellen werden in Phase 2 angelegt – hier nur die Plumbing-Schicht.
+- **Versions-Verifikation für Schritt 1.4** (Modus-2-Schritt 2a, Sessionstart 2026-05-09):
+  - **asyncpg 0.31.0** — `Verifiziert: 2026-05-09` (PyPI-Stand: 0.31.0 vom 2025-11-24, ~5,5 Monate alt; PostgreSQL-17-Support seit 0.30.0; einziger Breaking Change in 0.31.0 ist Drop von Python 3.8, irrelevant für unseren Stack 3.13). Patrick wählte **Option A** (`asyncpg~=0.31.0`).
+  - In `project-context.md` Abschnitt 3 Sub-Block "Backend Frameworks und Bibliotheken" mit Stempel ergänzt.
+- **Verifikation am 2026-05-09 (alle Akzeptanzkriterien erfüllt):**
+  1. ✅ `docker compose --profile dev up -d` startet `postgres:17.9@sha256:347bc4e6…` (Digest am 2026-05-09 aus Docker Hub Registry geholt), Container `healthy` nach 11 Sekunden.
+  2. ✅ `alembic upgrade head` läuft fehlerfrei zweistufig: `(empty) → 0bf0aa5ccee1 baseline → 660e1a12a41a add health marker`.
+  3. ✅ `alembic revision --autogenerate -m "add health marker"` erkennt das `HealthMarker`-Modell und erzeugt eine Migration mit korrekt benannten Constraints (`pk_health_marker`, `uq_health_marker_label`) gemäß Naming-Convention.
+  4. ✅ `alembic check` nach Anwendung der generierten Migration: `No new upgrade operations detected` (Idempotenz bestätigt — ORM und Migration in Sync).
+  5. ✅ Async-Session-Lifecycle gegen reale Postgres: Insert/Select/Delete eines `HealthMarker` mit timezone-aware Audit-Timestamps, danach `engine.dispose()` mit Pool-Status `Checked out connections: 0` (keine Connection-Leaks).
+  6. ✅ `uv run pytest` 45 Tests grün (Coverage **95 %**; `db/__init__.py` und `db/models.py` je 100 %; Schwelle 80 % weit überschritten).
+  7. ✅ `uv run ruff check backend` + `ruff format --check backend` + `mypy --strict` (7 source files) alle grün.
+  8. ✅ `uv run pre-commit run --all-files` grün auf allen Hooks.
+- **Reibungen während 1.4** (alle dokumentiert im Logbuch-Sessionende-Eintrag):
+  - **`alembic post_write_hooks` mit `console_scripts`-Type fand `ruff` nicht** — uv installiert ruff zwar in `.venv/bin/ruff`, aber nicht als `console_scripts`-Entry-Point. Lösung: Hook-Type auf `exec` umgestellt mit `executable = ruff`. Zusätzlich `ruff check --fix` als zweiter Hook ergänzt, damit auto-generierte Migrationen direkt lint-konform sind.
+  - **Erneute `_editable_impl_*.pth`-Reibung** — Direkter Smoke-Test (`uv run python /tmp/script.py`) konnte das `eb_digital`-Modul nicht importieren, obwohl `pytest` (mit eigenem Discovery) es findet. `uv sync --reinstall-package eb-digital` half diesmal **nicht**; **`rm -rf .venv && uv sync`** war die wirksame Heilung. Phänomen identisch zu Schritt 1.3 — wenn es ein drittes Mal auftritt, lohnt ein Blocker-Eintrag mit Reproduktion.
 
 #### 1.5: Procrastinate-Setup + Worker
 

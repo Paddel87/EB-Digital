@@ -635,7 +635,9 @@ Alle modulübergreifenden Aufrufe sind hier dokumentiert. Änderungen an `[BELAS
 
 ## 7. Datenmodell
 
-Grobübersicht der wichtigsten Entitäten und ihrer Beziehungen. Spalten/Indizes/Migrations-Details gehören in Alembic-Migrations-Dateien (Phase 1 in `backend/db/migrations/`), nicht hier. Reifegrad pro Entität: alle `[VORLÄUFIG]` außer wo markiert.
+Grobübersicht der wichtigsten Entitäten und ihrer Beziehungen. Spalten/Indizes/Migrations-Details gehören in Alembic-Migrations-Dateien (`backend/migrations/versions/`), nicht hier. Reifegrad pro Entität: alle `[VORLÄUFIG]` außer wo markiert.
+
+**Plumbing-Schicht (Stand 2026-05-09 nach Schritt 1.4):** SQLAlchemy 2.0 Async-Engine + asyncpg-Driver, gemeinsamer `DeclarativeBase` mit deterministischer `MetaData`-Naming-Convention für PK/FK/UQ/CK/IX (Voraussetzung für stabile Alembic-Autogenerate-Diffs). `TimestampMixin` liefert `created_at`/`updated_at` als timezone-aware UTC. ID-Schema: UUID v4 als Default für PKs (außer wenn ein Aggregat fachlich Integer-Auto-Increment verlangt — dann ADR). Migrations-Verzeichnis `backend/migrations/`; `alembic.ini` im Repo-Root liest die DB-URL zur Laufzeit aus `Settings`, kein Hard-Coding.
 
 ```mermaid
 erDiagram

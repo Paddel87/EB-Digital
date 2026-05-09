@@ -48,6 +48,7 @@ Pflicht: jede Version trägt einen Vermerk `Verifiziert: YYYY-MM-DD` (Datum, an 
 - FastAPI 0.136.x — `Verifiziert: 2026-05-07`
 - uvicorn 0.46.x mit `[standard]`-Extra (uvloop, httptools, websockets, watchfiles, PyYAML, python-dotenv) — `Verifiziert: 2026-05-09` (Schritt 1.3)
 - SQLAlchemy 2.0.49 — `Verifiziert: 2026-05-07`
+- asyncpg 0.31.x (Async PostgreSQL-Driver für SQLAlchemy 2.0; v0.31.0 released 2025-11-24, droppt nur EOL Python 3.8, PostgreSQL-17-Support seit 0.30.0) — `Verifiziert: 2026-05-09` (Schritt 1.4)
 - Alembic 1.18.x — `Verifiziert: 2026-05-07`
 - Pydantic 2.13.x — `Verifiziert: 2026-05-07`
 - pydantic-settings 2.13.1 (NICHT 2.14 – „Stabilität vor Aktualität": 2.14.1 erst am 2026-05-08 released, Hotfix auf 2.14.0; 2.13.1 hat seit Februar Praxisreife. Migration auf 2.14.x per ADR, sobald die 2.14-Linie stabilisiert ist) — `Verifiziert: 2026-05-09` (Schritt 1.3)
