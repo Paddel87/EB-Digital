@@ -46,10 +46,10 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
      - blockers.md (Aktive Blocker)
      Inkonsistenzen sind Bugs und werden vor Sessionende behoben. -->
 
-- **Projektphase:** Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG); Schritte 1.1 (Repository- und Workspace-Setup) und 1.2 (CI-Pipeline aktivieren) am 2026-05-08 `[ERLEDIGT]`. Branch-Protection auf `main` aktiv mit 8 Required Status Checks. Schritt 1.3 (Backend-Skelett) als nächster Schritt.
+- **Projektphase:** Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG); Schritte 1.1 (Repository- und Workspace-Setup), 1.2 (CI-Pipeline aktivieren) und 1.3 (Backend-Skelett FastAPI + Settings + Logging) `[ERLEDIGT]`. Schritt 1.4 (Datenbank + Alembic + ORM-Konventionen) als nächster Schritt.
 - **Version:** v0.1.0
 - **Status:** Konzeption
-- **Letzte Änderung:** 2026-05-08
+- **Letzte Änderung:** 2026-05-09
 - **Architektur-Reife:** 9 Bestandteile `[BELASTBAR]` (Stack-/NFR-/Datenschutz-Constraints), ca. 35 `[VORLÄUFIG]` (Module, Schnittstellen, Datenmodell-Invarianten), 9 `[OFFEN]` (Spikes G–M, Bedrohungsmodell, Tracing). Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends bleibt bis zum Last-/Funktionstest in Phase 7 `[VORLÄUFIG]`.
 - **Aktive Blocker:** 0 ([`docs/blockers.md`](docs/blockers.md)).
 - **ADRs:** 10 (9 `[STRATEGISCH]` aus INITIALISIERUNG + ADR-010 `[OPERATIV]` zu GitHub-Actions Major-Update + Verifikations-Regime); Reaktiv-Quote 0/10 (Schwellenwert 20 % nicht überschritten).
@@ -57,7 +57,7 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
 
 ## Quick Start
 
-> **Hinweis Konzeptionsphase:** Das Repository enthält die Pflicht-Dokumente und das Tooling-Skelett (uv-/pnpm-Workspace, Pre-Commit-Hooks, CI-Pipeline auf GitHub Actions). Anwendungscode (FastAPI-App, Frontend-Skelette, Compose-`dev`-Profil) folgt mit Phase-1-Schritten 1.3–1.8; siehe [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
+> **Hinweis Konzeptionsphase:** Das Repository enthält die Pflicht-Dokumente, das Tooling-Skelett (uv-/pnpm-Workspace, Pre-Commit-Hooks, CI-Pipeline auf GitHub Actions) und seit Schritt 1.3 das Backend-Skelett (FastAPI + Settings + JSON-Logging mit PII-Redaction + `/health`-Endpoint). Restlicher Anwendungscode (Datenbank, Frontend-Skelette, Compose-`dev`-Profil) folgt mit Phase-1-Schritten 1.4–1.8; siehe [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
 
 ### Voraussetzungen
 
@@ -84,6 +84,12 @@ pnpm install                                         # Node-Dev-Tooling (commitl
 uv run pre-commit install \
   --hook-type pre-commit --hook-type commit-msg      # Hooks lokal aktivieren
 uv run pre-commit run --all-files                    # Alle Hooks einmalig durchlaufen
+
+# Backend-Skelett lokal starten (ab Schritt 1.3)
+cp .env.example .env                                 # Platzhalter ersetzen, .env ist gitignored
+uv run python -m eb_digital serve                    # Uvicorn auf 0.0.0.0:8000
+curl http://localhost:8000/health                    # → {"status":"ok","version":"0.1.0"}
+uv run pytest                                        # 26 Tests, Coverage ≥ 80 %
 ```
 
 ## Architektur (Überblick)
@@ -126,8 +132,8 @@ graph LR
 
 ## Nächste Schritte
 
-1. **Phase 1 Schritt 1.3 – Backend-Skelett (FastAPI + Settings + Logging)**: `backend/eb_digital/{__main__.py, app.py, logging.py, settings.py}` plus erste Tests in `backend/tests/`. Healthcheck-Endpoint `/health`, strukturiertes JSON-Logging mit PII-Redaction. Detail in [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
-2. **Phase 1 Schritte 1.4–1.8** (UMSETZUNG): PostgreSQL+Alembic+ORM, Procrastinate-Worker, Admin-Bootstrap-CLI (ADR-004), Frontend-Workspaces, Compose-`dev`-Profil mit Caddy + Tile-Proxy.
+1. **Phase 1 Schritt 1.4 – Datenbank + Alembic + ORM-Konventionen**: PostgreSQL-Container im Compose-`dev`-Profil, SQLAlchemy 2.0 Async-Engine + DeclarativeBase mit Naming-Convention, Alembic-Init mit Async-Template, ein Test-ORM-Modell zur Setup-Validierung. Detail in [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
+2. **Phase 1 Schritte 1.5–1.8** (UMSETZUNG): Procrastinate-Worker, Admin-Bootstrap-CLI (ADR-004), Frontend-Workspaces, Compose-`dev`-Profil mit Caddy + Tile-Proxy.
 3. **Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2)** (UMSETZUNG): Vollständige Auth-Schicht, Mandanten-Onboarding, `operation_tenant_participation` als alleinige Operation↔Mandant-Verknüpfung (ADR-009 Invariante I1), abstrakter Berechtigungs-Filter (Invariante I2).
 
 → Vollständiger Fahrplan mit 7 regulären Phasen plus späterer Verbund-Erweiterungs-Phase X: [`docs/fahrplan.md`](docs/fahrplan.md)

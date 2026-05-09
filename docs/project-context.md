@@ -46,9 +46,11 @@ Pflicht: jede Version trägt einen Vermerk `Verifiziert: YYYY-MM-DD` (Datum, an 
 **Backend Frameworks und Bibliotheken**
 
 - FastAPI 0.136.x — `Verifiziert: 2026-05-07`
+- uvicorn 0.46.x mit `[standard]`-Extra (uvloop, httptools, websockets, watchfiles, PyYAML, python-dotenv) — `Verifiziert: 2026-05-09` (Schritt 1.3)
 - SQLAlchemy 2.0.49 — `Verifiziert: 2026-05-07`
 - Alembic 1.18.x — `Verifiziert: 2026-05-07`
 - Pydantic 2.13.x — `Verifiziert: 2026-05-07`
+- pydantic-settings 2.13.1 (NICHT 2.14 – „Stabilität vor Aktualität": 2.14.1 erst am 2026-05-08 released, Hotfix auf 2.14.0; 2.13.1 hat seit Februar Praxisreife. Migration auf 2.14.x per ADR, sobald die 2.14-Linie stabilisiert ist) — `Verifiziert: 2026-05-09` (Schritt 1.3)
 - httpx 0.28.x (1.0 noch in dev) — `Verifiziert: 2026-05-07`
 
 **Auth-Bausteine (kein Auth-Framework, eigene dünne Schicht)**
