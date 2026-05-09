@@ -76,12 +76,15 @@ Begründung: PostgreSQL als Backing nutzt vorhandene Infrastruktur und macht Job
 
 **Frontend Frameworks und Bibliotheken**
 
-- Svelte 5.55.x (Svelte 5 ist stabile Default-Linie) — `Verifiziert: 2026-05-07`
-- SvelteKit 2.59.x — `Verifiziert: 2026-05-07`
-- Vite 8.0.x (Rolldown-basiert, stable seit 2026-03-12) — `Verifiziert: 2026-05-07`
-- vite-plugin-pwa 1.3.x (peer-dep auf Vite 8) — `Verifiziert: 2026-05-07`
-- MapLibre GL JS 5.24.x (BSD-3) — `Verifiziert: 2026-05-07`
-- Workbox 7.4.x — `Verifiziert: 2026-05-07`
+- Svelte 5.55.x (Svelte 5 ist stabile Default-Linie) — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-10 Schritt 1.7)
+- SvelteKit 2.59.x — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-10 Schritt 1.7)
+- @sveltejs/adapter-static 3.0.x — `Verifiziert: 2026-05-10` (Schritt 1.7); MIT; gewählt statt `@sveltejs/adapter-auto`/`adapter-node`, weil Frontends als statische Bundles hinter Caddy serviert werden (architecture.md Abschnitt 2)
+- @sveltejs/vite-plugin-svelte 7.1.x — `Verifiziert: 2026-05-10` (Schritt 1.7); MIT; transitiv über `@sveltejs/kit`, expliziter Pin macht Major-Updates ADR-pflichtig
+- TypeScript 6.0.3 (Re-Bestätigung 2026-05-10 Schritt 1.7) — siehe Sprachen-Block oben
+- Vite 8.0.x (Rolldown-basiert, stable seit 2026-03-12) — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-10 Schritt 1.7)
+- vite-plugin-pwa 1.3.x (peer-dep auf Vite 8) — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-10 Schritt 1.7)
+- MapLibre GL JS 5.24.x (BSD-3) — `Verifiziert: 2026-05-07` (Aktivierung in Phase 6 nach Spike L)
+- Workbox 7.4.x — `Verifiziert: 2026-05-07` (transitiv via vite-plugin-pwa in Phase 1; expliziter Import in Phase 6)
 
 **Infrastruktur**
 
@@ -121,7 +124,9 @@ Bibliotheken und Tools, die ohne separate Freigabe eingesetzt werden dürfen, so
 
 **Frontend Test- und Qualitäts-Tooling**
 
-- vitest 4.1.x mit Coverage — `Verifiziert: 2026-05-07`
+- vitest 4.1.x mit Coverage — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-10 Schritt 1.7)
+- @vitest/coverage-v8 4.1.x — `Verifiziert: 2026-05-10` (Schritt 1.7); MIT; vitest-Coverage-Reporter analog `pytest-cov`
+- @types/node 24.12.x — `Verifiziert: 2026-05-10` (Schritt 1.7); MIT; Type-Stubs für Node 24 LTS, Pflicht für vite/svelte-kit-tsconfig (`types: ["node"]`)
 - Playwright 1.59.x (E2E-Smoke-Tests pro Frontend, ausgeweitet in STABILISIERUNG) — `Verifiziert: 2026-05-07`
 - ESLint 10.3.x — `Verifiziert: 2026-05-07`
 - @typescript-eslint 8.59.x — `Verifiziert: 2026-05-07`

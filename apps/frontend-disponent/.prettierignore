@@ -1,0 +1,8 @@
+# Build-Output und SvelteKit-Sync-Output (per Workspace, weil prettier 3.x
+# .prettierignore aus dem CWD relativ auflöst und Root-Patterns nicht
+# zuverlässig auf Workspace-Pfade durchgreifen).
+.svelte-kit/
+build/
+dist/
+node_modules/
+.vite/

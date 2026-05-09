@@ -10,9 +10,10 @@
 - **Stand vom:** 2026-05-10
 - **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
-- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09, **1.4 [ERLEDIGT]** 2026-05-09, **1.5 [ERLEDIGT]** 2026-05-09, **1.6 [ERLEDIGT]** 2026-05-10 (`backend/eb_digital/auth/{models,hashing,cli}.py` mit `PlatformAdmin`-ORM, Argon2id-Hashing-Wrapper über `argon2-cffi`, asynchroner `create_platform_admin`-Use-Case mit Idempotenz-SELECT vor INSERT; CLI-Subcommand `python -m eb_digital admin create --username NAME` mit interaktivem getpass-Passwort, `created admin user: <name>`-stdout, JSON-Log `platform_admin_created` ohne Klartext/Hash/Salt; Migration `add_platform_admin` mit Naming-Convention-konformen Constraints inkl. `CHECK (created_via IN ('bootstrap_cli','admin_cli'))`; 30 neue Tests, Coverage `backend/auth/*` **100 %**, gesamt 94 %; argon2-cffi 25.1.0 re-bestätigt + itsdangerous 2.2.0 erst-verifiziert. **Schnittstelle S1** in `architecture.md` von `[VORLÄUFIG]` auf `[BELASTBAR]` befördert.
-- **Nächster Schritt:** **1.7 – Frontend-Workspaces + PWA-Skelett** _oder_ **1.8 – Infrastruktur (Caddy + nginx) + Compose dev-Profil** (1.7 ist parallelisierbar, hängt nur an 1.1 ✓; 1.8 wartet bis 1.7 erledigt ist). Versions-Re-Verifikation für `svelte`/`@sveltejs/kit`/`vite` zu Sessionstart 1.7 (Modus-2-Schritt-2a-Disziplin).
+- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09, **1.4 [ERLEDIGT]** 2026-05-09, **1.5 [ERLEDIGT]** 2026-05-09, **1.6 [ERLEDIGT]** 2026-05-10, **1.7 [ERLEDIGT]** 2026-05-10 (drei SvelteKit-2.59-Workspaces unter `apps/frontend-{disponent,betreuer,einsatzkraft}` mit Svelte 5.55, Vite 8.0, TypeScript 6.0.3 strict + noUncheckedIndexedAccess + noImplicitReturns; `@sveltejs/adapter-static` für statische Auslieferung hinter Caddy; `vite-plugin-pwa` mit `generateSW`+Workbox-NetworkFirst-Strategy für Betreuer (`/api/*`-Cache) und Einsatzkraft (`/api/anon/*`-Cache, kürzere TTL); Disponent ohne PWA gemäß Vision-Constraint; `/health`-Route pro Frontend mit App-Name + Version + Build-Time aus `vite.config.ts`-`define`; ESLint-Flat-Config mit typescript-eslint 8.59 + eslint-plugin-svelte 3.17 + eslint-plugin-security 4.0 inline pro Frontend; Prettier mit `prettier-plugin-svelte` pro Frontend; vitest 4.1 mit Coverage-v8; `pnpm -r build/check/lint/format/tsc/test` alle grün; SW + manifest.webmanifest in Build-Output für Betreuer + Einsatzkraft, nicht für Disponent; Dev-Server Smoke (curl `/` und `/health` 200) bestätigt). Architektur-Modul-Reifegrade unverändert `[VORLÄUFIG]` (Skelett ohne Domain-Logik).
+- **Nächster Schritt:** **1.8 – Infrastruktur (Caddy + nginx) + Docker Compose dev-Profil**. Eingangskriterien: 1.3 ✓, 1.4 ✓, 1.5 ✓, 1.6 ✓, 1.7 ✓ — alle Skelette laufen einzeln. Konkret: `infra/reverse-proxy/Caddyfile` mit lokaler Domain + Routing zu Backend + drei Frontends; `infra/tile-proxy/nginx.conf` mit Cache-Pfad und Stub-Routing zu MapTiler/TomTom; `docker-compose.yml`-Profile `dev`/`staging`/`production` komplettiert; `scripts/dev-smoke.sh`. Re-Verifikation für `nginx`/`caddy`/Docker-Versionen zu Sessionstart 1.8.
 - **Offene STOPP-Situationen:** keine.
+- **Aktive Blocker:** **1** ([Blocker #001](blockers.md): uv-/venv-Korruption nach intensiven Reinstall-/Sync-Sequenzen — vier Vorfälle bis 2026-05-10; Workaround `rm -rf .venv && uv sync --reinstall` zuverlässig, kein Schritt-Blocker, aber Pattern dokumentiert für mögliche fünfte Eskalation).
 
 ## Phasen-Typen
 
@@ -83,16 +84,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                      |
-| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ------------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1–1.6 erledigt; 1.7–1.8 offen) |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                       |
-| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                       |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                       |
-| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                       |
-| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                       |
-| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                       |
-| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                       |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                  |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | --------------------------------------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1–1.7 erledigt; 1.8 offen) |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                   |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                   |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                   |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                   |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                   |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                   |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                   |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -342,7 +343,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 #### 1.7: Frontend-Workspaces + PWA-Skelett
 
-- **Status:** OFFEN
+- **Status:** ERLEDIGT (2026-05-10)
 - **Phasentyp-Kontext:** UMSETZUNG
 - **Abhängigkeiten:** 1.1
 - **Freigabepflichtig:** nein

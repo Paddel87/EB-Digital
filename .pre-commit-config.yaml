@@ -71,7 +71,12 @@ repos:
     hooks:
       - id: actionlint
 
-  # TypeScript/Frontend: Prettier (3.8.x, project-context.md Abschnitt 3).
+  # Prettier für Repo-Root-Dateien (Doku, Konfig, etc.) — OHNE
+  # prettier-plugin-svelte, weil die isolierte pre-commit-Hook-venv das
+  # Plugin nicht aus dem Workspace-node_modules auflösen kann (Schritt 1.7
+  # Reibung: `Cannot find package 'prettier-plugin-svelte' imported from
+  # /noop.js`). Frontend-Dateien werden vom lokalen `pnpm -r format`-Hook
+  # weiter unten geprüft, der das Plugin pro Workspace findet.
   # Hinweis: pre-commit/mirrors-prettier wurde archiviert und stoppt bei
   # v4.0.0-alpha.x – Community-Fork rbubley/mirrors-prettier pflegt die
   # stabilen v3.x-Tags weiter und ist semantisch identisch (gleiche
@@ -80,12 +85,10 @@ repos:
     rev: v3.8.0
     hooks:
       - id: prettier
-        types_or:
-          [javascript, jsx, ts, tsx, svelte, json, css, scss, markdown, yaml]
-        # Frontend-Workspace plus Doku/Konfig im Repo-Root.
+        types_or: [javascript, jsx, ts, tsx, json, css, scss, markdown, yaml]
+        exclude: "^apps/"
         additional_dependencies:
           - prettier@3.8.0
-          - prettier-plugin-svelte@3.5.0
 
   # TypeScript/Frontend: ESLint, TSC, svelte-check als lokale Hooks
   # (laufen über pnpm-Workspace-Scripts, weil sie auf installierte Dependencies
@@ -97,6 +100,14 @@ repos:
         entry: pnpm -r lint
         language: system
         types_or: [javascript, jsx, ts, tsx, svelte]
+        files: ^apps/
+        pass_filenames: false
+
+      - id: prettier-frontend
+        name: Prettier (frontend, mit svelte-plugin)
+        entry: pnpm -r format
+        language: system
+        types_or: [ts, tsx, svelte, json, css, scss, markdown, yaml]
         files: ^apps/
         pass_filenames: false
 
