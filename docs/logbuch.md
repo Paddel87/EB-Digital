@@ -28,6 +28,76 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ### 2026-05-09 – [SESSIONENDE]
 
+- **Session-Dauer:** ca. 3 h (Sessionstart bis Sessionende-Commit-Vorbereitung).
+- **Bearbeitet:** Phase 1 Schritt 1.5 — **Procrastinate-Setup + Worker.** Status `[OFFEN]` → `[ERLEDIGT]`. Plus eine ungeplante, mid-Session entstandene Methodik-/Lizenz-Entscheidung (ADR-011 + Regel-016).
+- **Erreicht:**
+  - **Versions-Verifikation 1.5** (delegiert an mich nach 1.3-Pattern): PyPI + GitHub-Releases + raw `pyproject.toml` für `procrastinate`. **3.8.1** (released 2026-04-08, ~1 Monat alt, Production/Stable, MIT). Kein Hotfix-Pattern wie 2.14.x bei pydantic-settings → Empfehlung A. **Patrick wählte Option A:** `procrastinate~=3.8.1` plus **PsycopgConnector** (Procrastinate-Default-Pfad).
+  - **STOPP wegen Lizenz-Reibung:** Beim ersten `uv run python ...` mit procrastinate-Import fiel auf, dass psycopg (Pflicht-Sub-Dep von procrastinate) **LGPL-3.0-only** ist. `project-context.md` Abschnitt 6 schließt LGPL ohne ADR aus. STOPP-Block formuliert mit drei Optionen: (A) ADR-Akzeptanz, (B) Procrastinate kippen (effektiv unmöglich), (C) ADR-Akzeptanz **plus** Methodik-Regel für Sub-Dep-Lizenz-Prüfung. **Patrick wählte C.**
+  - **ADR-011** `[OPERATIV] [STACK] [METHODIK]` — psycopg LGPL-3.0-only akzeptiert. Geltungsbereich der LGPL-Verschmutzung auf Persistenz-/Job-Engine-Pfad beschränkt; Module ohne Job-Engine (`infra/tile-proxy`, Routing-Adapter in `backend/geo`) bleiben extraktionsfähig. **Regel-016** abgeleitet — Sub-Dep-Lizenz-Prüfung im Verifikations-Regime, schließt die methodische Lücke aus Modus-2-Schritt-2a. Tabelle Teil A in `decisions.md` aktualisiert. `project-context.md` Abschnitt 6 um „Aktive Ausnahmen"-Sub-Block + Sub-Dep-Lizenz-Prüfung-Verweis erweitert. **Reaktiv-Quote bleibt 0/10.**
+  - **`pyproject.toml`:** `procrastinate~=3.8.1` und `psycopg[binary,pool]~=3.3.4` als Runtime-Deps mit Verifiziert-Stempel. Kommentar im Datei-Kopf entfernt (procrastinate ist nicht mehr „kommend").
+  - **`project-context.md`** Abschnitt 3 Sub-Block Background-Jobs überarbeitet — procrastinate jetzt mit Versions-Pin, Connector-Begründung; psycopg als eigene Stack-Zeile mit ADR-011-Verweis. Begründungs-Block aktualisiert.
+  - **Procrastinate-DB-Schema-Migration** `add_procrastinate_schema` (Revision `1e343dae5fc4`):
+    - `upgrade()` nutzt `procrastinate.schema.SchemaManager.get_schema()` als Quelle.
+    - **Statement-Splitter** (`_split_postgres_statements`) inline in der Migration: respektiert Top-Level-Semikolons, schützt `$$`/`$tag$`-Dollar-Quoting für Function-Bodies und `DO`-Blöcke. Begründung: asyncpg's prepared-statement-Modus lehnt Multi-Statement ab (`cannot insert multiple commands into a prepared statement`).
+    - `downgrade()` als Liste expliziter `DROP ... CASCADE`-Statements (Tabellen, Functions, Composite-Type, Enum-Types in der richtigen Reihenfolge). 4 Tabellen + 18 Functions + 3 Enum-Types sauber rekonstruierbar.
+  - **`backend/migrations/env.py`:** `include_object` + `include_name` Callbacks blenden `procrastinate_*`-Objekte aus, damit `alembic check`/`alembic revision --autogenerate` keine Drop-Operationen für die externe Schema-Verwaltung vorschlagen.
+  - **`backend/eb_digital/jobs/`:**
+    - `__init__.py`: `_to_psycopg_conninfo()` (URL-Konvertierung `postgresql+asyncpg://` → `postgresql://`), `make_procrastinate_app()` Factory, Modul-Level `procrastinate_app: App` mit Side-Effekt-Import des `ping`-Sub-Moduls. **Job-Modul-Konvention** dokumentiert: jedes Backend-Modul mit Hintergrund-Jobs bekommt ein eigenes `jobs/`-Submodul.
+    - `ping.py`: `@procrastinate_app.task(name="ping")` mit `INFO`-Logger-Eintrag `ping_task_executed` und Rückgabe `"pong"`. Phase-1-Sentinel; entfernt in Phase 2 sobald produktive Tasks existieren.
+  - **`backend/eb_digital/__main__.py`** `worker`-Subcommand:
+    - `--queue` (repeatable) + `--concurrency`-Args.
+    - `_cmd_worker` ruft `configure_logging` vor dem `asyncio.run(_run_worker(...))` (analog zu `_cmd_serve` mit uvicorn — JSON-Logs propagieren via Root).
+    - `_run_worker` öffnet `procrastinate_app.open_async()` und ruft `run_worker_async`. KeyboardInterrupt → exit 0 (Procrastinate behandelt SIGINT/SIGTERM intern und ruft sauberen Shutdown).
+    - mypy-Reibung mit Procrastinate's `WorkerOptions`-TypedDict (deklariert `queues: Iterable[str]` ohne `Optional`, Doku sagt aber `None = alle queues`): umgangen durch konditionalen kwarg-Pass + `# type: ignore[arg-type]` mit Begründungs-Kommentar.
+  - **`docker-compose.yml`** `worker`-Service im `dev`-Profil: `build: docker/Dockerfile.backend`, `image: eb-digital-backend:dev`, `depends_on: db (healthy)`, `command: ["python", "-m", "eb_digital", "worker"]`, `env_file: .env`, `restart: unless-stopped`. `DATABASE_URL` über Compose-Network `db:5432`.
+  - **`docker/Dockerfile.backend`** multi-stage (builder/runtime), Python 3.13.13-slim, uv 0.11.0, copy von `pyproject.toml + uv.lock + README.md + LICENSE + backend/ + alembic.ini`, `uv sync --frozen --no-dev`. Default-CMD `python -m eb_digital serve` (für 1.8 Backend-Server-Service); worker-Service überschreibt CMD. UID/GID 1000 als non-root. **Wird in 1.8 wiederverwendet** für den `backend`-Service — kein zweites Image nötig.
+  - **21 neue Tests** in `backend/tests/test_jobs.py` (7), `test_migration_splitter.py` (11), Erweiterung von `test_main.py` (3 zusätzliche Worker-CLI-Tests).
+  - **`.pre-commit-config.yaml`** mypy-Hook `additional_dependencies` um `procrastinate~=3.8.1` und `psycopg[binary,pool]~=3.3.4` erweitert (analog zu 1.4 für sqlalchemy/asyncpg/alembic).
+  - **`pyproject.toml`** Coverage-Source-Pfad von `backend/eb_digital` auf `eb_digital` (Modul-Name) gewechselt — der Editable-Install-Pfad wird korrekt erkannt, die `0%`-Coverage-Reibung mit der neuen conftest-Top-Level-Logik ist behoben.
+  - **`backend/tests/conftest.py`:** ENV-Defaults werden jetzt **am Modul-Top-Level** via `os.environ.setdefault` gesetzt (für Test-Collection-Time, weil `eb_digital.jobs` die Settings beim Import lädt). Pro-Test-Override über Fixture bleibt erhalten. `from eb_digital.settings ...` bewusst nur in der Fixture (nicht Top-Level), damit Coverage das Modul beim ersten Test-Import sieht.
+- **Verifikations-Sequenz (alle Akzeptanzkriterien aus Fahrplan 1.5 erfüllt):**
+  1. ✅ Lokaler Smoke-Test: ping deferred → Worker-Pickup nach <1 s → `ping_task_executed` + `Result: pong` als JSON-Logs.
+  2. ✅ Lokaler SIGTERM-Test: `kill -TERM <pid>` → Worker stoppt nach 2 s mit Stop-Sequenz.
+  3. ✅ Container-Smoke-Test: Image gebaut, Worker im Container läuft, ping deferred, Job durchgeführt mit identischer Log-Sequenz.
+  4. ✅ Container-SIGTERM-Test: `docker compose stop worker` → sauberer Shutdown in <1 s.
+  5. ✅ `alembic upgrade head` + `alembic check` (No new upgrade operations) + `alembic downgrade 660e1a12a41a && upgrade head` Roundtrip.
+  6. ✅ `uv run ruff check backend` + `ruff format --check backend` + `uv run mypy --strict` alle grün (9 source files).
+  7. ✅ `uv run pytest` 66 Tests grün, Coverage **92 %** gesamt.
+  8. ✅ `uv run pre-commit run --all-files` grün auf allen Hooks.
+- **Reibungen während der Session:**
+  - **Methoden-Erfolg — STOPP-Disziplin bei Lizenz-Reibung:** Vor jeder Code-Änderung mit psycopg habe ich die Lizenz-Reibung erkannt, einen STOPP-Block im CLAUDE.md-Format formuliert und Patrick zur Entscheidung vorgelegt. Disziplin gewahrt; ADR + Regel sind solide dokumentiert; methodische Lücke (Sub-Dep-Lizenz-Prüfung) ist dauerhaft geschlossen.
+  - **asyncpg-Multi-Statement-Limit:** Schon vor dem ersten Migrations-Lauf erwartet (`cannot insert multiple commands into a prepared statement`); Splitter pragmatisch implementiert, mit 11 Tests abgesichert. Alternative (separate psycopg-Sync-Connection in der Migration) wäre transaktions-fragiler gewesen — der Splitter hält die DDL in der Alembic-Outer-Transaktion.
+  - **`alembic check` mit externem Schema:** Procrastinate verwaltet seine Tabellen selbst (eigenes Migrations-System bei zukünftigen Major-Updates). Ohne `include_object`-Filter würden Autogenerate und `alembic check` Drop-Operationen für die `procrastinate_*`-Tabellen vorschlagen. Filter blendet sie aus — saubere Koexistenz.
+  - **`_editable_impl_*.pth`-Reibung dritte Iteration:** trat erneut nach `uv sync --reinstall-package eb-digital` auf. Heilung 1.4 (`rm -rf .venv && uv sync`) wirkte. Drittauftritt rechtfertigt einen Blocker-Stub-Eintrag noch nicht — Heilung ist deterministisch und einzeilig. Sollte das viertes Mal kommen, lege ich einen formalen Blocker an.
+  - **mypy-Hook-Korruption während Verifikation:** `ModuleNotFoundError: No module named '0aca9ce3d91742c5b361__mypyc'` nach einem mid-Session venv-Reinstall. `uv sync --reinstall-package mypy` heilte sofort. Vermutlich pre-commit-mypy-Hook-venv-Cache-Konflikt; Wiederholung nicht beobachtet.
+  - **Coverage-Source-Pfad-Issue:** Mit der neuen conftest-Top-Level-`os.environ.setdefault`-Logik und der Beibehaltung des `--cov=backend/eb_digital`-Pfads (statt Modul-Name) zeigte coverage `0%` mit Warnung „Module backend/eb_digital was never imported". Wechsel auf `--cov=eb_digital` heilte. Dauerhafte Verbesserung — Modul-Name ist auch der robustere Pfad bei Editable-Installs. Diff in `pyproject.toml`.
+  - **Methoden-Lerneffekt — Container-Smoke-Test ist Pflicht in 1.5, weil 1.8 erst kommt:** Akzeptanzkriterien aus dem Fahrplan-Schritt 1.5 verlangen explizit „Worker-Container im Compose-`dev`-Profil". Der lokale Smoke-Test allein hätte das `eb-worker`-Compose-Snippet nicht validiert. Image-Build + Container-Run + Container-SIGTERM ist der entscheidende Schritt — und hat den fehlenden `README.md`+`LICENSE`-Copy im Dockerfile vor dem Commit aufgedeckt (Bugfix in derselben Iteration).
+- **Reaktiv-Quote nach dieser Session:** **0/11 (0 %)**. Schwellenwert 20 % nicht erreicht. ADR-011 ist klar `[OPERATIV]` (planmäßige Nachzieh-Festlegung im Rahmen einer strategisch fixierten Stack-Wahl, kein Pivot).
+- **Nächster Schritt:** **Phase 1 Schritt 1.6 — backend/auth Admin-Bootstrap-CLI** _oder_ **1.7 — Frontend-Workspaces + PWA-Skelett** (parallelisierbar laut Fahrplan). Versions-Re-Verifikation für `argon2-cffi` (1.6) bzw. `svelte`/`@sveltejs/kit`/`vite` (1.7) zu Sessionstart.
+
+### 2026-05-09 – [ADR-ANGELEGT]
+
+- **ADR-011** `[OPERATIV] [STACK] [METHODIK]` – „psycopg LGPL-3.0-only akzeptiert plus Sub-Dependency-Lizenz-Regime". Auslöser: Aufnahme von `procrastinate~=3.8.1` für Schritt 1.5 deckte auf, dass die Pflicht-Sub-Dependency `psycopg` (psycopg3) LGPL-3.0-only ist und damit gegen die Lizenz-Restriktion in `project-context.md` Abschnitt 6 verstößt. ADR-002 (Stack-Wahl) hatte das nicht adressiert — methodische Lücke (Modus-2-Schritt-2a deckt nur Top-Level-Komponenten).
+- **Entscheidung Patrick: Option C** (psycopg-Akzeptanz **plus** Methodik-Regel). Ich hatte A/B/C als Optionen vorgelegt, C empfohlen. Patrick bestätigte „c".
+- **Konkrete Festlegungen:** Geltungsbereich der LGPL-Verschmutzung auf Persistenz-/Job-Engine-Pfad beschränkt; Module ohne Job-Engine (`infra/tile-proxy`, Routing-Adapter) bleiben extraktionsfähig. `psycopg[binary,pool]~=3.3.4` wird als **explizite** Runtime-Dep gepinnt (nicht nur transitiv), Begründung Build-Reproduzierbarkeit auf macOS und im Docker-Container ohne libpq-System-Package.
+- **Regel-016** (Sub-Dependency-Lizenz-Prüfung im Verifikations-Regime) abgeleitet — schließt die methodische Lücke dauerhaft.
+- **Reaktiv-Quote bleibt 0/10.** Klassifikation `[OPERATIV]`, weil planmäßige Nachzieh-Festlegung im Rahmen einer strategisch fixierten Stack-Wahl, kein Pivot.
+- **Auswirkungen auf Schritt 1.5:** keine Verzögerung des Schritts selbst — nach ADR-Anlage geht es nahtlos mit Schema-Migration, Job-Modul und Worker weiter. Die Disziplin-Folge (Sub-Dep-Lizenz-Check für künftige Stack-Komponenten) ist methodisch ab sofort wirksam.
+
+### 2026-05-09 – [SESSIONSTART]
+
+- **Letzter Stand:** Phase 1 Schritt 1.4 am 2026-05-09 abgeschlossen (PR #10 `7dcc068` in `main`); 1.1–1.4 alle ERLEDIGT. Reaktiv-Quote 0/10. Keine aktiven Blocker. Keine offenen STOPP-Situationen.
+- **Geplant für diese Session:** Phase 1 Schritt 1.5 — **Procrastinate-Setup + Worker.** Konkret: `procrastinate`-Pin nach Versions-Verifikation in `pyproject.toml` und `project-context.md` aufnehmen, eigene Migration für das Procrastinate-DB-Schema (`procrastinate apply-schema`-Output als Alembic-Migration), Modul `backend/eb_digital/jobs/` mit `ping`-Test-Job (`@app.task(name="ping")`), `__main__.py worker`-Subcommand durch echten Worker-Run ersetzen, `eb-worker`-Service im Compose-`dev`-Profil. Akzeptanzkriterien aus `fahrplan.md` Schritt 1.5: Job einreihen → Worker führt aus → „pong" im Log; Worker stoppt sauber bei `SIGTERM`.
+- **Vorabprüfung:**
+  - **Branch-Awareness:** `git fetch --all --prune` zu Sessionstart durchgeführt; Worktree-Branch `scp/romantic-shockley-190ddb` initial bei `a81e981` (PR #9), nach `git pull --ff-only` auf `7dcc068` synchron mit `origin/main` (PR #10 mit 1.4 wurde gemerged, der Worktree-SESSIONSTART zunächst „weiter mit 1.5" wurde durch Patrick mit Hinweis auf den letzten Commit korrigiert; Synchronisation nachgezogen). Worktree-Stand entspricht Fahrplan-Stand 1.4 ERLEDIGT, 1.5 OFFEN.
+  - Phase 1 = UMSETZUNG. Schritt 1.5 hat Eingangskriterien: 1.4 ✓ (PostgreSQL läuft im Compose-`dev`-Profil, Async-Engine konfiguriert). Nicht freigabepflichtig laut Fahrplan.
+  - Sonderregel Phase 1 (Eingangsdisziplin abgemildert) gilt weiter — Procrastinate-Job-Engine ist laut Reifegrad-Übersicht bereits `[BELASTBAR]` (Stack-fix), die Compose-Realisierung ist hier zu bauen.
+  - **Versions-Re-Verifikation Pflicht für 1.5** (Notiz aus Schritt 1.1 + Modus-2-Schritt-2a): `procrastinate` wird hier neu gepinnt — Re-Verifikation auf offiziellen Quellen (PyPI + GitHub-Releases) zu Sessionbeginn, dann in `project-context.md` Abschnitt 3 mit `Verifiziert: 2026-05-09`-Stempel ergänzen. Ohne Verifikation keine Aufnahme ins Pinning-Set.
+- **Reibung beim Sessionstart (gelöst):** Erster Sessionstart-Befund („1.4 OFFEN, weiter mit 1.5") basierte auf veraltetem Worktree-Stand (`a81e981`); ohne `git fetch --all` direkt nach Pflichtlektüre wurde der zwischenzeitlich gemergete PR #10 nicht gesehen. Patricks Hinweis „1.4 ist fertig, prüfe letzten Commit" hat das aufgedeckt. Wiederholung des **Lerneffekts vom 2026-05-08 22:22**: Branch-Awareness mit `git fetch --all --prune` gehört vor die Pflichtlektüre, nicht danach. Hier nochmal als Reibung dokumentiert; die fundamentale Methodik-Anpassung (`fetch` als Vor-Pflichtlektüre-Schritt in CLAUDE.md Abschnitt 2 verankern) bleibt projektmethodisch unerledigt.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus, Worktree `scp/romantic-shockley-190ddb` (Opus 4.7 1M-Kontext).
+
+### 2026-05-09 – [SESSIONENDE]
+
 - **Session-Dauer:** ca. 1 h 45 min (Sessionstart bis Sessionende-Commit-Vorbereitung).
 - **Bearbeitet:** Phase 1 Schritt 1.4 — **Datenbank + Alembic + ORM-Konventionen.** Status `[OFFEN]` → `[ERLEDIGT]`.
 - **Erreicht:**

@@ -13,18 +13,19 @@
 
 ## Teil A: ADR-Übersicht
 
-| ADR | Datum      | Status | Klassifikation | Themen        | Kategorie                  | Kurztitel                                                              |
-| --- | ---------- | ------ | -------------- | ------------- | -------------------------- | ---------------------------------------------------------------------- |
-| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK      | Methodik                   | Projektgrößen-Klassifikation Klasse G                                  |
-| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK         | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate) |
-| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK      | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends        |
-| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY      | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                    |
-| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY      | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                         |
-| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL   | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets               |
-| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                     |
-| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL         | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                     |
-| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL   | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5             |
-| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.  | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                     |
+| ADR | Datum      | Status | Klassifikation | Themen          | Kategorie                  | Kurztitel                                                              |
+| --- | ---------- | ------ | -------------- | --------------- | -------------------------- | ---------------------------------------------------------------------- |
+| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK        | Methodik                   | Projektgrößen-Klassifikation Klasse G                                  |
+| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK           | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate) |
+| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK        | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends        |
+| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY        | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                    |
+| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY        | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                         |
+| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL     | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets               |
+| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE   | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                     |
+| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL           | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                     |
+| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL     | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5             |
+| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                     |
+| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime               |
 
 ### Reaktiv-Quote
 
@@ -341,6 +342,30 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
 
 ---
 
+#### ADR-011: psycopg LGPL-3.0-only akzeptiert plus Sub-Dependency-Lizenz-Regime
+
+- **Datum:** 2026-05-09
+- **Status:** Aktiv
+- **Tags:** `[OPERATIV]` `[STACK]` `[METHODIK]`
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 1, im Anschluss an Schritt 1.5-Start)
+- **Reifegrad-Wirkung:** keine Architektur-Reifegrad-Beförderungen; festigt aber den Stack-Eintrag „Procrastinate" als belastbar in seiner praktischen Realisierbarkeit (vorher offene Lizenz-Frage bei der Pflicht-Sub-Dep psycopg).
+- **Kategorie:** Lizenz- und Compliance-relevante Änderung (CLAUDE.md Abschnitt 4 Punkt 8).
+- **Kontext:** Beim Aufnehmen von `procrastinate` (gemäß ADR-002 strategisch fixierte Job-Engine) für Schritt 1.5 wurde die Pflicht-Sub-Dependency `psycopg` (psycopg3) sichtbar. Auf PyPI und im Upstream-LICENSE.txt mit License-Expression **`LGPL-3.0-only`** markiert. `project-context.md` Abschnitt 6 schließt GPL/LGPL als Backend-Dependency ohne ADR aus, mit der Begründung, dass einzelne Module später ohne Lizenz-Reibung als eigenständige Bibliotheken extrahierbar bleiben sollen. ADR-002 (Stack-Wahl) hatte diese transitive Lizenz-Frage nicht adressiert – das ist eine methodische Lücke, weil Modus-2-Schritt-2a (Versions-Verifikation) systematisch nur Top-Level-Komponenten erfasst und Sub-Dependencies offen lässt. Die Frage stellt sich jetzt akut, weil ohne psycopg keine Procrastinate-Realisierung möglich ist (kein anderer First-Class-Connector, kein gangbarer Job-Engine-Ersatz im Rahmen der Constraints aus ADR-002 und `project-context.md` Abschnitt 3).
+- **Optionen:**
+  - **A:** psycopg LGPL-3.0-only als transitive Dep akzeptieren, ADR-Folgeeintrag mit Begründung. – Konsequenzen: pragmatisch, technisch ohne Reibung. Erste echte LGPL-Akzeptanz im Projekt.
+  - **B:** Procrastinate-Wahl revidieren, andere Job-Engine wählen. – Konsequenzen: Kein gangbarer Ersatz im Rahmen unserer Constraints. Taskiq, ARQ, Celery sind in `project-context.md` Abschnitt 3 explizit ausgeschlossen, SAQ in ADR-002 verworfen. Effektiv kein gangbarer Pfad ohne ADR-002-Kippung.
+  - **C:** A plus Methodik-Regel: bei jeder neuen Stack-Komponente werden Pflicht-transitive Dependencies auf Lizenz geprüft und im ADR adressiert (nicht nur Top-Level-Lizenz). – Konsequenzen: schließt die methodische Lücke, die hier sichtbar wurde, und verhindert die Wiederholung bei künftigen Stack-Komponenten.
+- **Entscheidung:** **Option C – psycopg akzeptieren plus Methodik-Regel.** Die LGPL-Akzeptanz für psycopg ist die einzige praktikable Variante, sobald procrastinate gesetzt ist. Zusätzlich wird die Modus-2-Schritt-2a-Disziplin auf Pflicht-Sub-Dependencies ausgedehnt, damit die nächste Stack-Komponente nicht erneut diese Reibung erzeugt.
+- **Konsequenzen:**
+  - **psycopg-Akzeptanz konkret abgegrenzt:** LGPL-3-Lib-Linking aus Python ist dynamisches Linking, der Standard-LGPL-konforme Pfad. AGPLv3-Hauptlizenz vereinbart sich. Die Modul-Extraktions-Strategie aus `project-context.md` Abschnitt 6 bleibt für **andere** Module gewahrt: `infra/tile-proxy`, der Routing-Adapter in `backend/geo` und ähnliche sauber gegen Job-Engine getrennte Module verwenden psycopg **nicht** und sind weiterhin ohne LGPL-Verschmutzung extrahierbar. Verschmutzung ist auf den Persistenz-/Job-Engine-Pfad beschränkt.
+  - **`pyproject.toml`** nimmt `psycopg[binary,pool]` als **explizite** Runtime-Dependency auf (statt nur transitiv über procrastinate). Begründung: macOS-Entwicklung ohne System-libpq und Docker-Container ohne `apt-get install libpq5`-Schritt sind beide nur mit dem Binary-Wheel reproduzierbar; das `pool`-Extra ist ohnehin von procrastinate gefordert. Pin: aktuelles Patch-Tag `~=3.3.4` (analog zu Stack-Komponenten-Verifikations-Regime).
+  - **`project-context.md` Abschnitt 3** – neuer Sub-Block-Eintrag „psycopg 3.3.4 (LGPL-3.0-only, transitive Pflicht-Dep zu procrastinate)" mit `Verifiziert: 2026-05-09`-Stempel; Eintrag bei „Compliance und Lizenz" um expliziten Verweis auf ADR-011 als Ausnahme von der LGPL-Restriktion erweitert.
+  - **Klassifikation `[OPERATIV]`, nicht `[REAKTIV]`:** Die LGPL-Frage war prinzipiell aus procrastinates `pyproject.toml` ableitbar. Sie wurde in ADR-002 nicht erfasst, weil die damalige Modus-2-Methodik keine Sub-Dependency-Lizenz-Prüfung vorgesehen hat. Es ist eine nachgezogene Festlegung im Rahmen einer strategisch gesetzten Stack-Wahl, kein unerwarteter Pivot. Reaktiv-Quote bleibt 0/10.
+  - **Methodische Lehre:** Sub-Dep-Lizenz-Prüfung wird in das Verifikations-Regime aufgenommen (Regel-016), greift bei jeder neuen Top-Level-Stack-Komponente.
+- **Abgeleitete Regel:** Regel-016 (Sub-Dependency-Lizenz-Prüfung im Verifikations-Regime) – siehe Teil C.
+
+---
+
 ## Teil C: Entscheidungsregeln
 
 <!-- Regeln für wiederkehrende Fälle, damit die KI in ähnlichen Situationen
@@ -480,3 +505,11 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
 - **Regel:** Alle GitHub-Actions stehen unter demselben Verifikations-Regime wie die anderen Stack-Komponenten (`project-context.md` Abschnitt 3): jede Action trägt einen `Verifiziert: YYYY-MM-DD`-Stempel im Sub-Block „GitHub Actions". Pin-Form je nach Maintainer-Praxis: **Patch-Tag** (z. B. `@v8.1.0`) für Repos außerhalb der `actions/`-Org (Immutable-Tag-Trend); **Major-Tag** (z. B. `@v6`) für Actions aus der `actions/`-Org (dort pflegen die Maintainer Major-Tag-Stabilität). Patch- und Minor-Updates sind freigabefrei mit Stempel-Refresh; Major-Updates erfordern ADR mit Begründung (Regel-001 analog für Sprachen/Bibliotheken). Bei Deprecation-Warnings in CI-Annotations: Mini-ADR vor Ablauf der Frist anlegen.
 - **Ausnahmen:** keine.
 - **Gegenbeispiel:** Eine Action ohne `Verifiziert`-Stempel im `project-context.md`-Block aufnehmen – verboten. Major-Sprung (z. B. `actions/checkout@v6` → `@v7`) ohne ADR – verboten.
+
+#### Regel-016: Sub-Dependency-Lizenz-Prüfung im Verifikations-Regime
+
+- **Herkunft:** ADR-011
+- **Gilt für:** jede neue **Top-Level**-Backend- oder Frontend-Komponente, die in `pyproject.toml` (oder dem entsprechenden Frontend-Manifest) als Runtime-Dependency aufgenommen wird, sowie jeder Major-Update-Schritt einer bestehenden Top-Level-Komponente.
+- **Regel:** Vor Aufnahme bzw. Major-Update wird **zusätzlich zur eigenen Lizenz** auch die Lizenz aller **Pflicht**-Sub-Dependencies (`dependencies = […]` ohne `optional-dependencies` / `extras`) gegen die Liste „Erlaubte Abhängigkeitslizenzen" in `project-context.md` Abschnitt 6 geprüft. Quelle: PyPI-Metadaten der Sub-Dep (License-Expression oder Classifier) plus Upstream-`LICENSE`-Datei zur Bestätigung. Ergebnis wird im Verifikations-Block notiert. Treffer auf eine ausgeschlossene Lizenz (GPL/LGPL als Backend-Dep, RSALv2/SSPL u. a.) erzwingt **vor** dem Pinning eine Entscheidung: entweder eigener ADR (`[STACK] [METHODIK]` oder strenger) mit Begründung der Akzeptanz und konkretem Geltungsbereich der Verschmutzung, oder Verzicht auf die Top-Level-Komponente.
+- **Ausnahmen:** Optionale Extras (`optional-dependencies`, `extras`), die wir nicht installieren, müssen nicht geprüft werden. Test- und Dev-Dependencies (`[dependency-groups].dev`) sind außerhalb des Backend-Lizenz-Restriktions-Geltungsbereichs (`project-context.md` Abschnitt 6 „als Backend-Dependency"); werden trotzdem im Verifikations-Block notiert, ohne ADR-Pflicht.
+- **Gegenbeispiel:** Eine Bibliothek `foo` (MIT) in `pyproject.toml` aufnehmen, weil ihre Top-Level-Lizenz passt, ohne zu prüfen, dass `foo` zwingend `bar` (GPLv3) zieht – verboten. Die Verschmutzung ist real, auch wenn die direkte Top-Level-Lizenz „sauber" wirkt.

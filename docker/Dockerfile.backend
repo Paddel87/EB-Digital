@@ -1,0 +1,54 @@
+# Backend image (FastAPI app + Procrastinate worker share this image).
+# Two stages:
+#   - builder: pulls dependencies via uv into a virtual environment.
+#   - runtime: thin slim image, copies the virtualenv + source.
+#
+# Phase 1 Schritt 1.5 introduces this Dockerfile for the worker. Schritt 1.8
+# expands it (default CMD finalised, healthcheck, multi-arch tags). Patch- and
+# minor-version updates of base image and uv follow Regel-001/Regel-016.
+
+ARG PYTHON_VERSION=3.13.13
+ARG UV_VERSION=0.11.0
+
+FROM python:${PYTHON_VERSION}-slim AS builder
+
+ARG UV_VERSION
+ENV UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1 \
+    UV_PYTHON_DOWNLOADS=never
+
+RUN pip install --no-cache-dir "uv==${UV_VERSION}"
+
+WORKDIR /app
+
+# Lock + manifest first for layer caching. `README.md` and `LICENSE` are
+# referenced by `pyproject.toml` (`readme`, `license-files`) and required at
+# build time even though they are not runtime artefacts.
+COPY pyproject.toml uv.lock README.md LICENSE ./
+COPY backend ./backend
+COPY alembic.ini ./
+
+RUN uv sync --frozen --no-dev
+
+
+FROM python:${PYTHON_VERSION}-slim AS runtime
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH=/app/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+WORKDIR /app
+
+# Non-root user; UID 1000 matches typical host developer for bind-mounted volumes.
+RUN groupadd --system --gid 1000 eb && useradd --system --gid eb --uid 1000 eb
+
+COPY --from=builder --chown=eb:eb /app/.venv /app/.venv
+COPY --from=builder --chown=eb:eb /app/backend /app/backend
+COPY --from=builder --chown=eb:eb /app/alembic.ini /app/alembic.ini
+COPY --from=builder --chown=eb:eb /app/pyproject.toml /app/pyproject.toml
+
+USER eb
+
+# Default command: HTTP server. The worker service in docker-compose.yml
+# overrides this with the `worker` subcommand.
+CMD ["python", "-m", "eb_digital", "serve"]

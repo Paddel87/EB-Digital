@@ -40,9 +40,44 @@ def test_admin_subcommand_is_a_stub_with_exit_code_two(
     assert "1.6" in capsys.readouterr().err
 
 
-def test_worker_subcommand_is_a_stub_with_exit_code_two(
-    capsys: pytest.CaptureFixture[str],
+def test_worker_subcommand_parses_default_args() -> None:
+    parser = _build_parser()
+    args = parser.parse_args(["worker"])
+    assert args.command == "worker"
+    assert args.queues is None
+    assert args.concurrency == 1
+
+
+def test_worker_subcommand_accepts_repeated_queue_and_concurrency() -> None:
+    parser = _build_parser()
+    args = parser.parse_args(
+        ["worker", "--queue", "default", "--queue", "exports", "--concurrency", "4"]
+    )
+    assert args.queues == ["default", "exports"]
+    assert args.concurrency == 4
+
+
+def test_worker_subcommand_invokes_run_worker_with_parsed_args(
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    code = main(["worker"])
-    assert code == 2
-    assert "1.5" in capsys.readouterr().err
+    captured: dict[str, object] = {}
+
+    async def fake_run_worker(*, queues: list[str] | None, concurrency: int) -> None:
+        captured["queues"] = queues
+        captured["concurrency"] = concurrency
+
+    monkeypatch.setattr("eb_digital.__main__._run_worker", fake_run_worker)
+    code = main(["worker", "--queue", "default", "--concurrency", "3"])
+    assert code == 0
+    assert captured == {"queues": ["default"], "concurrency": 3}
+
+
+def test_worker_subcommand_returns_zero_on_keyboard_interrupt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def raising_run_worker(*, queues: list[str] | None, concurrency: int) -> None:
+        del queues, concurrency
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr("eb_digital.__main__._run_worker", raising_run_worker)
+    assert main(["worker"]) == 0

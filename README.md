@@ -46,18 +46,18 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
      - blockers.md (Aktive Blocker)
      Inkonsistenzen sind Bugs und werden vor Sessionende behoben. -->
 
-- **Projektphase:** Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG); Schritte 1.1 (Repository- und Workspace-Setup), 1.2 (CI-Pipeline aktivieren), 1.3 (Backend-Skelett FastAPI + Settings + Logging) und 1.4 (Datenbank + Alembic + ORM-Konventionen) `[ERLEDIGT]`. Schritte 1.5 (Procrastinate-Worker) oder 1.7 (Frontend-Workspaces) als nächste, parallelisierbar.
+- **Projektphase:** Phase 1 (Repo-Bootstrap & Tech-Foundations, UMSETZUNG); Schritte 1.1 (Repository- und Workspace-Setup), 1.2 (CI-Pipeline aktivieren), 1.3 (Backend-Skelett FastAPI + Settings + Logging), 1.4 (Datenbank + Alembic + ORM-Konventionen) und 1.5 (Procrastinate-Worker + ping-Test-Job + Worker-Container) `[ERLEDIGT]`. Schritte 1.6 (backend/auth Admin-Bootstrap-CLI) oder 1.7 (Frontend-Workspaces) als nächste, parallelisierbar.
 - **Version:** v0.1.0
 - **Status:** Konzeption
 - **Letzte Änderung:** 2026-05-09
 - **Architektur-Reife:** 9 Bestandteile `[BELASTBAR]` (Stack-/NFR-/Datenschutz-Constraints), ca. 35 `[VORLÄUFIG]` (Module, Schnittstellen, Datenmodell-Invarianten), 9 `[OFFEN]` (Spikes G–M, Bedrohungsmodell, Tracing). Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends bleibt bis zum Last-/Funktionstest in Phase 7 `[VORLÄUFIG]`.
 - **Aktive Blocker:** 0 ([`docs/blockers.md`](docs/blockers.md)).
-- **ADRs:** 10 (9 `[STRATEGISCH]` aus INITIALISIERUNG + ADR-010 `[OPERATIV]` zu GitHub-Actions Major-Update + Verifikations-Regime); Reaktiv-Quote 0/10 (Schwellenwert 20 % nicht überschritten).
+- **ADRs:** 11 (9 `[STRATEGISCH]` aus INITIALISIERUNG + ADR-010 `[OPERATIV]` zu GitHub-Actions Major-Update + Verifikations-Regime + ADR-011 `[OPERATIV]` zu psycopg-LGPL-Akzeptanz und Sub-Dep-Lizenz-Regime); Reaktiv-Quote 0/11 (Schwellenwert 20 % nicht überschritten).
 - **Klassifikation:** Klasse G (Groß) – ADR-001.
 
 ## Quick Start
 
-> **Hinweis Konzeptionsphase:** Das Repository enthält die Pflicht-Dokumente, das Tooling-Skelett (uv-/pnpm-Workspace, Pre-Commit-Hooks, CI-Pipeline auf GitHub Actions), seit Schritt 1.3 das Backend-Skelett (FastAPI + Settings + JSON-Logging mit PII-Redaction + `/health`-Endpoint) und seit Schritt 1.4 die Datenbank-Plumbing-Schicht (SQLAlchemy 2.0 Async-Engine + asyncpg, Alembic mit Async-Template, PostgreSQL-17.9-Service im Compose-`dev`-Profil mit Digest-Pin). Restlicher Anwendungscode (Procrastinate-Worker, Frontend-Skelette, Caddy + Tile-Proxy) folgt mit Phase-1-Schritten 1.5–1.8; siehe [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
+> **Hinweis Konzeptionsphase:** Das Repository enthält die Pflicht-Dokumente, das Tooling-Skelett (uv-/pnpm-Workspace, Pre-Commit-Hooks, CI-Pipeline auf GitHub Actions), seit Schritt 1.3 das Backend-Skelett (FastAPI + Settings + JSON-Logging mit PII-Redaction + `/health`-Endpoint), seit Schritt 1.4 die Datenbank-Plumbing-Schicht (SQLAlchemy 2.0 Async-Engine + asyncpg, Alembic mit Async-Template, PostgreSQL-17.9-Service im Compose-`dev`-Profil mit Digest-Pin) und seit Schritt 1.5 die Procrastinate-Job-Engine (ping-Test-Job, Worker-Subcommand `python -m eb_digital worker`, Worker-Container im `dev`-Profil mit Multi-Stage-Backend-Image `docker/Dockerfile.backend`). Restlicher Anwendungscode (Auth-CLI, Frontend-Skelette, Caddy + Tile-Proxy) folgt mit Phase-1-Schritten 1.6–1.8; siehe [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
 
 ### Voraussetzungen
 
@@ -91,10 +91,14 @@ uv run python -m eb_digital serve                    # Uvicorn auf 0.0.0.0:8000
 curl http://localhost:8000/health                    # → {"status":"ok","version":"0.1.0"}
 
 # Datenbank lokal hochziehen (ab Schritt 1.4)
-docker compose --profile dev up -d                   # PostgreSQL 17.9 mit Digest-Pin und Healthcheck
+docker compose --profile dev up -d db                # PostgreSQL 17.9 mit Digest-Pin und Healthcheck
 uv run alembic upgrade head                          # Schema auf den aktuellen Stand bringen
 
-uv run pytest                                        # 45 Tests, Coverage ≥ 80 % (aktuell 95 %)
+# Worker im Container starten (ab Schritt 1.5; baut docker/Dockerfile.backend beim ersten up)
+docker compose --profile dev up -d worker            # eb-digital-backend:dev → python -m eb_digital worker
+docker compose --profile dev logs -f worker          # JSON-Logs der Job-Engine
+
+uv run pytest                                        # 66 Tests, Coverage ≥ 80 % (aktuell 92 %)
 ```
 
 ## Architektur (Überblick)
@@ -137,9 +141,9 @@ graph LR
 
 ## Nächste Schritte
 
-1. **Phase 1 Schritt 1.5 – Procrastinate-Setup + Worker**: Procrastinate-DB-Schema-Migration, Worker-Container im Compose-`dev`-Profil, ein Test-Job zur Verifikation. Detail in [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
-2. **Phase 1 Schritt 1.7 – Frontend-Workspaces + PWA-Skelett** (parallelisierbar zu 1.5): drei SvelteKit-Projekte (Disponent, Betreuer, Einsatzkraft) mit Vite 8, vite-plugin-pwa für Betreuer/Einsatzkraft, Health-Page pro Frontend.
-3. **Phase 1 Schritte 1.6 + 1.8** (UMSETZUNG): Admin-Bootstrap-CLI (ADR-004), Compose-`dev`-Profil mit Caddy + Tile-Proxy.
+1. **Phase 1 Schritt 1.6 – backend/auth Admin-Bootstrap-CLI**: `python -m eb_digital admin create --username …` mit Argon2id-Hashing und interaktiver Passwort-Eingabe; `platform_admin`-Tabelle (ADR-004 + Regel-005). Detail in [`docs/fahrplan.md`](docs/fahrplan.md) Phase 1.
+2. **Phase 1 Schritt 1.7 – Frontend-Workspaces + PWA-Skelett** (parallelisierbar zu 1.6): drei SvelteKit-Projekte (Disponent, Betreuer, Einsatzkraft) mit Vite 8, vite-plugin-pwa für Betreuer/Einsatzkraft, Health-Page pro Frontend.
+3. **Phase 1 Schritt 1.8** (UMSETZUNG): Compose-`dev`-Profil komplettiert mit Caddy + Tile-Proxy + Frontend-Dev-Servern + Smoke-Test-Skript.
 4. **Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2)** (UMSETZUNG): Vollständige Auth-Schicht, Mandanten-Onboarding, `operation_tenant_participation` als alleinige Operation↔Mandant-Verknüpfung (ADR-009 Invariante I1), abstrakter Berechtigungs-Filter (Invariante I2).
 
 → Vollständiger Fahrplan mit 7 regulären Phasen plus späterer Verbund-Erweiterungs-Phase X: [`docs/fahrplan.md`](docs/fahrplan.md)
@@ -154,16 +158,16 @@ graph LR
 
 ## Dokumentation
 
-| Dokument                                             | Inhalt                                                                                           |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| [`docs/vision.md`](docs/vision.md)                   | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss)                                 |
-| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards                                     |
-| [`docs/architecture.md`](docs/architecture.md)       | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht              |
-| [`docs/fahrplan.md`](docs/fahrplan.md)               | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert                |
-| [`docs/decisions.md`](docs/decisions.md)             | 10 ADRs (Klassifikation, Stack, Pattern, Fragen A–F, Actions-Update) plus 15 Entscheidungsregeln |
-| [`docs/blockers.md`](docs/blockers.md)               | Aktive Blocker (aktuell keine) und Erkennungs-Heuristiken                                        |
-| [`docs/logbuch.md`](docs/logbuch.md)                 | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen           |
-| [`CLAUDE.md`](CLAUDE.md)                             | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus)                                      |
+| Dokument                                             | Inhalt                                                                                                                   |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| [`docs/vision.md`](docs/vision.md)                   | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss)                                                         |
+| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards                                                             |
+| [`docs/architecture.md`](docs/architecture.md)       | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht                                      |
+| [`docs/fahrplan.md`](docs/fahrplan.md)               | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert                                        |
+| [`docs/decisions.md`](docs/decisions.md)             | 11 ADRs (Klassifikation, Stack, Pattern, Fragen A–F, Actions-Update, psycopg-LGPL-Akzeptanz) plus 16 Entscheidungsregeln |
+| [`docs/blockers.md`](docs/blockers.md)               | Aktive Blocker (aktuell keine) und Erkennungs-Heuristiken                                                                |
+| [`docs/logbuch.md`](docs/logbuch.md)                 | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen                                   |
+| [`CLAUDE.md`](CLAUDE.md)                             | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus)                                                              |
 
 ## Lizenz
 

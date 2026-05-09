@@ -10,8 +10,8 @@
 - **Stand vom:** 2026-05-09
 - **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
-- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09, **1.4 [ERLEDIGT]** 2026-05-09 (`backend/eb_digital/db/{__init__.py,models.py}` mit Async-Engine, Session-Factory, DeclarativeBase + Naming-Convention, TimestampMixin und HealthMarker-Sentinel; Alembic mit Async-Template + Baseline + Health-Marker-Migration; PostgreSQL-17.9-Service im Compose-`dev`-Profil mit Digest-Pin und Healthcheck; 19 neue Tests, Coverage 95 %; asyncpg 0.31.0 verifiziert und gepinnt).
-- **Nächster Schritt:** **1.5 – Procrastinate-Setup + Worker** oder **1.7 – Frontend-Workspaces + PWA-Skelett** (laut Parallelisierungs-Notiz unabhängig voneinander). Eingangskriterien: 1.5 hängt an 1.4 ✓; 1.7 hängt an 1.1 ✓.
+- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09, **1.4 [ERLEDIGT]** 2026-05-09, **1.5 [ERLEDIGT]** 2026-05-09 (`backend/eb_digital/jobs/{__init__,ping}.py` mit Procrastinate-App und ping-Test-Job; `__main__.py worker`-Subcommand mit echtem Worker-Run und sauberem SIGTERM-Handling; Procrastinate-Schema-Migration `add_procrastinate_schema` mit Statement-Splitter (Workaround für asyncpg-Multi-Statement-Limit) und `include_object`-Filter im env.py; `eb-worker`-Service im Compose-`dev`-Profil + multi-stage `docker/Dockerfile.backend` (auch für FastAPI-Server in 1.8 wiederverwendet); 21 neue Tests, Coverage 92 % gesamt; procrastinate 3.8.1 + psycopg 3.3.4 verifiziert und gepinnt; **ADR-011 + Regel-016** für psycopg-LGPL-Akzeptanz und Sub-Dep-Lizenz-Prüfungs-Regime).
+- **Nächster Schritt:** **1.6 – backend/auth Admin-Bootstrap-CLI** _oder_ **1.7 – Frontend-Workspaces + PWA-Skelett** (laut Parallelisierungs-Notiz unabhängig voneinander). Eingangskriterien beider Schritte erfüllt: 1.6 hängt an 1.4 ✓ + 1.3 ✓; 1.7 hängt an 1.1 ✓. Versions-Re-Verifikation für `argon2-cffi` (1.6) bzw. `svelte`/`@sveltejs/kit`/`vite` (1.7) zu Sessionstart.
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
@@ -85,7 +85,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 | Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                      |
 | ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ------------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1–1.4 erledigt; 1.5–1.8 offen) |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1–1.5 erledigt; 1.6–1.8 offen) |
 | 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                       |
 | 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                       |
 | 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                       |
@@ -275,10 +275,10 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 #### 1.5: Procrastinate-Setup + Worker
 
-- **Status:** OFFEN
+- **Status:** ERLEDIGT (2026-05-09)
 - **Phasentyp-Kontext:** UMSETZUNG
 - **Abhängigkeiten:** 1.4
-- **Freigabepflichtig:** nein
+- **Freigabepflichtig:** nein (operative Setzungen; ADR-011 nachgezogen für die LGPL-Sub-Dep `psycopg`)
 - **Eingangskriterien:** PostgreSQL läuft; SQLAlchemy-Engine konfiguriert.
 - **Zu tun:**
   - **Procrastinate-DB-Schema:** Eigene Migration nach Procrastinate-Doku (`procrastinate_jobs`, `procrastinate_periodic_defers`, …).
@@ -292,6 +292,27 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 - **Reifegrad-Wirkung:** Procrastinate-Job-Engine ist bereits `[BELASTBAR]` (Stack-fix); diese Phase liefert die Compose-Realisierung.
 - **Artefakte:** Migration für Procrastinate-Schema, `backend/eb_digital/jobs/`, Compose-Snippet `eb-worker`.
 - **Notizen:** Procrastinate-Job-State liegt in PostgreSQL und ist Teil der Standard-Backups – konsistent mit Vision „nahtlose Fortsetzung nach Crash".
+- **Versions-Verifikation für Schritt 1.5** (Modus-2-Schritt 2a, Sessionstart 2026-05-09):
+  - **procrastinate~=3.8.1** — `Verifiziert: 2026-05-09` (PyPI-Stand: 3.8.1 vom 2026-04-08, ~1 Monat Praxisreife; Production/Stable-Classifier; 3.8.1 ist Type-Hint-Refinement gegenüber 3.8.0, kein Hotfix-Pattern wie pydantic-settings 2.14.0/2.14.1; Lizenz MIT).
+  - **psycopg[binary,pool]~=3.3.4** — `Verifiziert: 2026-05-09` (Pflicht-Sub-Dep zu procrastinate, Lizenz **LGPL-3.0-only**, explizit per **ADR-011** als einzige LGPL-Ausnahme zur Lizenz-Restriktion in `project-context.md` Abschnitt 6 akzeptiert; `binary`-Extra macht das Image auf macOS und in Debian-basierten Containern reproduzierbar ohne System-libpq).
+- **Verifikation am 2026-05-09 (alle Akzeptanzkriterien aus Fahrplan 1.5 erfüllt):**
+  1. ✅ **Lokaler Smoke-Test:** `python -m eb_digital worker` startet (JSON-Logs zeigen `Starting worker on all queues`, `Installing signal handler`, `tasks: [..., 'ping']`); ein-Skript-Defer (`ping.defer_async()`) erzeugt Job-ID 1; Worker pickt nach <1 s auf, Log zeigt `Starting job ping[1]()`, `eb_digital.jobs.ping ping_task_executed`, `Result: pong`.
+  2. ✅ **Lokaler SIGTERM-Test:** `kill -TERM <pid>` → Worker stoppt nach 2 s mit Log `Stop requested` → `Cancelled task deferrer` → `Unregistered finished worker` → `Stopped worker on all queues`.
+  3. ✅ **Container-Smoke-Test:** `docker compose --profile dev build worker` baut `eb-digital-backend:dev` aus `docker/Dockerfile.backend`. `docker compose --profile dev up -d worker` startet den Worker im Container, der gegen den `db`-Service connected (`Registered worker 2 in the database`). Defer via `docker compose run --rm --no-deps worker python -c "..."` erzeugt Job-ID 2, Worker-Container loggt `Starting job ping[2]()` + `Result: pong`.
+  4. ✅ **Container-SIGTERM-Test:** `docker compose --profile dev stop worker` bringt den Container in <1 s mit identischer Stopp-Sequenz herunter.
+  5. ✅ `alembic upgrade head` läuft inkl. der neuen `add procrastinate schema`-Migration. `alembic check` meldet nach erfolgtem Upgrade „No new upgrade operations detected" — der `include_object`/`include_name`-Filter im env.py blendet die `procrastinate_*`-Objekte für Autogenerate aus, sodass die externe Schemen-Verwaltung (Procrastinate verwaltet seine Tabellen selber bei zukünftigen Major-Updates) und Alembic koexistieren.
+  6. ✅ `alembic downgrade 660e1a12a41a && alembic upgrade head` als Roundtrip — alle 4 Tabellen, 18 Funktionen und 3 Enum-Typen sauber gedroppt und neu erzeugt.
+  7. ✅ `uv run ruff check backend` + `ruff format --check backend` + `uv run mypy --strict` (9 source files) alle grün.
+  8. ✅ `uv run pytest` 66 Tests grün, **Coverage 92 %** gesamt (settings/app/logging/db/jobs/ping je 100 %, `__main__.py` 81 %; Schwelle 80 % deutlich überschritten).
+  9. ✅ `uv run pre-commit run --all-files` grün — alle Hooks (Hygiene, ruff lint+format, mypy, bandit, prettier, actionlint, commitlint). Mypy-Hook-`additional_dependencies` um `procrastinate~=3.8.1` und `psycopg[binary,pool]~=3.3.4` erweitert.
+- **Reibungen während 1.5** (alle dokumentiert im Logbuch-Sessionende-Eintrag):
+  - **psycopg LGPL-3.0-only-Reibung mit Lizenz-Constraint:** procrastinate ist MIT, zieht aber psycopg als Pflicht-Sub-Dep — und psycopg ist LGPL-3.0-only. `project-context.md` Abschnitt 6 schließt LGPL ohne ADR aus. STOPP-Situation während Schritt 1.5; Patrick wählte Option C: ADR-Akzeptanz **plus** Methodik-Regel. ADR-011 + Regel-016 angelegt. Geltungsbereich der LGPL-Verschmutzung auf Persistenz-/Job-Engine-Pfad beschränkt; Module ohne Job-Engine bleiben extraktionsfähig. Reaktiv-Quote bleibt 0/10 (klar `[OPERATIV]`, kein Pivot).
+  - **asyncpg-Multi-Statement-Limit bei Procrastinate-Schema-Apply:** Procrastinate's `SchemaManager.get_schema()` liefert ~20 KB SQL mit mehreren Statements und `$$`-Function-Bodies. asyncpg's prepared-statement-Pfad lehnt Multi-Statement ab (`cannot insert multiple commands into a prepared statement`). Lösung: Statement-Splitter direkt in der Migration, der Top-Level-Semikolons trennt und PostgreSQL-Dollar-Quoting (`$$`, `$tag$`) respektiert. Splitter ist mit 11 Tests (`test_migration_splitter.py`) abgesichert; Roundtrip `upgrade → downgrade → upgrade` validiert.
+  - **`alembic check` will Procrastinate-Tabellen droppen:** Das von der Migration erzeugte Schema ist nicht in `Base.metadata` registriert, daher schlägt Autogenerate vor, die Tabellen zu droppen. Lösung: `include_object`- und `include_name`-Callbacks in `env.py`, die alle Objekte mit Präfix `procrastinate_` ausblenden. Damit kann Procrastinate seine Tabellen via eigenem Migrations-System pflegen, ohne dass Alembic-Autogenerate das stört.
+  - **Procrastinate-Worker und uvicorn-Logger-Pattern:** wie schon in 1.3 für uvicorn musste `configure_logging` vor `procrastinate_app.run_worker_async` aufgerufen werden, damit Procrastinate's Logger via Root-Propagation auf den `JsonLogFormatter` gehen. Bestätigt: alle Worker-Container-Log-Zeilen sind valides JSON.
+  - **Coverage-Source-Pfad:** Der bisherige Pfad `--cov=backend/eb_digital` schlug fehl, weil die neue conftest.py-Top-Level-`os.environ.setdefault`-Setup-Logik das Modul erstmalig vor Coverage-Initialisierung importiert (`No data was collected`). Wechsel auf den **Modul-Namen** `--cov=eb_digital` — Coverage findet das Modul jetzt über den Editable-Install-Pfad zuverlässig. Dauerhafte Verbesserung über Schritt 1.5 hinaus.
+  - **`_editable_impl_*.pth`-Reibung dritte Iteration:** trat erneut nach `uv sync --reinstall-package eb-digital` auf. Heilung 1.4 (`rm -rf .venv && uv sync`) wirkte sofort. Hypothese aus 1.4 (uv-Cache-Zustand bei Re-Install vs. Wheel-Build) bestätigt sich; Drittauftritt rechtfertigt das Anlegen eines Blocker-Stub-Eintrags noch nicht (Heilung ist deterministisch und einzeilig).
+  - **mypy-Hook-Reinstall-Korruption:** Während der Verifikations-Sequenz brach mypy mit `ModuleNotFoundError: No module named '0aca9ce3d91742c5b361__mypyc'` ab. `uv sync --reinstall` heilte. Vermutlich Reibung mit dem `pre-commit`-Hook-venv-Cache; beim nächsten `uv sync --reinstall-package mypy` ohne nukleare Reset trat es nicht erneut auf.
 
 #### 1.6: backend/auth Admin-Bootstrap-CLI
 
