@@ -31,7 +31,7 @@ def _load_split_function() -> object:
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
-    return module._split_postgres_statements  # type: ignore[attr-defined]  # noqa: SLF001
+    return module._split_postgres_statements  # type: ignore[attr-defined]
 
 
 _split = _load_split_function()

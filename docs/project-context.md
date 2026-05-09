@@ -56,8 +56,8 @@ Pflicht: jede Version trägt einen Vermerk `Verifiziert: YYYY-MM-DD` (Datum, an 
 
 **Auth-Bausteine (kein Auth-Framework, eigene dünne Schicht)**
 
-- argon2-cffi 25.1.x – Argon2id-Hashing direkt — `Verifiziert: 2026-05-07`
-- itsdangerous (aktuelle stabile Minor) – signierte Tokens für Reset-Flows und Einsatz-URLs — `Verifiziert: 2026-05-07`
+- argon2-cffi 25.1.x – Argon2id-Hashing direkt — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-09 Schritt 1.6: Python 3.13/3.14 als Trove-Classifier offiziell aufgeführt, MIT, kein neuer Hotfix seit 2025-06-03)
+- itsdangerous 2.2.x – signierte Tokens für Reset-Flows und Einsatz-URLs — `Verifiziert: 2026-05-09` (Schritt 1.6); BSD-3-Clause; einzige stabile 2.x-Linie seit 2024-04-16, langsame Pallets-Cadence, kein 2.3 in Sicht
 - Starlette `SessionMiddleware` – Cookie-basierte Sessions (Bestandteil von FastAPI-Stack)
 
 Begründung: FastAPI-Users im Maintenance-Mode (kein Feature-Wachstum), passlib seit 2020-10 ohne Release. Eigener Auth-Code basiert auf etablierten Bausteinen, keine eigene Krypto-Implementierung. Begleitende Pflichten: Auth-Modul-Coverage ≥ 95 %, externe Security-Review vor Produktivstart, ADR mit Threat-Model.
