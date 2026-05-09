@@ -28,6 +28,53 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ### 2026-05-09 – [SESSIONENDE]
 
+- **Session-Dauer:** ca. 1 h 45 min (Sessionstart bis Sessionende-Commit-Vorbereitung).
+- **Bearbeitet:** Phase 1 Schritt 1.4 — **Datenbank + Alembic + ORM-Konventionen.** Status `[OFFEN]` → `[ERLEDIGT]`.
+- **Erreicht:**
+  - **Versions-Verifikation 1.4** (Modus-2-Schritt-2a-Disziplin): Recherche per `curl pypi.org/pypi/asyncpg/json` + GitHub-Releases → asyncpg 0.31.0 vom 2025-11-24 (~5,5 Monate alt), PostgreSQL-17-Support seit 0.30.0, einziger Breaking Change in 0.31.0 ist Drop Python 3.8 (irrelevant). Patrick wählte **Option A:** `asyncpg~=0.31.0`. In `pyproject.toml` und `project-context.md` Abschnitt 3 mit `Verifiziert: 2026-05-09`-Stempel ergänzt.
+  - **DB-Plumbing-Schicht** (`backend/eb_digital/db/`):
+    - **`__init__.py`** (40 Zeilen exec): `MetaData(naming_convention=…)` mit deterministischen Patterns für PK/FK/UQ/CK/IX (Voraussetzung für stabile Alembic-Autogenerate-Diffs); `Base(DeclarativeBase)` mit shared metadata; `TimestampMixin` mit `created_at`/`updated_at` als timezone-aware UTC und `onupdate=_utcnow` auf updated_at; `create_db_engine(database_url, echo=False) -> AsyncEngine`; `create_session_factory(engine) -> async_sessionmaker[AsyncSession]` mit `expire_on_commit=False` (FastAPI-Pattern). 100 % Coverage.
+    - **`models.py`** (33 Zeilen exec): `HealthMarker(Base, TimestampMixin)` als Phase-1-Sentinel zur Setup-Validierung — UUID-PK mit `default=uuid.uuid4`, `label: str` mit `unique=True`, plus die zwei Audit-Spalten aus dem Mixin. Wird in Phase 2 entfernt, sobald echte Domain-Modelle existieren. 100 % Coverage.
+  - **Alembic-Setup** mit Async-Template:
+    - **`alembic.ini`** im Repo-Root: `script_location = backend/migrations`, `prepend_sys_path = backend`, `file_template = %(year)d%(month).2d%(day).2d_%(rev)s_%(slug)s` (sortierbares Datum-Präfix), `sqlalchemy.url =` leer (URL kommt zur Laufzeit aus Settings). `post_write_hooks` mit `exec`-Type für `ruff format` + `ruff check --fix`, sodass auto-generierte Migrationen direkt lint-konform sind.
+    - **`backend/migrations/env.py`**: liest `Settings().database_url` zur Laufzeit (kein Hard-Coding), `async_engine_from_config` mit `NullPool` für Migrations-Runs, sync-Migration-Runner via `connection.run_sync(_run_sync_migrations)`, `compare_type=True` + `compare_server_default=True` für genaue Diff-Erkennung.
+    - **`backend/migrations/script.py.mako`**: Standard-Alembic-Template, an PEP-8/Modern-Type-Style angepasst (`str | None` statt `Optional[str]`, `from __future__ import annotations`).
+    - **`backend/migrations/versions/20260509_0bf0aa5ccee1_baseline.py`**: leere Baseline-Migration, manuell geschrieben (ohne autogenerate, weil DB-leer).
+    - **`backend/migrations/versions/20260509_660e1a12a41a_add_health_marker.py`**: per autogenerate erzeugt — Tabelle `health_marker` mit korrekt benannten Constraints `pk_health_marker` und `uq_health_marker_label` (Naming-Convention angewandt).
+  - **PostgreSQL-Service im Compose-`dev`-Profil** (`docker-compose.yml`): `postgres:17.9@sha256:347bc4e6…` (Digest am 2026-05-09 aus Docker Hub Registry-Manifest geholt mit Bearer-Token + `docker-content-digest`-Header), Volume `eb-digital-pg`, `pg_isready`-Healthcheck (5 s Interval, 10 retries, 10 s start_period), Port-Bind nur auf `127.0.0.1:5432` (kein public exposure). Schritt 1.5/1.6/1.8 erweitern dieses File später.
+  - **19 neue Tests** in `backend/tests/test_db.py` (12 Tests) + `backend/tests/test_models.py` (7 Tests):
+    - DB-Layer: Naming-Convention vollständigkeit, Base-Metadata-Sharing, Async-Engine-Konstruktion mit korrekten Dialekten (`postgresql+asyncpg`), `echo`-Default false + überschreibbar, Session-Factory mit `class_=AsyncSession` und `expire_on_commit=False`, async dispose-without-connect ist no-op, TimestampMixin-Audit-Spalten timezone-aware mit `onupdate`.
+    - Models: Tabelle in metadata registriert, UUID-v4-PK-Default, `label`-Unique, Naming-Convention auf PK + Unique angewandt, TimestampMixin-Vererbung.
+  - **Verifikations-Sequenz (alle Akzeptanzkriterien aus Fahrplan 1.4 erfüllt):**
+    1. ✅ Postgres-Container `healthy` nach 11 Sekunden via `docker compose --profile dev up -d`.
+    2. ✅ `alembic upgrade head` läuft zweistufig fehlerfrei (`(empty) → 0bf0aa5ccee1 → 660e1a12a41a`).
+    3. ✅ `alembic revision --autogenerate -m "add health marker"` erkennt das HealthMarker-Modell, generiert die Migration, post-write-hook formatiert + lintet sie automatisch.
+    4. ✅ `alembic check` (nach `alembic upgrade head`): „No new upgrade operations detected" — Idempotenz bestätigt, ORM-Modelle und Migrationen in Sync.
+    5. ✅ Async-Session-Lifecycle gegen reale Postgres (`/tmp/eb_smoke_db.py`, später aufgeräumt): Insert mit auto-generierter UUID + timezone-aware Timestamps, Select mit `tzinfo`-Assertion, Delete in Transaction, `engine.dispose()` mit Pool-Status `Checked out connections: 0` → keine Connection-Leaks.
+    6. ✅ `uv run pytest` 45 Tests grün (Coverage **95 %**: `db/__init__.py` 100 %, `db/models.py` 100 %, gesamt 95.03 %; Schwelle 80 % deutlich überschritten).
+    7. ✅ `uv run ruff check backend` + `ruff format --check backend` + `uv run mypy --strict` (7 source files) alle grün.
+    8. ✅ `uv run pre-commit run --all-files` grün — alle Hooks (Hygiene, ruff lint+format, mypy, bandit, prettier, actionlint) passieren.
+- **Reibungen während der Session:**
+  - **Methoden-Erfolg — Verifikations-Disziplin:** Versions-Frage an Patrick im Modus-2-Schritt-2a-Format formuliert (mit konkreter Recherche-Begründung und Optionen A/B). Patrick antwortete „a" → Pin in `pyproject.toml` und `project-context.md` mit Datum. Disziplin gewahrt.
+  - **`alembic post_write_hooks` mit `console_scripts`-Type fand `ruff` nicht.** Erster autogenerate-Lauf produzierte zwar die Migration, der ruff-Hook scheiterte aber an `Could not find entrypoint console_scripts.ruff`. Ursache: uv installiert ruff zwar in `.venv/bin/ruff`, aber nicht als `console_scripts`-Entry-Point in der venv-Metadata. Lösung: Hook-Type auf `exec` umgestellt (`executable = ruff`). Zusätzlich `ruff check --fix` als zweiter Hook ergänzt, sodass autogenerate-Migrationen direkt sowohl formatiert als auch gelintet sind. Nach Korrektur lief der zweite autogenerate-Lauf sauber.
+  - **Erneute `_editable_impl_*.pth`-Reibung** (zweites Mal nach 1.3): Direkter Smoke-Test (`uv run python /tmp/script.py`) konnte das `eb_digital`-Modul nicht importieren, obwohl `pytest` (mit eigenem Discovery) es findet. **Heilung 1.3** (`uv sync --reinstall-package eb-digital`) **wirkte diesmal nicht** — die `.pth`-Datei hatte den richtigen Pfad-Inhalt, aber `import _editable_impl_eb_digital` schlug fehl. **Wirksame Heilung:** `rm -rf .venv && uv sync` (komplette venv-Erneuerung) — danach lief der Smoke direkt durch. Lerneffekt: Wenn das ein drittes Mal auftritt, ist es ein Blocker mit Reproduktion (Datei kann unter `docs/blockers.md` als Stub angelegt werden, sobald reproduzierbar). Hypothese: Reihenfolge von uv-Operationen (sync → manueller Test → reinstall) erzeugt einen Cache-Zustand, den die nukleare Variante umgeht.
+  - **Methoden-Lerneffekt — `alembic check` als Idempotenz-Bestätigung:** Nach `alembic upgrade head` zusätzlich `alembic check` aufgerufen, statt nur per Augenschein zu prüfen, ob ORM und Migration in Sync sind. „No new upgrade operations detected" ist die explizite Bestätigung. Sollte für jede Phase-1+-Schritt-Verifikation Standard werden, sobald die DB-Schicht aktiv ist.
+- **Reaktiv-Quote nach dieser Session:** **0/10 (0 %)**. Schwellenwert 20 % nicht erreicht. Diese Session hat keinen ADR erzeugt — die asyncpg-Versions-Pin-Entscheidung ist operativ und in `project-context.md` Abschnitt 3 abgehandelt (Regel-001 ADR-002).
+- **Nächster Schritt:** **Phase 1 Schritt 1.5 — Procrastinate-Setup + Worker** (Eingangskriterium 1.4 erfüllt) **oder** **Schritt 1.7 — Frontend-Workspaces + PWA-Skelett** (parallelisierbar, Eingangskriterium 1.1 erfüllt). Versions-Re-Verifikation für `procrastinate` zu Sessionstart 1.5 (Modus-2-Schritt-2a-Disziplin).
+
+### 2026-05-09 – [SESSIONSTART]
+
+- **Letzter Stand:** Phase 1 Schritt 1.3 am 2026-05-09 abgeschlossen (PR #9 `a81e981` in `main`). Reaktiv-Quote 0/10. Keine aktiven Blocker. Keine offenen STOPP-Situationen.
+- **Geplant für diese Session:** Phase 1 Schritt 1.4 — **Datenbank + Alembic + ORM-Konventionen.** Konkret: PostgreSQL-Container im Compose-`dev`-Profil (Image-Stub, weil das Compose-File erst in Schritt 1.8 final entsteht — hier wird ein Snippet vorbereitet/dokumentiert), `backend/eb_digital/db/__init__.py` mit SQLAlchemy 2.0 Async-Engine + Session-Factory + `DeclarativeBase` mit Naming-Convention, Alembic-Init mit Async-Template, ein Test-ORM-Modell zur Validierung des Setups, Tests für Async-Session-Lifecycle. Akzeptanzkriterien aus `fahrplan.md` Schritt 1.4: `alembic upgrade head` läuft fehlerfrei, `alembic revision --autogenerate` erkennt Änderungen, Async-Session-Lifecycle in Tests funktioniert ohne Connection-Leaks.
+- **Vorabprüfung:**
+  - **Branch-Awareness korrekt verlaufen:** `git fetch --all --prune` zu Sessionstart durchgeführt. Worktree-Branch `scp/competent-sutherland-993194` ist auf HEAD `a81e981` (PR #9 gemerged), tracked `origin/main`, keine Divergenz. Worktree-Stand entspricht dem Fahrplan-Stand 1.3 ERLEDIGT, 1.4 OFFEN.
+  - Phase 1 = UMSETZUNG. Schritt 1.4 hat Eingangskriterien: 1.3 ✓ (Backend-Skelett mit Settings-Modul existiert, `Settings.database_url` ist gepinnt). Nicht freigabepflichtig laut Fahrplan.
+  - Sonderregel Phase 1 (Eingangsdisziplin abgemildert) gilt weiter — Datenbank-Layer wird hier als Plumbing aufgebaut, ohne produktive Tabellen (die kommen ab Phase 2).
+  - **Versions-Re-Verifikation Pflicht für 1.4** (Notiz aus Schritt 1.1): `asyncpg` wird hier neu gepinnt — Re-Verifikation auf offiziellen Quellen zu Sessionbeginn, dann in `project-context.md` Abschnitt 3 mit `Verifiziert: 2026-05-09`-Stempel ergänzen. SQLAlchemy 2.0.49 + Alembic 1.18.x sind bereits in 1.1 verifiziert; Re-Bestätigung als Disziplin-Akt unmittelbar vor Aufnahme der DB-Schicht.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus, Worktree `scp/competent-sutherland-993194` (Opus 4.7 1M-Kontext).
+
+### 2026-05-09 – [SESSIONENDE]
+
 - **Session-Dauer:** ca. 1 h 30 min (Sessionstart bis Sessionende-Commit-Vorbereitung).
 - **Bearbeitet:** Phase 1 Schritt 1.3 — **Backend-Skelett (FastAPI + Settings + Logging)**. Status `[OFFEN]` → `[ERLEDIGT]`.
 - **Erreicht:**

@@ -1,0 +1,36 @@
+# Docker Compose for EB Digital. Phase 1 Schritt 1.4 introduces the
+# PostgreSQL service under the `dev` profile; Schritt 1.5/1.6/1.7/1.8 add the
+# remaining services (worker, cache, backend, frontends, tile-proxy,
+# reverse-proxy). Profiles let `docker compose --profile dev up` spin up only
+# what is currently working without breaking on stubs.
+#
+# Image pinning: tag + digest, both. `project-context.md` Abschnitt 3 fixes
+# PostgreSQL 17.9. The digest below was resolved on 2026-05-09 from the
+# Docker Hub registry manifest for `postgres:17.9`.
+
+services:
+  db:
+    image: postgres:17.9@sha256:347bc4e64006d47bb255b0e28652d08590260a5e97f6b55f6ba1c0b31aef58b3
+    profiles: ["dev"]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-eb_digital}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eb_digital}
+      POSTGRES_DB: ${POSTGRES_DB:-eb_digital}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - eb-digital-pg:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-eb_digital} -d ${POSTGRES_DB:-eb_digital}",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  eb-digital-pg:
