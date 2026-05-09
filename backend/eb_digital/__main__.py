@@ -1,14 +1,15 @@
 """Command-line entry point: ``python -m eb_digital``.
 
 Subcommands:
-  serve   — start the HTTP server (this step, 1.3).
+  serve   — start the HTTP server (Schritt 1.3).
+  worker  — start the Procrastinate background worker (Schritt 1.5).
   admin   — platform-administrator CLI (Schritt 1.6, stub here).
-  worker  — Procrastinate background worker (Schritt 1.5, stub here).
 """
 
 from __future__ import annotations
 
 import argparse
+import asyncio
 import sys
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
@@ -41,7 +42,20 @@ def _build_parser() -> argparse.ArgumentParser:
     admin = sub.add_parser("admin", help="Platform-administrator CLI (Schritt 1.6).")
     admin.add_subparsers(dest="admin_command", metavar="{create,...}")
 
-    sub.add_parser("worker", help="Procrastinate background worker (Schritt 1.5).")
+    worker = sub.add_parser("worker", help="Procrastinate background worker.")
+    worker.add_argument(
+        "--queue",
+        action="append",
+        dest="queues",
+        default=None,
+        help="Queue name to consume (repeatable). Default: all registered queues.",
+    )
+    worker.add_argument(
+        "--concurrency",
+        type=int,
+        default=1,
+        help="Concurrent in-flight tasks per worker (default: 1).",
+    )
 
     return parser
 
@@ -74,11 +88,38 @@ def _cmd_admin(_args: argparse.Namespace) -> int:
     return 2
 
 
-def _cmd_worker(_args: argparse.Namespace) -> int:
-    sys.stderr.write(
-        "TODO(fahrplan-ref: 1.5): Procrastinate worker is implemented in Phase 1 step 1.5.\n",
-    )
-    return 2
+async def _run_worker(queues: list[str] | None, concurrency: int) -> None:
+    from eb_digital.jobs import procrastinate_app
+
+    # Procrastinate's WorkerOptions TypedDict types ``queues`` as ``Iterable[str]``
+    # without ``Optional``, but the documented behaviour for ``None`` (= consume
+    # every registered queue) is what we want here. We pass the kwarg only when
+    # the caller asked for specific queues.
+    worker_kwargs: dict[str, object] = {"concurrency": concurrency}
+    if queues is not None:
+        worker_kwargs["queues"] = queues
+    async with procrastinate_app.open_async():
+        await procrastinate_app.run_worker_async(**worker_kwargs)  # type: ignore[arg-type]
+
+
+def _cmd_worker(args: argparse.Namespace) -> int:
+    from eb_digital.logging import configure_logging
+    from eb_digital.settings import get_settings
+
+    # Configure JSON logging up front so Procrastinate's own loggers
+    # (procrastinate.*) inherit the root handler via propagation.
+    configure_logging(get_settings().log_level)
+
+    queues: list[str] | None = list(args.queues) if args.queues else None
+    concurrency = int(args.concurrency)
+    try:
+        asyncio.run(_run_worker(queues=queues, concurrency=concurrency))
+    except KeyboardInterrupt:
+        # Procrastinate handles SIGINT/SIGTERM internally and stops the worker
+        # loop cleanly. KeyboardInterrupt at the asyncio layer means a clean
+        # shutdown — exit 0.
+        return 0
+    return 0
 
 
 _HANDLERS: dict[str, Callable[[argparse.Namespace], int]] = {

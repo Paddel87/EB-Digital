@@ -1,8 +1,9 @@
-# Docker Compose for EB Digital. Phase 1 Schritt 1.4 introduces the
-# PostgreSQL service under the `dev` profile; Schritt 1.5/1.6/1.7/1.8 add the
-# remaining services (worker, cache, backend, frontends, tile-proxy,
-# reverse-proxy). Profiles let `docker compose --profile dev up` spin up only
-# what is currently working without breaking on stubs.
+# Docker Compose for EB Digital. Phase 1 Schritt 1.4 introduced the
+# PostgreSQL service; Schritt 1.5 adds the Procrastinate worker (image built
+# from docker/Dockerfile.backend, will be reused by the FastAPI server in 1.8).
+# Schritt 1.6/1.7/1.8 add the remaining services (cache, backend HTTP server,
+# frontends, tile-proxy, reverse-proxy). Profiles let
+# `docker compose --profile dev up` spin up only what is currently working.
 #
 # Image pinning: tag + digest, both. `project-context.md` Abschnitt 3 fixes
 # PostgreSQL 17.9. The digest below was resolved on 2026-05-09 from the
@@ -30,6 +31,24 @@ services:
       timeout: 3s
       retries: 10
       start_period: 10s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    image: eb-digital-backend:dev
+    profiles: ["dev"]
+    command: ["python", "-m", "eb_digital", "worker"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Container talks to the `db` service hostname via the compose network.
+      # `.env` is loaded for SECRET_KEY, TOMTOM/MAPTILER, etc.
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-eb_digital}:${POSTGRES_PASSWORD:-eb_digital}@db:5432/${POSTGRES_DB:-eb_digital}
+    env_file:
+      - .env
     restart: unless-stopped
 
 volumes:

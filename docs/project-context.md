@@ -64,9 +64,10 @@ Begründung: FastAPI-Users im Maintenance-Mode (kein Feature-Wachstum), passlib 
 
 **Background-Jobs**
 
-- Procrastinate (PostgreSQL-basiert, async-native, ACID-Job-State) — `Verifiziert: 2026-05-07`
+- procrastinate 3.8.1 (PostgreSQL-basiert, async-native, ACID-Job-State; PsycopgConnector als Default — psycopg3-Pool transitiv neben unserem asyncpg-Pool, by-design getrennte Connection-Pools für Job-Engine und ORM) — `Verifiziert: 2026-05-09` (Schritt 1.5)
+- psycopg 3.3.4 (`psycopg[binary,pool]`-Extra) — Pflicht-Sub-Dependency von procrastinate. Lizenz LGPL-3.0-only — explizit per ADR-011 als einzige LGPL-Ausnahme zur Lizenz-Restriktion in Abschnitt 6 akzeptiert; Geltungsbereich auf den Persistenz-/Job-Engine-Pfad beschränkt. `binary`-Extra gewählt, weil macOS-Entwicklung ohne System-libpq und Docker-Container ohne `apt-get install libpq5`-Schritt beide nur mit dem Binary-Wheel reproduzierbar laufen; `pool`-Extra ist von procrastinate gefordert. — `Verifiziert: 2026-05-09` (Schritt 1.5, Lizenz-Quelle: PyPI License-Expression + Upstream-`LICENSE.txt`)
 
-Begründung: PostgreSQL als Backing nutzt vorhandene Infrastruktur und macht Job-State Teil der DB-Backups – passt direkt zur Vision-Anforderung „nahtlose Fortsetzung nach Crash". Gewählt anstelle von Taskiq (Velocity-Risiko) und SAQ (zusätzlicher Druck auf Valkey-Persistenz-Konfiguration).
+Begründung: PostgreSQL als Backing nutzt vorhandene Infrastruktur und macht Job-State Teil der DB-Backups – passt direkt zur Vision-Anforderung „nahtlose Fortsetzung nach Crash". Gewählt anstelle von Taskiq (Velocity-Risiko) und SAQ (zusätzlicher Druck auf Valkey-Persistenz-Konfiguration). Connector-Wahl: `PsycopgConnector` (Procrastinate-Default-Pfad in der Doku, ACID-Garantien klar dokumentiert) statt `SQLAlchemyConnector` (Sekundärpfad mit weniger Praxisbeispielen).
 
 **Datenbank, Cache, Realtime**
 
@@ -261,6 +262,9 @@ API-Verträge werden in `architecture.md` Abschnitt 4 detailliert. Hier nur Kate
 - **Erlaubte Abhängigkeitslizenzen:** MIT, BSD-2/BSD-3, Apache-2.0, MPL-2.0, ISC.
 - **Ausgeschlossene Lizenzen:** GPL/LGPL als Backend-Dependency (außer per ADR ausdrücklich freigegeben), proprietäre/commercial-only, RSALv2, SSPL, Confluent-Community-License, Elastic-License.
 - **Begründung der GPL/LGPL-Restriktion trotz AGPLv3-Hauptlizenz:** Technisch wäre AGPLv3 mit GPL/LGPL-Dependencies kompatibel. Die Restriktion auf permissive Lizenzen ist eine bewusste strategische Wahl, um einzelne Module später ohne Lizenz-Reibung als eigenständige Bibliotheken extrahieren zu können (z. B. die Tile-Cache-Logik oder den Routing-Adapter), falls sie über EB Digital hinaus nutzbar werden. Abweichung im Einzelfall via ADR möglich.
+- **Aktive Ausnahmen** (im Einzelfall via ADR freigegeben):
+  - **psycopg 3 (LGPL-3.0-only)** als Pflicht-Sub-Dependency von `procrastinate` — siehe **ADR-011**. Verschmutzung beschränkt auf den Persistenz-/Job-Engine-Pfad; Module ohne Job-Engine-Bezug (`infra/tile-proxy`, Routing-Adapter in `backend/geo` u. ä.) bleiben extraktions-fähig.
+- **Sub-Dependency-Lizenz-Prüfung:** Pflicht-Sub-Dependencies neuer Top-Level-Komponenten werden **vor** Aufnahme gegen die Erlaubt-/Ausschluss-Liste geprüft (Regel-016). Treffer auf eine ausgeschlossene Lizenz erzwingt entweder einen ADR (analog zu ADR-011) oder Verzicht auf die Top-Level-Komponente.
 - **DSGVO** gilt; Operationalisierung siehe Abschnitt „Datenschutz" oben.
 
 ### Methodik-Schwellenwerte

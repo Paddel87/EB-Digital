@@ -22,8 +22,6 @@ classifiers = [
 
 # Runtime-Dependencies. Pflicht-Pin auf Minor-Linien aus project-context.md Abschnitt 3
 # mit Verifikations-Stempel. Patch-Updates frei (Regel-001 ADR-002).
-# Nicht enthalten: procrastinate — wird in Phase 1 Schritt 1.5
-# nach erneuter Versions-Verifikation hinzugefügt.
 dependencies = [
     "fastapi~=0.136.0",             # Verifiziert: 2026-05-07
     "uvicorn[standard]~=0.46.0",    # Verifiziert: 2026-05-09 (Schritt 1.3)
@@ -32,6 +30,8 @@ dependencies = [
     "sqlalchemy[asyncio]~=2.0.49",  # Verifiziert: 2026-05-07
     "asyncpg~=0.31.0",              # Verifiziert: 2026-05-09 (Schritt 1.4)
     "alembic~=1.18.0",              # Verifiziert: 2026-05-07
+    "procrastinate~=3.8.1",         # Verifiziert: 2026-05-09 (Schritt 1.5); PsycopgConnector (Default, psycopg3-Pool transitiv)
+    "psycopg[binary,pool]~=3.3.4",  # Verifiziert: 2026-05-09 (Schritt 1.5). LGPL-3.0-only — explizit per ADR-011 akzeptiert (transitive Pflicht-Dep zu procrastinate). binary-Extra: kein System-libpq nötig auf macOS/Docker.
     "httpx~=0.28.0",                # Verifiziert: 2026-05-07
     "argon2-cffi~=25.1.0",          # Verifiziert: 2026-05-07
     "itsdangerous~=2.2.0",          # project-context.md "aktuelle stabile Minor"; Verifikation Schritt 1.6
@@ -101,13 +101,13 @@ addopts = [
     "-ra",
     "--strict-markers",
     "--strict-config",
-    "--cov=backend/eb_digital",
+    "--cov=eb_digital",
     "--cov-report=term-missing",
     "--cov-fail-under=80",      # globaler Mindestwert (project-context.md Abschnitt 7)
 ]
 
 [tool.coverage.run]
-source = ["backend/eb_digital"]
+source = ["eb_digital"]
 branch = true
 
 [tool.coverage.report]

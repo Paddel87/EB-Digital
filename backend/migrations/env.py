@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from logging.config import fileConfig
+from typing import Any
 
 from alembic import context
 from sqlalchemy import pool
@@ -23,6 +24,44 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+# Procrastinate verwaltet seine eigenen Tabellen, Funktionen und Typen
+# (Schritt 1.5, Migration ``add_procrastinate_schema``). Sie tauchen nicht in
+# unseren ORM-Modellen auf, sind aber in der Datenbank vorhanden — Autogenerate
+# und ``alembic check`` würden sonst Drop-Operationen vorschlagen.
+_PROCRASTINATE_PREFIX = "procrastinate_"
+
+
+def _include_object(
+    object_: Any,  # noqa: ANN401  # alembic callback signature uses Any
+    name: str | None,
+    type_: str,
+    reflected: bool,  # alembic callback signature
+    compare_to: Any,  # noqa: ANN401  # alembic callback signature
+) -> bool:
+    # ``reflected`` and ``compare_to`` are part of the alembic callback signature;
+    # they are intentionally unused.
+    del reflected, compare_to
+    if name and name.startswith(_PROCRASTINATE_PREFIX):
+        return False
+    # Indizes haben keinen Tabellennamen als ``name``, sondern den Index-Namen.
+    # Foreign-Keys liegen über ``object_.table`` — beide Pfade über Präfix abdecken.
+    if type_ in {"index", "foreign_key_constraint", "unique_constraint"}:
+        table = getattr(object_, "table", None)
+        if table is not None and table.name.startswith(_PROCRASTINATE_PREFIX):
+            return False
+    return True
+
+
+def _include_name(
+    name: str | None,
+    type_: str,
+    parent_names: dict[str, str | None],
+) -> bool:
+    # ``type_`` and ``parent_names`` are part of the alembic callback signature;
+    # they are intentionally unused.
+    del type_, parent_names
+    return not (name and name.startswith(_PROCRASTINATE_PREFIX))
+
 
 def _resolved_url() -> str:
     settings = get_settings()
@@ -38,6 +77,8 @@ def run_migrations_offline() -> None:
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
         compare_server_default=True,
+        include_object=_include_object,
+        include_name=_include_name,
     )
 
     with context.begin_transaction():
@@ -50,6 +91,8 @@ def _run_sync_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         compare_type=True,
         compare_server_default=True,
+        include_object=_include_object,
+        include_name=_include_name,
     )
 
     with context.begin_transaction():
