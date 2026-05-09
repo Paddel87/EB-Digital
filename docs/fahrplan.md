@@ -7,11 +7,11 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** 2026-05-08
+- **Stand vom:** 2026-05-09
 - **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
-- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** am 2026-05-08, **1.2 [ERLEDIGT]** am 2026-05-08 (PR #5 gemerged, Merge-Commit `1cd72df`; Branch-Protection auf `main` aktiv mit 8 Required Status Checks).
-- **Nächster Schritt:** **1.3 – Backend-Skelett (FastAPI + Settings + Logging)** – `backend/eb_digital/__main__.py`, `app.py`, `logging.py`, `settings.py` plus erste Tests in `backend/tests/`. Ab dem ersten Test wird `Backend · Tests & Coverage` (jetzt geskipt) regulär ausgeführt.
+- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09 (`backend/eb_digital/{settings,logging,app,__main__}.py` plus 26 Tests in `backend/tests/`, Coverage 94 %; uvicorn 0.46 + pydantic-settings 2.13.1 verifiziert und gepinnt).
+- **Nächster Schritt:** **1.4 – Datenbank + Alembic + ORM-Konventionen** – PostgreSQL-Container im Compose-`dev`-Profil, SQLAlchemy 2.0 Async-Engine, Alembic-Init mit Async-Template, ein Test-ORM-Modell zur Setup-Validierung. Eingangskriterium erfüllt: Backend-Skelett mit Settings-Modul existiert.
 - **Offene STOPP-Situationen:** keine.
 
 ## Phasen-Typen
@@ -83,16 +83,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                      |
-| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ------------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1+1.2 erledigt; 1.3–1.8 offen) |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                       |
-| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                       |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                       |
-| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                       |
-| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                       |
-| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                       |
-| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                       |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                          |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ----------------------------------------------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1+1.2+1.3 erledigt; 1.4–1.8 offen) |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                           |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                           |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                           |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                           |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                           |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                           |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                           |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -197,7 +197,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 #### 1.3: Backend-Skelett (FastAPI + Settings + Logging)
 
-- **Status:** OFFEN
+- **Status:** ERLEDIGT (2026-05-09)
 - **Phasentyp-Kontext:** UMSETZUNG
 - **Abhängigkeiten:** 1.1, 1.2
 - **Freigabepflichtig:** nein
@@ -217,6 +217,24 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 - **Reifegrad-Wirkung:** keine direkten Beförderungen.
 - **Artefakte:** `backend/eb_digital/{__main__.py, app.py, logging.py, settings.py}`, Tests unter `backend/tests/`.
 - **Notizen:** Sicherheits-Constraint „keine PII in Logs" (`project-context.md` Abschnitt 6) wird hier zentral umgesetzt – spätere Module nutzen den Wrapper, statt eigene Logger.
+- **Versions-Verifikation für Schritt 1.3** (Modus-2-Schritt 2a, Sessionstart 2026-05-09):
+  - **uvicorn[standard]~=0.46.0** — `Verifiziert: 2026-05-09` (PyPI-Stand: 0.46.0 vom 2026-04-23, normales Minor ohne Breaking Change; `[standard]` bringt uvloop/httptools/websockets/watchfiles für Production-Performance auf Linux).
+  - **pydantic-settings~=2.13.1** — `Verifiziert: 2026-05-09` (2.14 bewusst zurückgehalten — 2.14.1 war am 2026-05-08 als Hotfix für 2.14.0 erschienen, „Stabilität vor Aktualität"-Linie analog zu Postgres 17 / mypy 1.20). Kompatibel mit `pydantic~=2.13.0` (Constraint im Paket: `pydantic>=2.7.0`).
+  - In `project-context.md` Abschnitt 3 Sub-Block „Backend Frameworks und Bibliotheken" mit Stempel ergänzt.
+- **Verifikation am 2026-05-09 (alle Akzeptanzkriterien erfüllt):**
+  1. ✅ `uv run python -m eb_digital serve --host 127.0.0.1 --port 18001` startet Uvicorn (Direct-`.venv/bin/python`-Aufruf in Smoke-Test wegen einmaliger `_editable_impl_*.pth`-Reibung — siehe Logbuch). Standard-Bind ist Port 8000.
+  2. ✅ `curl http://127.0.0.1:18001/health` liefert `{"status":"ok","version":"0.1.0"}` (Inhalt + `application/json`-Content-Type).
+  3. ✅ Log-Output validiert: alle 6 Stdout-Zeilen aus dem Smoke-Test (`uvicorn.error`, `uvicorn.access`, `eb_digital.app` `application_startup`) sind valides JSON pro Zeile (per `json.loads` geparst). `uvicorn.run(log_config=None)` plus pre-startup `configure_logging`-Aufruf in `_cmd_serve` bewirkt, dass uvicorn-Loggers per Propagation an Root + JsonLogFormatter gehen.
+  4. ✅ Logger-Redaction für 9 sensitive Felder (`password`, `password_hash`, `access_code`, `access_code_hash`, `secret_key`, `tomtom_api_key`, `maptiler_api_key`, `email`, `coordinate_lat`, `coordinate_lng`) inklusive rekursiver Redaction durch verschachtelte Dicts/Lists. 14 Tests in `test_logging.py` decken das ab.
+  5. ✅ `mypy --strict` läuft fehlerfrei auf 5 source files (1 lokale `# type: ignore[call-arg]`-Suppression mit Begründungs-Kommentar in `settings.py:get_settings`, weil pydantic-settings die required-Felder zur Laufzeit aus ENV nachlädt — nicht für mypy sichtbar).
+  6. ✅ pytest 26 Tests grün, Coverage **94 % gesamt** (settings.py, app.py, logging.py jeweils 100 %; `__main__.py` 79 % — Server-Start nicht im Unit-Test). Schwelle 80 % deutlich überschritten.
+  7. ✅ pre-commit `run --all-files` grün auf allen Hooks (ruff lint+format, mypy --strict, bandit, prettier, actionlint, commitlint).
+- **Reibungen während 1.3** (alle dokumentiert im Logbuch-Sessionende-Eintrag):
+  - **uvicorn-Logger umgehen Custom-Formatter standardmäßig:** Uvicorn richtet seine Logger (`uvicorn`, `uvicorn.access`, `uvicorn.error`) per Default mit eigener `LOGGING_CONFIG` ein, die unsere Root-Konfiguration überschreibt. Lösung: `_cmd_serve` ruft `configure_logging` vor `uvicorn.run` auf und übergibt `log_config=None` — dann propagieren alle uvicorn-Logger an den Root mit unserem `JsonLogFormatter`. Test im Smoke-Lauf bestätigt: 6/6 Zeilen JSON.
+  - **Einmalige `_editable_impl_*.pth`-Reibung:** Nach manuellem Re-Schreiben des `.pth`-Files schien Python den Eintrag nicht mehr zu prozessieren. `uv sync --reinstall-package eb-digital` hat das geheilt; danach funktionierten sowohl direkter `.venv/bin/python` als auch `uv run`. Kein dauerhaftes Problem, kein ADR nötig.
+  - **mypy-`# type: ignore[call-arg]` in `get_settings`:** pydantic-settings deklariert required Felder, deren Werte aber zur Laufzeit aus ENV kommen — mypy sieht das nicht. Engster Scope (Zeilen-Suppression mit Begründungs-Kommentar). Konsistent mit CLAUDE.md Abschnitt 6.
+  - **`# noqa: ANN401` in `_redact`:** typing.Any ist für Log-Extras die korrekte Wahl, weil sie inhaltlich unbeschränkt sind (Caller bestimmt). Suppression mit Begründungs-Kommentar.
+  - **`# noqa: S104` für `0.0.0.0`-Bind-Default:** Bewusster Default für Container-internes Bind hinter Caddy-Reverse-Proxy (`project-context.md` Abschnitt 8). Begründungs-Kommentar in derselben/oberhalb der Zeile.
 
 #### 1.4: Datenbank + Alembic + ORM-Konventionen
 
