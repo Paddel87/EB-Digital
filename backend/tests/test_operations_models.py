@@ -67,7 +67,9 @@ def test_operation_url_token_unique_and_not_null() -> None:
     column = Operation.__table__.c["url_token"]
     assert column.nullable is False
     assert column.unique is True
-    assert column.type.length == 64
+    # Schritt 2.3: Spalte von String(64) auf String(255) geweitet, weil
+    # itsdangerous-signierte Tokens typischerweise 80-100 Zeichen lang sind.
+    assert column.type.length == 255
 
 
 def test_operation_access_code_hash_nullable_and_long_enough_for_argon2() -> None:

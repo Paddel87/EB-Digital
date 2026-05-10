@@ -35,7 +35,7 @@ from eb_digital.auth.sessions import (
 UNKNOWN_IP: Final[str] = "unknown"
 
 
-def _extract_client_ip(request: Request) -> str:
+def extract_client_ip(request: Request) -> str:
     """Liefert die Client-IP unter Berücksichtigung des Caddy-Reverse-Proxy.
 
     ``X-Forwarded-For`` wird vom unmittelbaren Reverse-Proxy gesetzt; wir
@@ -117,7 +117,7 @@ async def login(
     valkey: Annotated[Redis, Depends(get_valkey_client)],
     db: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> SessionUserResponse:
-    ip = _extract_client_ip(request)
+    ip = extract_client_ip(request)
     rate_check = await check_login(valkey, ip=ip, username=payload.username)
     if not rate_check.allowed:
         response.headers["Retry-After"] = str(rate_check.retry_after_seconds)
@@ -179,6 +179,7 @@ async def me(request: Request) -> SessionUserResponse:
 __all__ = [
     "LoginRequest",
     "SessionUserResponse",
+    "extract_client_ip",
     "get_db_session",
     "get_valkey_client",
     "router",

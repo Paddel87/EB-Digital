@@ -311,7 +311,7 @@ def test_extract_client_ip_prefers_x_forwarded_for() -> None:
         "client": ("127.0.0.1", 5000),
     }
     request = Request(scope)
-    assert auth_api._extract_client_ip(request) == "203.0.113.45"
+    assert auth_api.extract_client_ip(request) == "203.0.113.45"
 
 
 def test_extract_client_ip_falls_back_to_request_client() -> None:
@@ -325,7 +325,7 @@ def test_extract_client_ip_falls_back_to_request_client() -> None:
         "client": ("198.51.100.7", 5000),
     }
     request = Request(scope)
-    assert auth_api._extract_client_ip(request) == "198.51.100.7"
+    assert auth_api.extract_client_ip(request) == "198.51.100.7"
 
 
 def test_extract_client_ip_returns_unknown_when_no_client_info() -> None:
@@ -339,7 +339,7 @@ def test_extract_client_ip_returns_unknown_when_no_client_info() -> None:
         "client": None,
     }
     request = Request(scope)
-    assert auth_api._extract_client_ip(request) == auth_api.UNKNOWN_IP
+    assert auth_api.extract_client_ip(request) == auth_api.UNKNOWN_IP
 
 
 @pytest.mark.asyncio

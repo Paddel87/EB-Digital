@@ -258,5 +258,108 @@ else
 	exit 1
 fi
 
+step "Anon-Smoke (Schritt 2.3): Operation → /info → /session → 401/410-Pfade"
+SMOKE_CODE="X7K3PQ"
+ANON_COOKIE_JAR=$(mktemp)
+# shellcheck disable=SC2064
+trap "rm -f $ANON_COOKIE_JAR" RETURN
+
+# Operation direkt via Python im Backend-Container anlegen (backend/operations-
+# Use-Cases kommen erst in 4.x). Erzeugt eine aktive Operation mit
+# AccessCode-Hash und gibt den signierten URL-Token auf stdout aus.
+SMOKE_TOKEN=$(docker compose exec -T \
+	-e EB_SMOKE_CODE="$SMOKE_CODE" \
+	backend python -c "
+import asyncio, os
+from sqlalchemy import insert
+from eb_digital.auth_anonymous.access_code import hash_access_code
+from eb_digital.auth_anonymous.tokens import generate_url_token
+from eb_digital.db import create_db_engine, create_session_factory
+from eb_digital.operations.models import Operation, OPERATION_STATUS_ACTIVE
+from eb_digital.settings import get_settings
+
+async def main():
+    s = get_settings()
+    engine = create_db_engine(s.database_url)
+    factory = create_session_factory(engine)
+    try:
+        async with factory() as session, session.begin():
+            op = Operation(
+                status=OPERATION_STATUS_ACTIVE,
+                city_label='Bremen Innenstadt (Anon-Smoke)',
+                url_token='placeholder',
+                access_code_hash=hash_access_code(os.environ['EB_SMOKE_CODE']),
+                access_code_active=True,
+            )
+            session.add(op)
+            await session.flush()
+            token = generate_url_token(op.id, s.secret_key.get_secret_value())
+            op.url_token = token
+            await session.flush()
+            print(token)
+    finally:
+        await engine.dispose()
+
+asyncio.run(main())
+" 2>/dev/null | tr -d '\r\n')
+
+if [[ -n "$SMOKE_TOKEN" ]]; then
+	ok "Anon-Operation angelegt; Token-Länge: ${#SMOKE_TOKEN}"
+else
+	fail "Anon-Operation-Anlage fehlgeschlagen"
+	exit 1
+fi
+
+# /info mit aktivem Code.
+info_status=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /tmp/dev-smoke-anon-info.json \
+	"https://localhost/api/anon/$SMOKE_TOKEN/info")
+if [[ "$info_status" == "200" ]]; then
+	ok "/api/anon/.../info 200 — access_code_active=$(jq -r .access_code_active /tmp/dev-smoke-anon-info.json)"
+else
+	fail "/api/anon/.../info Status $info_status (body: $(cat /tmp/dev-smoke-anon-info.json))"
+	exit 1
+fi
+
+# /session mit falschem Code → 401.
+wrong_status=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /tmp/dev-smoke-anon-wrong.json \
+	-H 'Content-Type: application/json' \
+	-d '{"access_code":"Z9X8Y7"}' \
+	"https://localhost/api/anon/$SMOKE_TOKEN/session")
+if [[ "$wrong_status" == "401" ]]; then
+	ok "/api/anon/.../session mit falschem Code 401"
+else
+	fail "/api/anon/.../session mit falschem Code Status $wrong_status (body: $(cat /tmp/dev-smoke-anon-wrong.json))"
+	exit 1
+fi
+
+# /session mit korrektem Code → 201 + Cookie.
+session_status=$(curl --silent --insecure --max-time 10 \
+	-c "$ANON_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-anon-session.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"access_code\":\"$SMOKE_CODE\"}" \
+	"https://localhost/api/anon/$SMOKE_TOKEN/session")
+if [[ "$session_status" == "201" ]]; then
+	ok "/api/anon/.../session mit Code 201 — session_id=$(jq -r .session_id /tmp/dev-smoke-anon-session.json)"
+else
+	fail "/api/anon/.../session mit Code Status $session_status (body: $(cat /tmp/dev-smoke-anon-session.json))"
+	exit 1
+fi
+
+# /session gegen verfälschten Token → 410.
+forged_status=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /dev/null \
+	-H 'Content-Type: application/json' \
+	-d '{}' \
+	"https://localhost/api/anon/not-a-real-token/session")
+if [[ "$forged_status" == "410" ]]; then
+	ok "/api/anon/forged/session 410 — Token-Signatur abgelehnt"
+else
+	fail "/api/anon/forged/session Status $forged_status (erwartet 410)"
+	exit 1
+fi
+
 step "Smoke-Test komplett grün"
 exit 0
