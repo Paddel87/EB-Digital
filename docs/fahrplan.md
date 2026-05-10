@@ -10,10 +10,10 @@
 - **Stand vom:** 2026-05-10
 - **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
-- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09, **1.4 [ERLEDIGT]** 2026-05-09, **1.5 [ERLEDIGT]** 2026-05-09, **1.6 [ERLEDIGT]** 2026-05-10, **1.7 [ERLEDIGT]** 2026-05-10 (drei SvelteKit-2.59-Workspaces unter `apps/frontend-{disponent,betreuer,einsatzkraft}` mit Svelte 5.55, Vite 8.0, TypeScript 6.0.3 strict + noUncheckedIndexedAccess + noImplicitReturns; `@sveltejs/adapter-static` für statische Auslieferung hinter Caddy; `vite-plugin-pwa` mit `generateSW`+Workbox-NetworkFirst-Strategy für Betreuer (`/api/*`-Cache) und Einsatzkraft (`/api/anon/*`-Cache, kürzere TTL); Disponent ohne PWA gemäß Vision-Constraint; `/health`-Route pro Frontend mit App-Name + Version + Build-Time aus `vite.config.ts`-`define`; ESLint-Flat-Config mit typescript-eslint 8.59 + eslint-plugin-svelte 3.17 + eslint-plugin-security 4.0 inline pro Frontend; Prettier mit `prettier-plugin-svelte` pro Frontend; vitest 4.1 mit Coverage-v8; `pnpm -r build/check/lint/format/tsc/test` alle grün; SW + manifest.webmanifest in Build-Output für Betreuer + Einsatzkraft, nicht für Disponent; Dev-Server Smoke (curl `/` und `/health` 200) bestätigt). Architektur-Modul-Reifegrade unverändert `[VORLÄUFIG]` (Skelett ohne Domain-Logik).
-- **Nächster Schritt:** **1.8 – Infrastruktur (Caddy + nginx) + Docker Compose dev-Profil**. Eingangskriterien: 1.3 ✓, 1.4 ✓, 1.5 ✓, 1.6 ✓, 1.7 ✓ — alle Skelette laufen einzeln. Konkret: `infra/reverse-proxy/Caddyfile` mit lokaler Domain + Routing zu Backend + drei Frontends; `infra/tile-proxy/nginx.conf` mit Cache-Pfad und Stub-Routing zu MapTiler/TomTom; `docker-compose.yml`-Profile `dev`/`staging`/`production` komplettiert; `scripts/dev-smoke.sh`. Re-Verifikation für `nginx`/`caddy`/Docker-Versionen zu Sessionstart 1.8.
+- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09, **1.4 [ERLEDIGT]** 2026-05-09, **1.5 [ERLEDIGT]** 2026-05-09, **1.6 [ERLEDIGT]** 2026-05-10, **1.7 [ERLEDIGT]** 2026-05-10, **1.8 [ERLEDIGT]** 2026-05-10 (Caddy 2.11.2 reverse-proxy mit `tls internal` für `eb.local`/`localhost` + Routing `/api/*`/`/health` → backend, `/disponent` `/betreuer` `/einsatzkraft` Path-Strip → Vite-Dev-Server; nginx 1.30.0-alpine tile-proxy mit `proxy_cache_path` 7d-TTL + 204-Stub für Tiles/Geocoding/Routing — produktiver Pass-through aktiviert in Phase 6 Spike L; Compose-Profile `dev`/`staging`/`production` für db/cache/backend/worker/db-init/tile-proxy/reverse-proxy plus separates `frontends`-Profil für die drei Vite-Dev-Server; Volume-Backup-Marker via `eb-digital.backup`-Label; `db-init`-Service mit `service_completed_successfully`-Dependency wendet Alembic-Migrationen vor backend/worker an; `scripts/dev-smoke.sh` läuft alle Akzeptanzkriterien grün durch — 6 Services healthy, `/api/health` + `/health` über Caddy 200 mit JSON-Payload, tile-proxy-Stub 204, tile-proxy `/health` 200; backend `/api/health` als zusätzlicher API-Router-Endpunkt + 2 neue Tests, Coverage 94 % bei 103 Tests). Architektur-Modul-Reifegrade `infra/reverse-proxy` und `infra/tile-proxy` bleiben `[VORLÄUFIG]` per Fahrplan-Regel — produktive TLS, Sub-Domain-Routing und Cache-Pass-through stehen für Phase 7 STABILISIERUNG.
+- **Nächster Schritt:** **Phase 1 abgeschlossen.** Übergang in **Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2)** (UMSETZUNG): vollständige Auth-Schicht über Bootstrap-Schiene aus 1.6 hinaus (Login, Sessions, Rate-Limit, Multi-User-Verwaltung), Mandanten-Onboarding, `operation_tenant_participation` als alleinige Operation↔Mandant-Verknüpfung (ADR-009 Invariante I1), abstrakter Berechtigungs-Filter (Invariante I2). Detail siehe Phase 2 unten.
 - **Offene STOPP-Situationen:** keine.
-- **Aktive Blocker:** **1** ([Blocker #001](blockers.md): uv-/venv-Korruption nach intensiven Reinstall-/Sync-Sequenzen — vier Vorfälle bis 2026-05-10; Workaround `rm -rf .venv && uv sync --reinstall` zuverlässig, kein Schritt-Blocker, aber Pattern dokumentiert für mögliche fünfte Eskalation).
+- **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
 
 ## Phasen-Typen
 
@@ -84,16 +84,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                  |
-| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | --------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | IN ARBEIT (1.1–1.7 erledigt; 1.8 offen) |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                   |
-| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                   |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                   |
-| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                   |
-| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                   |
-| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                   |
-| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                   |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                 |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | -------------------------------------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10) |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                  |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                  |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                  |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                  |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                  |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                  |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                  |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -366,7 +366,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 #### 1.8: Infrastruktur (Caddy + nginx) + Docker Compose dev-Profil
 
-- **Status:** OFFEN
+- **Status:** ERLEDIGT (2026-05-10)
 - **Phasentyp-Kontext:** UMSETZUNG
 - **Abhängigkeiten:** 1.3, 1.4, 1.5, 1.6, 1.7
 - **Freigabepflichtig:** nein – Compose-Profil-Wechsel ist Build-/Deploy-Pipeline (`project-context.md` Abschnitt 8) und wird durch ADR-002 fixiert.

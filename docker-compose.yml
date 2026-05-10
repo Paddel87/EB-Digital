@@ -1,18 +1,33 @@
-# Docker Compose for EB Digital. Phase 1 Schritt 1.4 introduced the
-# PostgreSQL service; Schritt 1.5 adds the Procrastinate worker (image built
-# from docker/Dockerfile.backend, will be reused by the FastAPI server in 1.8).
-# Schritt 1.6/1.7/1.8 add the remaining services (cache, backend HTTP server,
-# frontends, tile-proxy, reverse-proxy). Profiles let
-# `docker compose --profile dev up` spin up only what is currently working.
+# Docker Compose for EB Digital.
 #
-# Image pinning: tag + digest, both. `project-context.md` Abschnitt 3 fixes
-# PostgreSQL 17.9. The digest below was resolved on 2026-05-09 from the
-# Docker Hub registry manifest for `postgres:17.9`.
+# Profile-Strategie (Phase 1 Schritt 1.8):
+#   - `dev`:        komplette Entwicklungs-Stack ohne Frontends.
+#                   `docker compose --profile dev up -d` bringt db, cache, worker,
+#                   backend, tile-proxy und reverse-proxy in Status `healthy`.
+#   - `frontends`:  drei Vite-Dev-Server (Disponent, Betreuer, Einsatzkraft).
+#                   Optional zu `dev` hinzukombinierbar:
+#                   `docker compose --profile dev --profile frontends up -d`.
+#                   Erster Start zieht pnpm-Dependencies in den Volume-Cache —
+#                   einige Minuten Wartezeit normal.
+#   - `staging`:    Skelett-Profil. Selbe Core-Services wie `dev`, aber mit
+#                   Production-orientierten Defaults (RESTART, kein Source-Mount).
+#                   Final konfiguriert in Phase 7 (STABILISIERUNG).
+#   - `production`: Skelett-Profil. Wird in Phase 7 mit dedizierten Image-Tags,
+#                   Volumes und Secret-Quellen final ausgestattet.
+#
+# Image-Pinning: Tag + Digest (Manifest-List, multi-arch-tauglich). Digests
+# wurden am 2026-05-10 via `docker buildx imagetools inspect <tag> --format
+# '{{.Manifest.Digest}}'` gegen Docker Hub aufgelöst. Updates folgen
+# Regel-001 (Patch frei, Minor ohne ADR, Major mit ADR) und Regel-016
+# (Sub-Dep-Lizenz-Prüfung).
 
 services:
+  # ──────────────────────────────────────────────────────────────────────
+  # PostgreSQL — primärer Datenspeicher (Schritt 1.4).
+  # ──────────────────────────────────────────────────────────────────────
   db:
     image: postgres:17.9@sha256:347bc4e64006d47bb255b0e28652d08590260a5e97f6b55f6ba1c0b31aef58b3
-    profiles: ["dev"]
+    profiles: ["dev", "staging", "production"]
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-eb_digital}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eb_digital}
@@ -30,23 +45,287 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # ──────────────────────────────────────────────────────────────────────
+  # Valkey — Cache + WebSocket-Pub/Sub (Phase 4 produktiv,
+  # Phase 1 nur als Stack-Vorbereitung). Lizenz-Constraint: NICHT Redis.
+  # ──────────────────────────────────────────────────────────────────────
+  cache:
+    image: valkey/valkey:8.1.7-alpine@sha256:b027235326507cfdade9b6684056ec1d0b0c0757412e628245129b5d7b788618
+    profiles: ["dev", "staging", "production"]
+    command: ["valkey-server", "--appendonly", "yes", "--save", "60", "1000"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - eb-digital-valkey:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Alembic Migrations + Procrastinate Schema. Läuft einmalig beim Hochfahren,
+  # wird vor backend/worker startend abgeschlossen sein. Idempotent.
+  # ──────────────────────────────────────────────────────────────────────
+  db-init:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    image: eb-digital-backend:dev
+    profiles: ["dev", "staging", "production"]
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-eb_digital}:${POSTGRES_PASSWORD:-eb_digital}@db:5432/${POSTGRES_DB:-eb_digital}
+    env_file:
+      - .env
+    restart: "no"
+
+  # ──────────────────────────────────────────────────────────────────────
+  # FastAPI Backend (Schritt 1.8 aktiviert — Image existiert seit 1.5).
+  # ──────────────────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    image: eb-digital-backend:dev
+    profiles: ["dev", "staging", "production"]
+    command: ["python", "-m", "eb_digital", "serve", "--host", "0.0.0.0", "--port", "8000"]
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-eb_digital}:${POSTGRES_PASSWORD:-eb_digital}@db:5432/${POSTGRES_DB:-eb_digital}
+      VALKEY_URL: ${VALKEY_URL:-valkey://cache:6379/0}
+    env_file:
+      - .env
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=2).status==200 else 1)",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Procrastinate Worker (Schritt 1.5).
+  # ──────────────────────────────────────────────────────────────────────
   worker:
     build:
       context: .
       dockerfile: docker/Dockerfile.backend
     image: eb-digital-backend:dev
-    profiles: ["dev"]
+    profiles: ["dev", "staging", "production"]
     command: ["python", "-m", "eb_digital", "worker"]
     depends_on:
       db:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     environment:
-      # Container talks to the `db` service hostname via the compose network.
-      # `.env` is loaded for SECRET_KEY, TOMTOM/MAPTILER, etc.
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-eb_digital}:${POSTGRES_PASSWORD:-eb_digital}@db:5432/${POSTGRES_DB:-eb_digital}
     env_file:
       - .env
+    healthcheck:
+      # PID-1 Liveness — vollwertige Job-Engine-Health folgt in Phase 4.
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import os,sys; sys.exit(0 if os.path.exists('/proc/1/cmdline') else 1)",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
     restart: unless-stopped
 
+  # ──────────────────────────────────────────────────────────────────────
+  # nginx Tile-Proxy (Phase 1 Stub, Phase 6 produktiv).
+  # ──────────────────────────────────────────────────────────────────────
+  tile-proxy:
+    image: nginx:1.30.0-alpine@sha256:0272e4604ed93c1792f03695a033a6e8546840f86e0de20a884bb17d2c924883
+    profiles: ["dev", "staging", "production"]
+    volumes:
+      - ./infra/tile-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - eb-digital-tile-cache:/var/cache/nginx
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Caddy Reverse-Proxy (Phase 1 mit internem CA, Phase 7 produktiv).
+  # ──────────────────────────────────────────────────────────────────────
+  reverse-proxy:
+    image: caddy:2.11.2@sha256:25cdc846626b62d05f6b633b9b40c2c9f6ef89b515dc76133cefd920f7dbe562
+    profiles: ["dev", "staging", "production"]
+    depends_on:
+      backend:
+        condition: service_healthy
+      tile-proxy:
+        condition: service_healthy
+    volumes:
+      - ./infra/reverse-proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - eb-digital-caddy-data:/data
+      - eb-digital-caddy-config:/config
+    ports:
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:443:443"
+    healthcheck:
+      # Caddy admin-API auf :2019 (interner Port). HTTP 200 auf /config/.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:2019/config/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Vite-Dev-Server der drei Frontends (Profil `frontends`, optional zu
+  # `dev` hinzuschaltbar). Bind-Mount des Workspaces, Named-Volumes für
+  # node_modules — verhindert macOS-↔-Alpine-Inkompatibilität und hält
+  # `host` schnell.
+  # ──────────────────────────────────────────────────────────────────────
+  frontend-disponent:
+    image: node:24-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f
+    profiles: ["frontends"]
+    working_dir: /workspace
+    command: >
+      sh -c "corepack enable
+        && pnpm install --frozen-lockfile
+        && pnpm --filter frontend-disponent exec vite dev --host 0.0.0.0 --port 5173"
+    volumes:
+      - .:/workspace
+      - frontend-disponent-root-modules:/workspace/node_modules
+      - frontend-disponent-app-modules:/workspace/apps/frontend-disponent/node_modules
+    expose:
+      - "5173"
+    ports:
+      - "127.0.0.1:5173:5173"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+
+  frontend-betreuer:
+    image: node:24-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f
+    profiles: ["frontends"]
+    working_dir: /workspace
+    command: >
+      sh -c "corepack enable
+        && pnpm install --frozen-lockfile
+        && pnpm --filter frontend-betreuer exec vite dev --host 0.0.0.0 --port 5174"
+    volumes:
+      - .:/workspace
+      - frontend-betreuer-root-modules:/workspace/node_modules
+      - frontend-betreuer-app-modules:/workspace/apps/frontend-betreuer/node_modules
+    expose:
+      - "5174"
+    ports:
+      - "127.0.0.1:5174:5174"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:5174/"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+
+  frontend-einsatzkraft:
+    image: node:24-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f
+    profiles: ["frontends"]
+    working_dir: /workspace
+    command: >
+      sh -c "corepack enable
+        && pnpm install --frozen-lockfile
+        && pnpm --filter frontend-einsatzkraft exec vite dev --host 0.0.0.0 --port 5175"
+    volumes:
+      - .:/workspace
+      - frontend-einsatzkraft-root-modules:/workspace/node_modules
+      - frontend-einsatzkraft-app-modules:/workspace/apps/frontend-einsatzkraft/node_modules
+    expose:
+      - "5175"
+    ports:
+      - "127.0.0.1:5175:5175"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:5175/"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+
+# Volumes mit Backup-Marker via Label `eb-digital.backup`:
+#   - "yes" → in regulären Backup-Lauf einbeziehen (produktive Daten)
+#   - "no"  → ausschließen (regenerierbare Caches, Build-Caches)
 volumes:
   eb-digital-pg:
+    labels:
+      eb-digital.backup: "yes"
+      eb-digital.purpose: "PostgreSQL primary data"
+  eb-digital-valkey:
+    labels:
+      eb-digital.backup: "yes"
+      eb-digital.purpose: "Valkey AOF persistence (cache + pub/sub state)"
+  eb-digital-tile-cache:
+    labels:
+      eb-digital.backup: "no"
+      eb-digital.purpose: "nginx tile cache (regenerable from MapTiler)"
+  eb-digital-caddy-data:
+    labels:
+      eb-digital.backup: "yes"
+      eb-digital.purpose: "Caddy ACME certs and state"
+  eb-digital-caddy-config:
+    labels:
+      eb-digital.backup: "no"
+      eb-digital.purpose: "Caddy auto-generated config (regenerable)"
+  frontend-disponent-root-modules:
+    labels:
+      eb-digital.backup: "no"
+      eb-digital.purpose: "pnpm node_modules root (regenerable from pnpm-lock.yaml)"
+  frontend-disponent-app-modules:
+    labels:
+      eb-digital.backup: "no"
+      eb-digital.purpose: "frontend-disponent local node_modules"
+  frontend-betreuer-root-modules:
+    labels:
+      eb-digital.backup: "no"
+      eb-digital.purpose: "pnpm node_modules root (regenerable from pnpm-lock.yaml)"
+  frontend-betreuer-app-modules:
+    labels:
+      eb-digital.backup: "no"
+      eb-digital.purpose: "frontend-betreuer local node_modules"
+  frontend-einsatzkraft-root-modules:
+    labels:
+      eb-digital.backup: "no"
+      eb-digital.purpose: "pnpm node_modules root (regenerable from pnpm-lock.yaml)"
+  frontend-einsatzkraft-app-modules:
+    labels:
+      eb-digital.backup: "no"
+      eb-digital.purpose: "frontend-einsatzkraft local node_modules"
