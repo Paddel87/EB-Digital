@@ -7,11 +7,12 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** 2026-05-10
+- **Stand vom:** 2026-05-11
 - **Laufende Phase:** Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2) (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (**Phase-2-Sonderregel:** Eingangsdisziplin analog Phase 1 abgemildert — alle berührten Module bleiben durch Skelett-Existenz `[VORLÄUFIG]`; Modul-Schnitt durch ADR-002/003/004/008/009 fixiert, Datenmodell-Grundzüge durch ADR-006/007 fixiert. Reifegrad-Beförderung `[VORLÄUFIG]` → `[BELASTBAR]` erfolgt mit dem jeweiligen funktionalen Schritt, nicht mit dem Datenmodell-Skelett. Patrick freigegeben 2026-05-10.).
-- **Aktiver Schritt:** keiner. **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv: 5 neue Backend-Module unter `backend/eb_digital/cache` und `backend/eb_digital/auth/{rate_limit,repositories,sessions,api}.py`; `auth/hashing.py` um `verify_dummy()` für Timing-Attack-Schutz erweitert; SessionMiddleware-Wiring + Valkey-Lifespan in `app.py`; **ADR-013** Rate-Limit als eigener Valkey-Counter, **redis-py 7.4.0** als Sub-Wahl gegenüber valkey-py 6.1.1; backend-`auth`-Modul-Coverage 100 % Lines/Branches; gesamtes Backend 220 Tests / 97.27 % Coverage; alle Pflicht-Hooks pre-commit grün; `dev-smoke.sh` um Auth-Smoke (Admin-Anlage → Login → /me → Logout → /me-401) erweitert, End-to-End grün gegen Compose-Stack). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett: 6 neue Tabellen `tenant`, `dispatcher`, `carer`, `operation` ohne Tenant-FK [I1], `operation_tenant_participation` mit Partial-Unique-Index `ix_operation_tenant_participation_owner_unique` auf `(operation_id) WHERE role='owner'`, `operation_audit_log` Strukturskelett mit JSONB-Payload und `(operation_id, at)`-Index; Alembic-Migration `c1465f544fd0` autogenerate + sauber, Naming-Convention durchgängig, `alembic upgrade/downgrade/upgrade` Round-Trip grün, `alembic check` ohne Drift; 57 neue Tests bringen Backend von 103 auf 160 (alle drei `models.py`-Dateien 100 % Coverage, gesamt 95.43 %); Compose-Smoke mit clean Volume durchgelaufen — db-init wendet Migration auf frischer DB an, alle 6 Services healthy, `/api/health` 200, alle Pflichtgates grün). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
-- **Nächster Schritt:** **2.3** `backend/auth_anonymous` — einsatzgebundene URL-Token (`itsdangerous`), AccessCode-Validierung mit Konstantzeit-Vergleich + Hash-Speicherung (Regel-006), anonyme Session-Lifecycle. Wiederverwendung der Rate-Limit-Schicht aus 2.2 (`reset_user`-Variante für AccessCode-Counter ggf. ergänzen).
+- **Erledigte Schritte Phase 2:** **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv: 5 neue Backend-Module unter `backend/eb_digital/cache` und `backend/eb_digital/auth/{rate_limit,repositories,sessions,api}.py`; `auth/hashing.py` um `verify_dummy()` für Timing-Attack-Schutz erweitert; SessionMiddleware-Wiring + Valkey-Lifespan in `app.py`; **ADR-013** Rate-Limit als eigener Valkey-Counter, **redis-py 7.4.0** als Sub-Wahl gegenüber valkey-py 6.1.1; backend-`auth`-Modul-Coverage 100 % Lines/Branches; gesamtes Backend 220 Tests / 97.27 % Coverage; alle Pflicht-Hooks pre-commit grün; `dev-smoke.sh` um Auth-Smoke (Admin-Anlage → Login → /me → Logout → /me-401) erweitert, End-to-End grün gegen Compose-Stack). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett: 6 neue Tabellen `tenant`, `dispatcher`, `carer`, `operation` ohne Tenant-FK [I1], `operation_tenant_participation` mit Partial-Unique-Index `ix_operation_tenant_participation_owner_unique` auf `(operation_id) WHERE role='owner'`, `operation_audit_log` Strukturskelett mit JSONB-Payload und `(operation_id, at)`-Index; Alembic-Migration `c1465f544fd0` autogenerate + sauber, Naming-Convention durchgängig, `alembic upgrade/downgrade/upgrade` Round-Trip grün, `alembic check` ohne Drift; 57 neue Tests bringen Backend von 103 auf 160 (alle drei `models.py`-Dateien 100 % Coverage, gesamt 95.43 %); Compose-Smoke mit clean Volume durchgelaufen — db-init wendet Migration auf frischer DB an, alle 6 Services healthy, `/api/health` 200, alle Pflichtgates grün). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
+- **Aktiver Schritt:** keiner. **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv: 7 neue Backend-Module unter `backend/eb_digital/auth_anonymous/` — `tokens.py` mit `itsdangerous.URLSafeSerializer` und Salt `eb-digital.operation-url-token`, `access_code.py` mit Crockford-Base32-Generator + Argon2id-Wrapper + `verify_dummy_access_code()`, `models.py` mit `AnonymousSession`-ORM, `repositories.py`, `sessions.py` mit `request.session['anon']`-Subkey, `api.py` mit zwei Endpunkten; Alembic-Migration `f14e7ecace66` für neue Tabelle `anonymous_session` (PK UUID, FK auf `operation.id` CASCADE, kein Tenant-FK, kein `client_ip_hash`, 24-h-Hard-Cap-`expires_at`) + Spalten-Widening `operation.url_token` 64 → 255; Schnittstelle S2a (`/info`, `/session`) mit Rate-Limit IP+URL AND (5/15 min via Valkey, Schlüsselraum `auth_anonymous:ratelimit:session:*` mit SHA-256-Hash auf URL-Token); `auth.api._extract_client_ip` zu Public-API `extract_client_ip` promotet; 64 neue Tests in 6 Test-Dateien; Backend 286 Tests / 97.93 % Coverage gesamt, `backend/auth_anonymous` 100 % Lines/Branches; alle Pflicht-Hooks pre-commit grün auf staged-Dateien; Architektur-Spec-Cleanup `architecture.md` Abschnitte 3+6 (AccessCode-Hash-Wortlaut); `dev-smoke.sh` um Anon-Smoke-Block erweitert; **Compose-Smoke + Alembic-Round-Trip live im Stack verifiziert** — alle 6 Services healthy, Migration durch db-init angewandt, Anon-Smoke grün, Round-Trip auf leerer Operation-Tabelle sauber, `alembic check` ohne Drift).
+- **Nächster Schritt:** **2.4** `backend/tenants` — Self-Service-Mandanten-Antrag, Plattform-Admin-Freischaltungs-Endpoint, Mandanten-CRUD, abstrakter Teilnahme-Filter (Invariante I2 + Regel-014).
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
 - **CI-Hygiene-Sonderfall in Phase 1 (2026-05-10):** ADR-012 — `actions/upload-artifact@v4` → `@v7` als Major-Update gegen Node-20-Deprecation, analog zu ADR-010 in 1.2. Reaktiv-Quote bleibt 0 / 10.
@@ -502,9 +503,87 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
   - **Coverage-Risiko:** `verify_dummy()` erzeugt einen Code-Pfad, der in der Coverage-Messung sichtbar sein muss → expliziter Test.
   - **URL-Schema-Adaption:** Settings nutzt `valkey://` als URL-Schema (Marken-Konsistenz mit ADR-002), `redis-py.from_url()` erwartet `redis://` oder `rediss://`. Cache-Modul macht das gleiche Schema-Replace wie `_to_psycopg_conninfo` für Postgres-URL.
 
-#### 2.3–2.7: Folgeschritte (gröber)
+#### 2.3: backend/auth_anonymous Anonymous-Session + URL-Token + AccessCode-Validierung – Typ: UMSETZUNG
 
-- **2.3** `backend/auth_anonymous`: einsatzgebundene URL-Token (`itsdangerous`), AccessCode-Validierung (Konstantzeit-Vergleich + Hash-Speicherung gemäß Regel-006), Session-Lifecycle anonym. Wiederverwendung der Rate-Limit-Schicht aus 2.2.
+- **Status:** ERLEDIGT 2026-05-11 (alle 18 Akzeptanzkriterien erfüllt, inkl. Compose-Smoke und Alembic-Round-Trip live im Stack verifiziert: 286 Tests grün / 97.93 % Coverage, `backend/auth_anonymous` 100 %; Stack-Smoke alle 6 Services healthy, Migration `f14e7ecace66` durch db-init auf frischer DB angewandt, Auth- und Anon-Smoke grün, Alembic-Round-Trip auf leerer Operation-Tabelle sauber, `alembic check` ohne Drift).
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 2, Phase-2-Sonderregel: Eingangsdisziplin abgemildert).
+- **Abhängigkeiten:** 2.1 ERLEDIGT (`operation.url_token`, `access_code_hash`, `access_code_active`, `status`); 2.2 ERLEDIGT (Rate-Limit-Schicht, `verify_dummy()`, Cache/Valkey-Pool, SessionMiddleware-Wiring, fakeredis-Test-Setup); ADR-005 (AccessCode-Schema), Regel-006 (Hashing-Pflicht), Regel-007 (Toggle wirkt nur auf neue Sessions).
+- **Freigabepflichtig:** ja — neue Tabelle `anonymous_session` (CLAUDE.md Abschnitt 4 Punkt 4), Spalten-Widening `operation.url_token` von `String(64)` auf `String(255)` (additive Schema-Anpassung, weil itsdangerous-signierte Token > 64 Zeichen). Detail-Plan + vier Detail-Entscheidungen (URL-Token via `itsdangerous.URLSafeSerializer`, kein `client_ip_hash`, 24h-Hard-Cap-`expires_at`, gemeinsames Secret) Patrick am 2026-05-11 vorgelegt und mit „A/B/B/A" freigegeben.
+- **Eingangskriterien:** 2.1 + 2.2 ERLEDIGT ✓; ADR-005/Regel-006/007 ✓; Phase-2-Sonderregel akzeptiert ✓; keine neue Top-Level-Dependency erwartet (`itsdangerous 2.2.x` aus 1.6, `argon2-cffi 25.1.x` aus 2.2).
+- **Zu tun:**
+  1. **Architektur-Spec-Cleanup vorab:** [architecture.md:129](../docs/architecture.md:129) und [architecture.md:614](../docs/architecture.md:614) — Modul-Abhängigkeit (`access_code` → `access_code_hash`) und Sensitive-Datenflüsse-Eintrag (von „kein Hash" auf Argon2id-PHC) korrigieren. Bringt die Architektur-Spec mit ADR-005 + 2.1-Implementation in Übereinstimmung (war in 2.1-SESSIONENDE als „Abgleich mit 2.2–2.6" zurückgestellt).
+  2. **Neues Modul `backend/eb_digital/auth_anonymous/`** mit sieben Dateien:
+     - `__init__.py` — Modul-Docstring.
+     - `tokens.py` — `URLSafeSerializer` aus `itsdangerous` mit Salt `"eb-digital.operation-url-token"`. Funktionen `generate_url_token(operation_id: UUID, secret: str) -> str` und `verify_url_token(token: str, secret: str) -> UUID | None`. Bei `BadSignature`/`BadPayload` → `None` (kein Throw nach außen).
+     - `access_code.py` — Crockford-Base32-Generator (Alphabet `0-9` + `A-Z` ohne `I/L/O/U`, 32 Zeichen, gemäß architecture.md S2-Pattern `^[0-9A-HJ-KM-NP-TV-Z]{6}$`) via `secrets.choice`. Argon2-Wrapper `hash_access_code()`, `verify_access_code()`, `verify_dummy()` analog `auth/hashing.py`.
+     - `models.py` — `AnonymousSession`-ORM.
+     - `repositories.py` — `find_operation_by_id`, `create_anonymous_session`, `find_anonymous_session_by_id`, `is_session_valid`. (Read- und Insert-Pfade — Cleanup-Job ist Phase 4.)
+     - `sessions.py` — `set_anonymous_session(request, session_record)`, `get_current_anonymous_session(request) -> AnonymousSessionUser | None`, `clear_anonymous_session(request)`. Cookie-Key separat (`request.session['anon']` statt der bestehenden Login-Keys), damit Login-/Anon-Sessions parallel koexistieren können.
+     - `api.py` — FastAPI-Router unter `/anon` mit zwei Endpunkten.
+  3. **Neue Tabelle `anonymous_session`** (Alembic-Autogenerate):
+
+     | Spalte         | Typ         | Constraints / Notiz                                 |
+     | -------------- | ----------- | --------------------------------------------------- |
+     | `id`           | UUID PK     | `default uuid.uuid4`                                |
+     | `operation_id` | UUID FK     | → `operation.id` `ON DELETE CASCADE`, NOT NULL      |
+     | `created_at`   | TIMESTAMPTZ | NOT NULL, default `_utcnow`                         |
+     | `last_seen_at` | TIMESTAMPTZ | NOT NULL, default `_utcnow` (Cleanup-Anker Phase 4) |
+     | `expires_at`   | TIMESTAMPTZ | NOT NULL, default `_utcnow + 24h` (Frage-3-B)       |
+
+     Indizes: `pk_anonymous_session`, `fk_anonymous_session_operation_id_operation`, `ix_anonymous_session_operation_id`. Kein Tenant-FK (Bezieher-Seite ist mandantenneutral, ADR-005-konsistent). Kein `client_ip_hash` (Frage-2-B: Vision-Constraint „keine PII" strikt; Rate-Limit-Counter im Valkey-TTL ist die einzige IP-Berührung).
+
+  4. **Spalten-Widening `operation.url_token`** von `String(64)` auf `String(255)` in derselben Migration (signierte itsdangerous-Tokens sind ~80+ Zeichen). Additive Änderung, kein Datenverlust.
+  5. **Endpunkte (S2 Sub-Surface):**
+     - `GET /api/anon/{url_token}/info` → Token signaturprüfen → 404 bei Mismatch oder `status='closed'`/`'planned'` mit Operation-nicht-bereit-Semantik. Bei `status='active'`: 200 mit `{area_label, access_code_active, status}`. Keine Auth, kein Rate-Limit, kein Cookie. **Wahl `planned`-Behandlung:** für `status='planned'` ebenfalls 404, damit die Einsatzkraft-Sicht erst bei aktiver Operation greift (`access_code_active` aus DB; `planned`-State ist Disponenten-Vorbereitung).
+     - `POST /api/anon/{url_token}/session` → Rate-Limit-Check (IP UND URL-Hash AND, 5/15 min) **vor** DB-Lookup. Token signaturprüfen → 410 bei Mismatch (Operation-Token ungültig). SELECT operation → 410 bei `status='closed'`. Bei `access_code_active=True`: Pydantic-Pattern-Check `^[0-9A-HJ-KM-NP-TV-Z]{6}$` → 422 bei Format-Verstoß; Argon2-Verify gegen `access_code_hash`; bei Mismatch → 401, beide Counter +1, identische Antwortzeit (`verify_dummy()`-Pfad bei NULL-Hash). Bei `access_code_active=False`: Body `access_code` optional/ignoriert. Bei Erfolg: URL-Counter-Reset (IP-Counter bleibt — Disziplin aus 2.2), INSERT `anonymous_session` (24h-`expires_at`), Cookie via `set_anonymous_session()`. Antwort 201 mit `{session_id}`.
+  6. **App-Wiring** (`backend/eb_digital/app.py`): `auth_anonymous.api.router` an `api_router` unter `/anon` hängen.
+  7. **`pyproject.toml` / Dependencies:** keine neue Top-Level-Dependency. `itsdangerous 2.2.x` und `argon2-cffi 25.1.x` aus 1.6+2.2 wiederverwendet.
+  8. **`scripts/dev-smoke.sh`-Erweiterung:** Operation per Python-Direktaufruf erzeugen (analog 2.2-Admin-Pattern, weil `backend/operations` erst in 4.x kommt) — direkt INSERT mit `url_token = generate_url_token(op.id, settings.secret_key)`, `access_code_hash = hash_access_code("X7K3PQ")`, `access_code_active=True`, `status='active'`. Smoke-Pfad: `/info` → `/session` mit Code → 201; `/session` mit falschem Code → 401; `/session` auf gefälschtem Token → 410.
+  9. **Tests (5 neue Dateien)** + 1 Erweiterung von `test_auth_models.py` für anonymous_session:
+     - `test_auth_anonymous_tokens.py` — Roundtrip, falsches Secret, verfälschter Token.
+     - `test_auth_anonymous_access_code.py` — Generator-Alphabet, Hash-Roundtrip, Konstantzeit-Heuristik.
+     - `test_auth_anonymous_models.py` — anonymous_session ORM-Eigenschaften (FK CASCADE, Indizes, Default-Werte).
+     - `test_auth_anonymous_repositories.py` — find/create/expire.
+     - `test_auth_anonymous_api.py` — alle Endpunkte, alle Status-Codes, Rate-Limit-Counter-Disziplin.
+  10. **Reifegrad-Updates zu Sessionende:** `backend/auth_anonymous` `[VORLÄUFIG]` → `[BELASTBAR]`; S2 Sub-Surface (`/info`, `/session`) als spezifischer Sub-Eintrag `[BELASTBAR]` (S2 insgesamt bleibt `[VORLÄUFIG]` bis 4.x-`POST /order`); Datenmodell `anonymous_session` `[BELASTBAR]`; `architecture.md` Sensitive-Datenflüsse-Eintrag AccessCode auf `[BELASTBAR]`.
+
+- **Akzeptanzkriterien (UMSETZUNG → funktionsbasiert, 18 Stück):**
+  1. `GET /api/anon/{valid_url_token}/info` mit aktiver Operation → 200 mit `{area_label, access_code_active, status}`.
+  2. `GET /api/anon/{invalid_url_token}/info` → 404.
+  3. `GET /api/anon/{closed_operation_url_token}/info` → 404.
+  4. `POST /session` ohne Code bei `access_code_active=False` → 201 mit Session-Cookie.
+  5. `POST /session` mit korrektem Code bei `access_code_active=True` → 201 mit Cookie.
+  6. `POST /session` mit falschem Code → 401, IP- und URL-Counter +1.
+  7. `POST /session` ohne Code bei `access_code_active=True` → 422 (Pydantic-Pattern-Verstoß, weil Body `access_code` Pflicht-Feld bei aktivem Code).
+  8. 5 Fehlversuche/15 min/IP gegen verschiedene URLs → 6. Versuch 429 mit `Retry-After`.
+  9. 5 Fehlversuche/15 min auf demselben URL-Token → 6. Versuch 429.
+  10. Erfolgreicher POST /session löscht URL-Counter, IP-Counter bleibt.
+  11. `POST /session` auf `status='closed'`-Operation → 410.
+  12. AccessCode-Format-Pattern `^[0-9A-HJ-KM-NP-TV-Z]{6}$` durchgesetzt — ungültige Zeichen → 422.
+  13. Coverage `backend/auth_anonymous` ≥ 95 % Lines / ≥ 90 % Branches.
+  14. Alembic-Round-Trip `upgrade head` → `downgrade -1` → `upgrade head` grün; `alembic check` „No new upgrade operations".
+  15. `uv run pre-commit run --all-files` grün auf allen Hooks (inkl. mypy --strict).
+  16. `uv run pytest` grün, gesamtes Backend ≥ 80 % Coverage (globale Schwelle), kritischer Pfad ≥ 95 %.
+  17. `bash scripts/dev-smoke.sh` grün, Anon-Smoke-Block durchläuft.
+  18. Kein AccessCode-Klartext in Logs, Fehlermeldungen oder DB-Antworten — verifiziert per Grep-Test über `caplog` (Pytest).
+- **Betroffene Module:** `backend/auth_anonymous` (Hauptarbeit, neu); `backend/eb_digital/app.py` (Router-Wiring); `backend/migrations/env.py` (Model-Registrierung); `backend/eb_digital/operations/models.py` (Spalten-Längenänderung `url_token`). **Nicht** berührt: `backend/auth`, `backend/tenants`, `backend/operations`-Use-Cases.
+- **Reifegrad-Wirkung:**
+  - `backend/auth_anonymous` `[VORLÄUFIG]` → `[BELASTBAR]`.
+  - Schnittstelle S2 Sub-Surface (`/info`, `/session`) `[BELASTBAR]` (S2 insgesamt bleibt `[VORLÄUFIG]` bis Order-Endpoints in 4.x).
+  - Datenmodell `anonymous_session` neu `[BELASTBAR]`.
+  - Datenmodell `operation.url_token` (Spalten-Widening) bleibt `[BELASTBAR]` durch Migration.
+  - Architektur-Spec Abschnitt 6 AccessCode-Eintrag von `[VORLÄUFIG]` (mit „kein Hash"-Notiz) auf `[BELASTBAR]` (Argon2id-PHC produktiv).
+- **Artefakte:** 7 neue Backend-Module (`auth_anonymous/__init__.py`, `tokens.py`, `access_code.py`, `models.py`, `repositories.py`, `sessions.py`, `api.py`); 1 Erweiterung `app.py` + `env.py`; 1 neue Alembic-Migration; 5 neue Test-Dateien; 1 Erweiterung `scripts/dev-smoke.sh`; Logbuch- und Architektur-Updates zu Sessionende.
+- **Notizen:**
+  - **Counter-Reset-Disziplin:** Erfolgreiche Session-Anlage löscht URL-Counter, NICHT IP-Counter. Begründung analog 2.2: schützt vor Brute-Force-Sweep „1 falscher Code × 5 URLs + 1 richtiger = neuer IP-Slot".
+  - **`itsdangerous`-Salt:** `"eb-digital.operation-url-token"` — Context-Separation gegen Token-Replay aus anderen Verwendungen desselben Secrets (z. B. Disponent-Email-Reset in Phase 7).
+  - **Crockford-Base32-Diskrepanz** (Methoden-Notiz): ADR-005 sagt „ohne O/0/I/1/L"; architecture.md S2 zeigt das **kanonische** Crockford-Alphabet (ohne I/L/O/U; 0 und 1 sind valide Zeichen). Implementierung folgt architecture.md S2 (kanonische Spec); ADR-005-Wortlaut ist eine ungenaue Glosse, keine Spec-Abweichung — der ADR-Name „Crockford-Base32" ist die maßgebliche Festlegung. Hinweis in `access_code.py`-Modul-Docstring.
+  - **Test-Strategie für Operation-Erzeugung:** Unit-Tests bauen `Operation`-Instanzen via Direkt-INSERT in Test-DB-Fixtures (kein `backend/operations`-Use-Case nötig). Integration-Test in `dev-smoke.sh` via Python-Direktaufruf in Backend-Container.
+  - **Regel-007** (Toggle wirkt nur auf neue Sessions): in 2.3 nur indirekt umgesetzt (Code-Validierung passiert ausschließlich im `POST /session`; bestehende `anonymous_session`-Records werden bei Toggle nicht invalidiert). Expliziter Test zur Toggle-Semantik kommt mit der Toggle-Action in 4.x (`backend/operations.ToggleAccessCode`).
+  - **`status='planned'`-Verhalten in `/info`:** 404 statt 200, damit die Einsatzkraft-PWA erst dann die Operation „sieht", wenn sie aktiv ist. `planned` ist Disponenten-Vorbereitungsphase. Begründung in `tokens.py` und `api.py` als Doc-Kommentar.
+
+#### 2.4–2.7: Folgeschritte (gröber)
+
 - **2.4** `backend/tenants`: Self-Service-Antrag, Plattform-Admin-Freischaltung-Endpoint, Mandanten-CRUD, abstrakter Teilnahme-Filter (Invariante I2 + Regel-014).
 - **2.5** `frontend-disponent`: Login-Flow + Dashboard-Skelett (zeigt Mandanten-Übersicht und „leere Operations" der eigenen Teilnahme).
 - **2.6** `frontend-einsatzkraft`: AccessCode-Eingabe-UI (anonyme Session mit Code-Validierung).

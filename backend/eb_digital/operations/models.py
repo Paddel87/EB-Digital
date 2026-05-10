@@ -71,9 +71,11 @@ class Operation(Base, TimestampMixin):
     # Stadt-/Region-Label vom Disponenten beim Eröffnen gesetzt
     # (z. B. „Bremen Innenstadt"). Quelle für ADR-006-Aggregat.
     city_label: Mapped[str] = mapped_column(String(120), nullable=False)
-    # Kryptographisch zufälliger Token für die Einsatzkraft-URL.
-    # Generierung via ``itsdangerous`` in Schritt 2.3.
-    url_token: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    # Signierter URL-Token für die Einsatzkraft-URL (Schritt 2.3 produktiv).
+    # Generierung via ``itsdangerous.URLSafeSerializer`` mit Operation-UUID als
+    # Payload; typische Länge ~80-100 Zeichen, daher ``String(255)`` (Spalte
+    # wurde in Schritt 2.3 von ``String(64)`` auf ``String(255)`` geweitet).
+    url_token: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     # Argon2id-PHC-Hash des AccessCodes; nullable, weil Code opt-in ist.
     access_code_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     access_code_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
