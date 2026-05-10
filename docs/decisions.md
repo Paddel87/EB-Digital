@@ -13,25 +13,26 @@
 
 ## Teil A: ADR-Übersicht
 
-| ADR | Datum      | Status | Klassifikation | Themen          | Kategorie                  | Kurztitel                                                              |
-| --- | ---------- | ------ | -------------- | --------------- | -------------------------- | ---------------------------------------------------------------------- |
-| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK        | Methodik                   | Projektgrößen-Klassifikation Klasse G                                  |
-| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK           | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate) |
-| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK        | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends        |
-| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY        | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                    |
-| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY        | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                         |
-| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL     | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets               |
-| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE   | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                     |
-| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL           | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                     |
-| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL     | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5             |
-| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                     |
-| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime               |
-| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)     |
-| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY | Externe Abhängigkeiten     | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                |
+| ADR | Datum      | Status | Klassifikation | Themen          | Kategorie                  | Kurztitel                                                                  |
+| --- | ---------- | ------ | -------------- | --------------- | -------------------------- | -------------------------------------------------------------------------- |
+| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK        | Methodik                   | Projektgrößen-Klassifikation Klasse G                                      |
+| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK           | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate)     |
+| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK        | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends            |
+| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY        | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                        |
+| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY        | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                             |
+| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL     | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets                   |
+| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE   | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                         |
+| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL           | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                         |
+| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL     | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5                 |
+| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                         |
+| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime                   |
+| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)         |
+| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY | Externe Abhängigkeiten     | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                    |
+| 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL | Architekturänderungen      | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 0 / 10 = 0 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-004 bis ADR-013).
+- **Aktueller Wert:** 0 / 10 = 0 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-005 bis ADR-014).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 
@@ -416,6 +417,54 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
 
 ---
 
+#### ADR-014: Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip
+
+- **Datum:** 2026-05-10
+- **Status:** Aktiv
+- **Tags:** `[STRATEGISCH]` `[METHODIK]` `[MODUL]`
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 2, zwischen Schritt 2.1 ERLEDIGT und 2.2 OFFEN; strategische Klarstellung außerhalb der Schritt-Sequenz, ausgelöst durch Patrick-Direktive am 2026-05-10).
+- **Reifegrad-Wirkung:** neuer Architektur-Bestandteil „NFR Anbieter-Austauschbarkeit für externe Geo-Services" auf `[BELASTBAR]` (durch diesen ADR fixiert). Reifegrad-Übersicht in `architecture.md` Abschnitt 9 entsprechend ergänzt; Stand-Datum auf 2026-05-10 aktualisiert.
+- **Kategorie:** Architekturänderung als Architektur-Prinzip (CLAUDE.md Abschnitt 4 Punkt 1) — fixiert eine bisher implizite Architektur-Eigenschaft als bewusst geschütztes Prinzip.
+- **Kontext:** Echtdaten-Recherche zu MapTiler am 2026-05-10 (Logbuch-BEOBACHTUNG vom selben Tag) ergab vier Befunde, die die externe Service-Abhängigkeit mit strategischer Reibung belasten:
+  1. **AGB-Cache-Konflikt:** [MapTiler Cloud Terms](https://www.maptiler.com/terms/cloud/) verbieten serverseitiges Caching ohne ausdrückliche Sales-Approval und Zusatzgebühr — der geplante 7-Tage-nginx-Cache vor MapTiler Cloud (`project-context.md` Abschnitt 6 Performance, `architecture.md` Modul `infra/tile-proxy`) ist ohne Approval AGB-widrig.
+  2. **Pricing-Modell-Unterschiede pro Provider:** MapTiler Cloud rechnet Sessions vs. Tile-Requests ab. Sessions sind nur mit dem MapTiler-eigenen SDK technisch zählbar (Frontend-Lock-in). MapLibre GL JS als Renderer erzwingt Tile-Request-Abrechnung. Dieser Cost-Optimierungs-Hebel ist provider-spezifisch und damit kein Architektur-Argument, sondern ein Provider-Argument.
+  3. **Lizenz-/Compliance-Profile unterscheiden sich:** MapTiler Cloud Free Tier ist auf non-commercial use beschränkt; Multi-Tenant-B2B-Produktivnutzung schließt Free Tier aus, unabhängig von der AGPLv3-Lizenz der eigenen Software. MapTiler Server Standard schließt B2B/Multi-Tenant explizit aus; einziger Self-Hosting-Pfad ist Custom (kein öffentlicher Preis).
+  4. **Eigenbetriebs-Pfade unterscheiden sich qualitativ:** MapTiler Server vs. OpenMapTiles+tileserver-gl haben unterschiedliche Daten-Qualitäts- und Operations-Aufwand-Profile.
+     Gleichzeitig sind die Architektur-Naht (`backend/geo`-Adapter, `infra/tile-proxy`-Modul, MapLibre GL JS als Renderer ohne Provider-Bindung) bereits provider-neutral angelegt — diese Eigenschaft war bisher _implizit_ und wäre durch eine vermeintlich pragmatische Wahl (z. B. „wir nutzen MapTiler SDK JS für die Cost-Optimierung") leise verloren gegangen. Patrick-Direktive 2026-05-10: „EB-Digital so konzeptionieren, dass die Anbieter bei Bedarf gewechselt werden können". Dieser ADR überführt die Direktive in ein bewusst geschütztes Architektur-Prinzip.
+- **Optionen:**
+  - **A:** Provider-Lock-in pragmatisch akzeptieren (z. B. MapTiler SDK JS für Sessions-Cost-Vorteil im Frontend, MapTiler-spezifische Aufrufe in Backend-Modulen jenseits von `backend/geo`). – Konsequenzen: Cost-Vorteil heute, aber Hand bei jedem Provider-Vertragswechsel oder AGB-Update gebunden; Vendor-Lock-in im Frontend; Pfad zu OSS-Stack nur mit Frontend-Refactoring möglich.
+  - **B:** Provider-Neutralität als bewusst geschütztes Architektur-Prinzip fixieren. Externe Geo-Service-Integration läuft ausschließlich über Adapter-Module mit provider-neutralen Schnittstellen. Frontend-Renderer-Wahl: MapLibre GL JS als provider-neutraler Default. Wechsel zu provider-spezifischem SDK (MapTiler SDK JS) erfordert eigenen ADR mit expliziter Lock-in-Begründung. – Konsequenzen: Cost-Optimierung über Sessions im Frontend wird ADR-gesperrt (kein stilles Drift); Pfad zu OSS-Stack oder MapTiler Server Custom bleibt als Adapter-Tausch möglich; Pflicht zur Adapter-Schnittstellen-Dokumentation pro externer Service-Integration; Phase-1-Architektur ist für diesen Pfad bereits korrekt geschnitten — keine Code-Umstrukturierung nötig.
+  - **C:** Multi-Provider-Aktivbetrieb von Tag 1 (zwei aktive Provider-Adapter mit Failover). – Konsequenzen: doppelter Implementations-/Verifikations-/Test-Aufwand; in Phase 1 ohne demonstrierten Bedarf Over-Engineering.
+- **Entscheidung:** **Option B** — Anbieter-Austauschbarkeit als Architektur-Prinzip fixieren. Patrick freigegeben am 2026-05-10 mit Direktive „EB-Digital so konzeptionieren, dass die Anbieter bei Bedarf gewechselt werden können".
+- **Konsequenzen:**
+  - **Geltungsbereich:** Tile-Provider (heute MapTiler Cloud), Geocoding-Provider (heute MapTiler Cloud), Routing-Provider (heute TomTom), künftige externe Dienste mit Geo-/Karten-Bezug. Implizit auch alle externen HTTP-API-Abhängigkeiten mit erkennbarem Alternativanbieter (SaaS-Auth ist bereits durch `project-context.md` Abschnitt 3 „Explizit nicht erlaubt" ausgeschlossen).
+  - **Adapter-Pflicht:** Jede externe Service-Integration läuft ausschließlich über `backend/geo`-Adapter-Klassen (oder analoge Adapter in anderen Backend-Modulen) mit provider-neutralen Schnittstellen-Definitionen (Methoden-Signaturen, Datentypen, Fehler-Verhalten). Provider-spezifische Aufrufe, Datenstrukturen oder Endpunkte leben **ausschließlich** im Adapter; aufrufende Module dürfen sie nicht kennen.
+  - **Frontend-Renderer-Wahl ist Architektur-Entscheidung:** MapLibre GL JS bleibt provider-neutraler Default. Wechsel zu MapTiler SDK JS (oder einem analogen provider-spezifischen SDK) erfordert separaten ADR mit Begründung des akzeptierten Lock-ins, Bezifferung des Cost-/UX-Vorteils und Plan zum Rück-Wechsel-Aufwand.
+  - **Pflichten beim Hinzufügen eines neuen externen Service:**
+    1. Adapter-Modul mit provider-neutraler Schnittstelle vor erster produktiver Nutzung definiert und in `architecture.md` Abschnitt 4 als Schnittstelle dokumentiert.
+    2. Mindestens ein Alternativanbieter im aufnehmenden ADR oder im `project-context.md` Abschnitt 5 dokumentiert.
+    3. Wechselpfad als Adapter-Austausch beschrieben (welche Methoden-Signaturen müssen erfüllt sein, welche Datentypen sind kanonisch).
+  - **Kein Multi-Provider-Aktivbetrieb in Phase 1:** Prinzip schützt die _Möglichkeit_ des Wechsels, nicht die laufende parallele Verfügbarkeit. Ein einzelner aktiver Adapter pro Service-Typ reicht.
+  - **Wirkung auf bestehende Recherche-Befunde 2026-05-10:**
+    - **AGB-Cache-Konflikt** wird als offene Klärung in `project-context.md` Abschnitt 11 geführt (vor Phase-6-Tile-Proxy-Implementierung zu klären); kein direkter Konflikt mit dem Prinzip, weil das Prinzip die Wechselbarkeit, nicht die Gegenwarts-Wahl betrifft.
+    - **maptiler-sdk-js-Frontend-Lock-in** wird durch dieses Prinzip explizit ADR-pflichtig — wenn der Sessions-Cost-Vorteil nutzbar gemacht werden soll, muss ein eigener ADR die Akzeptanz begründen.
+    - **MapTiler Server Custom als Self-Hosting-Pfad** bleibt offen; das Prinzip ändert nichts an der Phase-1-Wahl MapTiler Cloud, hält aber den Migrationspfad als reiner Adapter-Austausch sauber.
+  - **Klassifikation `[STRATEGISCH]`, nicht `[REAKTIV]`:** strategische Architektur-Entscheidung aus Patrick-Direktive, kein nachgezogener Pivot. Reaktiv-Quote bleibt 0/10 (zählt jetzt ADR-005 bis ADR-014).
+- **Verworfene Alternativen** (siehe Optionen A und C oben; werden in `architecture.md` Abschnitt 8 aufgenommen):
+  - **A: Provider-Lock-in pragmatisch akzeptieren** – verworfen, weil strategische Flexibilität wichtiger als Cost-Optimierung in Phase 1; MapTiler-AGB-Risiken (Cache-Klausel, Free-Tier-Restriktion, Multi-Tenant-Restriktion bei Server Standard) zeigen, wie schnell sich Provider-Bedingungen ändern können; Patrick-Direktive 2026-05-10 fordert explizit Wechselbarkeit.
+  - **C: Multi-Provider-Aktivbetrieb von Tag 1** – verworfen, weil Over-Engineering ohne demonstrierten Phase-1-Bedarf; doppelter Implementations-/Verifikations-/Test-Aufwand.
+- **Wirkung auf bestehende Architektur und ADRs:**
+  - **ADR-002 (Stack-Wahl)** bleibt gültig; konkrete Provider (MapTiler, TomTom) bleiben in Phase 1 fixiert. Dieser ADR fixiert nur, dass die Schnittstelle provider-neutral bleiben muss.
+  - **ADR-003 (Architektur-Pattern)** bleibt gültig; das Prinzip ergänzt eine bisher implizite Eigenschaft des Modular-Monolith-Patterns ohne Modul-Schnitt-Änderung.
+  - **`architecture.md` Abschnitt 1 Überblick** wird um die Prinzip-Aussage als zusätzlichen Kommunikations-Grundmodus-Bullet ergänzt (`[BELASTBAR]`).
+  - **`architecture.md` Abschnitt 6 NFRs** wird um eine neue Sub-Sektion „Wartbarkeit / Portabilität" ergänzt mit dem Anbieter-Austauschbarkeits-Prinzip als belastbarer NFR.
+  - **`architecture.md` Abschnitt 8 Verworfene Alternativen** wird um „Provider-Lock-in pragmatisch akzeptieren" und „Multi-Provider-Aktivbetrieb in Phase 1" ergänzt.
+  - **`architecture.md` Abschnitt 9 Reifegrad-Übersicht** bekommt eine neue Zeile „NFR Anbieter-Austauschbarkeit für externe Geo-Services" als `[BELASTBAR]` mit Verweis auf diesen ADR.
+  - **`project-context.md` Abschnitt 11 MapTiler-Eintrag** wird vollständig konsolidiert (Renderer/Provider-Trennung, AGB-Cache-Befund, Free-Tier-Restriktion, Sessions-vs-Requests-Detail, vier Migrationspfade A/B/C/D mit aktualisierter Trigger-Liste, Begriffsklärung MapTiler vs. MapLibre).
+- **Abgeleitete Regel:** Regel-017 (Anbieter-Austauschbarkeit für externe Services) – siehe Teil C.
+
+---
+
 ## Teil C: Entscheidungsregeln
 
 <!-- Regeln für wiederkehrende Fälle, damit die KI in ähnlichen Situationen
@@ -563,3 +612,18 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
 - **Regel:** Vor Aufnahme bzw. Major-Update wird **zusätzlich zur eigenen Lizenz** auch die Lizenz aller **Pflicht**-Sub-Dependencies (`dependencies = […]` ohne `optional-dependencies` / `extras`) gegen die Liste „Erlaubte Abhängigkeitslizenzen" in `project-context.md` Abschnitt 6 geprüft. Quelle: PyPI-Metadaten der Sub-Dep (License-Expression oder Classifier) plus Upstream-`LICENSE`-Datei zur Bestätigung. Ergebnis wird im Verifikations-Block notiert. Treffer auf eine ausgeschlossene Lizenz (GPL/LGPL als Backend-Dep, RSALv2/SSPL u. a.) erzwingt **vor** dem Pinning eine Entscheidung: entweder eigener ADR (`[STACK] [METHODIK]` oder strenger) mit Begründung der Akzeptanz und konkretem Geltungsbereich der Verschmutzung, oder Verzicht auf die Top-Level-Komponente.
 - **Ausnahmen:** Optionale Extras (`optional-dependencies`, `extras`), die wir nicht installieren, müssen nicht geprüft werden. Test- und Dev-Dependencies (`[dependency-groups].dev`) sind außerhalb des Backend-Lizenz-Restriktions-Geltungsbereichs (`project-context.md` Abschnitt 6 „als Backend-Dependency"); werden trotzdem im Verifikations-Block notiert, ohne ADR-Pflicht.
 - **Gegenbeispiel:** Eine Bibliothek `foo` (MIT) in `pyproject.toml` aufnehmen, weil ihre Top-Level-Lizenz passt, ohne zu prüfen, dass `foo` zwingend `bar` (GPLv3) zieht – verboten. Die Verschmutzung ist real, auch wenn die direkte Top-Level-Lizenz „sauber" wirkt.
+
+#### Regel-017: Anbieter-Austauschbarkeit für externe Services
+
+- **Herkunft:** ADR-014
+- **Gilt für:** jede externe HTTP-API-Abhängigkeit eines Backend-Moduls (heute: MapTiler Cloud für Tiles + Geocoding via `infra/tile-proxy`, TomTom für Routing via `backend/geo`); jede künftige externe Service-Integration mit erkennbarem Alternativanbieter.
+- **Regel:** Externe Services werden ausschließlich über Adapter-Module angesprochen, die eine provider-neutrale Schnittstelle definieren (Methoden-Signaturen, Datentypen, Fehler-Verhalten). Provider-spezifische Aufrufe, Datenstrukturen oder Endpunkte leben **ausschließlich** im Adapter. Aufrufende Module außerhalb des Adapter-Moduls dürfen Provider-Identität nicht kennen — sie sehen nur die provider-neutrale Schnittstelle. Wechsel des Providers erfolgt als Adapter-Austausch ohne Modul-Refactor außerhalb des Adapters. Frontend-Renderer-Wahl pro Frontend folgt demselben Prinzip: **MapLibre GL JS als provider-neutraler Default**. Wechsel zu provider-spezifischem SDK (MapTiler SDK JS, Mapbox GL JS, etc.) ist möglich, erfordert aber **eigenen ADR** mit expliziter Begründung des akzeptierten Frontend-Lock-ins, Bezifferung des Cost-/UX-Vorteils und Plan zum Rück-Wechsel-Aufwand.
+- **Pflichten beim Hinzufügen eines neuen externen Service:**
+  1. Adapter-Modul mit provider-neutraler Schnittstelle vor erster produktiver Nutzung definiert und in `architecture.md` Abschnitt 4 als Schnittstelle dokumentiert.
+  2. Mindestens ein Alternativanbieter im aufnehmenden ADR oder im `project-context.md` Abschnitt 5 dokumentiert.
+  3. Wechselpfad als Adapter-Austausch beschrieben (welche Methoden-Signaturen müssen erfüllt sein, welche Datentypen sind kanonisch).
+- **Ausnahmen:** keine. Eine pragmatische Provider-Lock-in-Abweichung erfordert eigenen ADR mit expliziter Begründung (z. B. Frontend-Lock-in mit MapTiler SDK JS für Sessions-Cost-Vorteil) und greift nur für die spezifisch begründete Komponente, nicht generisch.
+- **Gegenbeispiel:**
+  - `from backend.geo.maptiler import geocode_address` direkt aus `backend/operations` aufgerufen (Provider-Identität sickert in den Aufrufer) — verboten. Stattdessen `backend.geo.geocode(address)` als provider-neutrale Schnittstelle.
+  - `import maptilersdk` im Svelte-Frontend ohne separaten ADR — verboten. Stattdessen MapLibre GL JS, oder ADR mit Lock-in-Begründung.
+  - Direkter provider-spezifischer Endpunkt-Aufruf in einem Backend-Modul außerhalb von `backend/geo` (z. B. `httpx.get("https://api.maptiler.com/...")` aus `backend/realtime`) — verboten. Stattdessen Adapter-Aufruf über `backend/geo`.

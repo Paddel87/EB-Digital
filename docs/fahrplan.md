@@ -15,6 +15,7 @@
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
 - **CI-Hygiene-Sonderfall in Phase 1 (2026-05-10):** ADR-012 — `actions/upload-artifact@v4` → `@v7` als Major-Update gegen Node-20-Deprecation, analog zu ADR-010 in 1.2. Reaktiv-Quote bleibt 0 / 10.
+- **Strategische Klarstellung zwischen 2.1 und 2.2 (2026-05-10):** ADR-014 — Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip + Regel-017. Außerhalb der Schritt-Sequenz, dokumentations-only (kein Code-Eingriff). Reaktiv-Quote bleibt 0 / 10. Keine Auswirkung auf Schritt-2.2-Plan; jedoch erweiterte Eingangsbedingung für Phase 6 (`backend/geo` + `infra/tile-proxy`-Implementierung): MapTiler-Sales-Approval für serverseitigen Cache vor erster Tile-Proxy-Implementierung zu klären, oder Pfad-B/C/D-Wechsel — siehe `project-context.md` Abschnitt 11. Wird in Phase-7-Roadmap-Meilenstein „MapTiler-Sales-Anfrage" gespiegelt.
 
 ## Phasen-Typen
 

@@ -26,6 +26,36 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-10 – [ADR-ANGELEGT]
+
+- **ADR-014** angelegt: „Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip", Tags `[STRATEGISCH] [METHODIK] [MODUL]`. Patrick-Direktive 2026-05-10: „EB-Digital so konzeptionieren, dass die Anbieter bei Bedarf gewechselt werden können". Bisher implizite Architektur-Naht (provider-neutraler `backend/geo`-Adapter, `infra/tile-proxy`, MapLibre GL JS als Renderer) wird zum bewusst geschützten Prinzip; jede externe Geo-Service-Integration läuft ausschließlich über provider-neutrale Adapter-Module; Frontend-Renderer-Wechsel auf provider-spezifisches SDK ist ADR-pflichtig.
+- **Reifegrad-Wirkung:** neuer Bestandteil „NFR Anbieter-Austauschbarkeit für externe Geo-Services" auf `[BELASTBAR]` (durch ADR fixiert). `architecture.md` Abschnitt 9 Reifegrad-Übersicht erweitert; Stand-Datum auf 2026-05-10 aktualisiert.
+- **Regel-017** abgeleitet (siehe `decisions.md` Teil C): provider-neutrale Adapter-Pflicht für externe Services + MapLibre GL JS als Frontend-Renderer-Default.
+- **Architektur-Spec-Updates:** `architecture.md` Abschnitt 1 (Überblick) um Prinzip-Bullet ergänzt; Abschnitt 6 NFRs um neue Sub-Sektion „Wartbarkeit / Portabilität" mit dem Prinzip als belastbarer NFR; Abschnitt 8 (Verworfene Alternativen) um „Provider-Lock-in pragmatisch akzeptieren" und „Multi-Provider-Aktivbetrieb in Phase 1" ergänzt; Abschnitt 9 um neue Reifegrad-Zeile.
+- **Reaktiv-Quote nach diesem ADR:** **0 / 10 (0 %)** unverändert (zählt jetzt ADR-005 bis ADR-014). ADR-014 ist `[STRATEGISCH]`, nicht `[REAKTIV]` — Patrick-Direktive aus echter Strategie-Frage, kein nachgezogener Pivot.
+
+### 2026-05-10 – [BEOBACHTUNG]
+
+- **Anlass:** Echtdaten-Recherche zu MapTiler Server + Cloud-Tier-Pricing nach Patrick-Frage 2026-05-10. Folgefragen: maptiler-sdk-js-Wechsel möglich? Ist „nicht-kommerziell" als Software-Lizenz für die ToS-Einstufung relevant? Frage zu MapTiler-vs-MapLibre-Begriffsklärung.
+- **Konsolidierte Befunde** (Quellen sind in `project-context.md` Abschnitt 11 und ADR-014 verlinkt):
+  - **MapTiler Cloud Tier-Tabelle:** Free $0 (100k Req / 5k Sess, **non-commercial only** + Logo-Pflicht), Flex $25 (500k/25k), Unlimited $295 (5M/300k), Custom Vertrag.
+  - **Sessions vs. Requests:** Sessions nur mit MapTiler-eigenem SDK technisch zählbar (Frontend-Lock-in). MapLibre GL JS als Renderer = zwingend Request-Abrechnung. Sessions wurden Juni 2023 als Option **zusätzlich** eingeführt, nicht als Ersatz.
+  - **MapTiler Server:** Free $0 (100 MAU, non-commercial), Standard $2.500/Jahr (500 MAU, **explizit kein B2B/Multi-Tenant** — für EB Digital damit nicht nutzbar), Custom (kein öffentlicher Preis). Einziger gangbarer Self-Hosting-Pfad ist Custom.
+  - **maptiler-sdk-js:** BSD-3-Clause (passt zur Erlaubt-Liste), wraps MapLibre GL JS, technisch drop-in. Wechsel würde Sessions-Cost-Vorteil aktivieren (~$35–55/Monat statt $295/Monat im Unlimited-Tier), bricht aber die Provider-Neutralität im Frontend → ADR-014/Regel-017 macht den Wechsel ADR-pflichtig. Aktivierung Phase 1 nicht geplant.
+  - **AGB-Cache-Konflikt (kritisch):** MapTiler Cloud Terms verbieten serverseitiges Caching ohne Sales-Approval. Geplanter 7-Tage-nginx-Cache vor MapTiler Cloud ist ohne Approval AGB-widrig. Vor Phase-6-Tile-Proxy-Implementierung zu klären.
+  - **Free-Tier-Restriktion:** „non-commercial only" gilt für die operative Nutzung des Service, nicht für die Software-Lizenz. AGPLv3-Lizenz von EB Digital ändert die ToS-Einstufung **nicht**. Phasen-Wirkung: Phase 1–6 fallen unter R&D (Free OK), ab Phase 7 Produktivbetrieb mit DPolG ist Flex-Tier ($25/Monat) zwingend.
+  - **MapTiler vs. MapLibre Begriffsklärung:** MapTiler = kommerzielles Schweizer Unternehmen (Klokan Technologies) mit Produkten (Cloud SaaS, Server kommerziell, SDK JS); MapLibre = Open-Source-Foundation-Projekt mit Renderer-Bibliotheken (GL JS, Native, Style Spec). Renderer (Frontend) und Tile-Provider (Backend) sind zwei unabhängige Wahl-Achsen.
+- **Übernahme in Pflicht-Dokumente:**
+  - `project-context.md` Abschnitt 11: Eintrag „MapTiler: Self-Hosting" durch konsolidierten Block ersetzt (Renderer/Provider-Trennung, vier Migrations-Pfade A/B/C/D, Tier-Tabelle, AGB-Cache-Befund, Free-Tier-Restriktion, Sessions-vs-Requests-Detail, Begriffsklärung).
+  - `architecture.md`: vier Stellen aktualisiert (Abschnitt 1 Überblick, Abschnitt 6 NFRs, Abschnitt 8 Verworfene Alternativen, Abschnitt 9 Reifegrad-Übersicht inkl. Stand-Datum-Bump auf 2026-05-10).
+  - `decisions.md`: ADR-014 in Teil B angelegt; Regel-017 in Teil C abgeleitet; Teil-A-Übersicht-Tabelle ergänzt; Reaktiv-Quote-Note auf „ADR-005 bis ADR-014" aktualisiert.
+  - `fahrplan.md`: „Aktueller Stand" um Hinweis auf ADR-014 zwischen 2.1 und 2.2 ergänzt; Phase-6-Eingangsbedingung „MapTiler-Sales-Approval oder Pfad-Wechsel" vermerkt.
+  - `README.md`: ADR-Zähler 12 → 13, Regel-Zähler 16 → 17, Architektur-Reife `[BELASTBAR]`-Zähler 10 → 11; Reaktiv-Quote bleibt 0/10.
+- **Methoden-Erfolg:** zwei strategische Folgefragen (maptiler-sdk-js-Lizenz + non-commercial-Relevanz) wurden vor Niederschreibung gezielt durch Web-/Repo-Verifikation gegengeprüft (gh API für maptiler-sdk-js-Repo-Lizenz BSD-3-Clause; WebFetch auf [maptiler.com/terms/cloud](https://www.maptiler.com/terms/cloud/) für Free-Tier-Wortlaut). Frühere Trainingsstand-Vermutung „Selbsthosten qualitativ schlechter" (in Erstantwort am Sessionbeginn) wurde in Folgeantwort korrigiert (MapTiler Server Custom = volle Cloud-Qualität). Keine stille Annahme in die Pflicht-Dokumente eingeschleust.
+- **Methoden-Reibung:** der AGB-Cache-Konflikt war seit Modus 2 implizit, blieb aber bis 2026-05-10 unerkannt. Lerneffekt für künftige Stack-Aufnahmen: bei externen Services nicht nur Pricing/Quoten, sondern **AGB-Wortlaut** als Teil der Verifikations-Disziplin (Modus-2-Schritt 2a) durchsehen — analog zur Sub-Dependency-Lizenz-Prüfung (Regel-016). Erwägung, Regel-016 in einer späteren Methodik-Reflexion entsprechend zu erweitern (nicht jetzt — separater ADR-Anlass, wenn er konkret wird).
+- **Wirkung auf Fahrplan / Phasen:** Phase 2.2–2.7 unverändert. Phase 6 (`backend/geo` + Tile-Proxy-Implementierung) bekommt zusätzliche Eingangsbedingung „MapTiler-Sales-Approval für serverseitigen Cache geklärt, oder Pfad-B/C/D-Wechsel". Phase 7 Roadmap-Meilenstein „MapTiler-Sales-Anfrage" als organisatorischer Punkt ergänzungswürdig (passt zur N/O/P-Logik in `fahrplan.md` Phase 7).
+- **Reaktiv-Quote unverändert 0/10.**
+
 ### 2026-05-10 – [BEOBACHTUNG]
 
 - **Anlass:** Strategie-Frage Patrick außerhalb der Phase-2-Schritt-Sequenz: „Muss MapTiler bis auf weiteres mit API genutzt werden oder ist in Zukunft ein eigener Server möglich?"
