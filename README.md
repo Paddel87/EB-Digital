@@ -50,9 +50,9 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
 - **Version:** v0.1.0
 - **Status:** Konzeption
 - **Letzte Änderung:** 2026-05-10
-- **Architektur-Reife:** 13 Bestandteile `[BELASTBAR]` (Stack-/NFR-/Datenschutz-Constraints + Schnittstelle S1 Admin-Bootstrap-CLI + seit 2026-05-10 Schritt 2.2 zusätzlich `backend/auth`-Modul, Schnittstelle S8a `/api/auth/login`+`/logout`+`/me`, Valkey-Connection-Pool für Backend), ca. 31 `[VORLÄUFIG]` (Module inkl. drei Frontend-Skelette + zwei Infra-Module mit Phase-1-Smoke aber ohne Production-TLS/Sub-Domain/Pass-through, restliche Schnittstellen, Datenmodell-Invarianten — Phase-2-Sonderregel: Beförderung erfolgt mit dem jeweiligen funktionalen Schritt 2.3–2.6), 9 `[OFFEN]` (Spikes G–M, Bedrohungsmodell, Tracing). Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends bleibt bis zum Last-/Funktionstest in Phase 7 `[VORLÄUFIG]`.
+- **Architektur-Reife:** 14 Bestandteile `[BELASTBAR]` (Stack-/NFR-/Datenschutz-Constraints + Schnittstelle S1 Admin-Bootstrap-CLI + seit 2026-05-10 Schritt 2.2 zusätzlich `backend/auth`-Modul, Schnittstelle S8a `/api/auth/login`+`/logout`+`/me`, Valkey-Connection-Pool für Backend + NFR Anbieter-Austauschbarkeit für externe Geo-Services via ADR-014/Regel-017), ca. 31 `[VORLÄUFIG]` (Module inkl. drei Frontend-Skelette + zwei Infra-Module mit Phase-1-Smoke aber ohne Production-TLS/Sub-Domain/Pass-through, restliche Schnittstellen, Datenmodell-Invarianten — Phase-2-Sonderregel: Beförderung erfolgt mit dem jeweiligen funktionalen Schritt 2.3–2.6), 9 `[OFFEN]` (Spikes G–M, Bedrohungsmodell, Tracing). Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends bleibt bis zum Last-/Funktionstest in Phase 7 `[VORLÄUFIG]`.
 - **Aktive Blocker:** 0 (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — macOS `UF_HIDDEN`-File-Flag auf `.venv` lässt Python 3.13 die Editable-`.pth` skippen; Heilung als Skript [`scripts/fix-venv-flags.sh`](scripts/fix-venv-flags.sh), siehe [`docs/blockers.md`](docs/blockers.md)).
-- **ADRs:** 13 (9 `[STRATEGISCH]` aus INITIALISIERUNG + 4 `[OPERATIV]`: ADR-010 GitHub-Actions Major-Update + Verifikations-Regime, ADR-011 psycopg-LGPL-Akzeptanz und Sub-Dep-Lizenz-Regime, ADR-012 actions/upload-artifact v4 → v7 gegen Node-20-Deprecation, ADR-013 Rate-Limit als eigener Valkey-Counter); Reaktiv-Quote 0/10 (Schwellenwert 20 % nicht überschritten).
+- **ADRs:** 14 (9 `[STRATEGISCH]` aus INITIALISIERUNG + 4 `[OPERATIV]`: ADR-010 GitHub-Actions Major-Update + Verifikations-Regime, ADR-011 psycopg-LGPL-Akzeptanz und Sub-Dep-Lizenz-Regime, ADR-012 actions/upload-artifact v4 → v7 gegen Node-20-Deprecation, ADR-013 Rate-Limit als eigener Valkey-Counter + ADR-014 `[STRATEGISCH]` zu Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip); Reaktiv-Quote 0/10 (Schwellenwert 20 % nicht überschritten; zählt jetzt ADR-005 bis ADR-014).
 - **Klassifikation:** Klasse G (Groß) – ADR-001.
 
 ## Quick Start
@@ -180,16 +180,16 @@ graph LR
 
 ## Dokumentation
 
-| Dokument                                             | Inhalt                                                                                                                                                           |
-| ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`docs/vision.md`](docs/vision.md)                   | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss)                                                                                                 |
-| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards                                                                                                     |
-| [`docs/architecture.md`](docs/architecture.md)       | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht                                                                              |
-| [`docs/fahrplan.md`](docs/fahrplan.md)               | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert                                                                                |
-| [`docs/decisions.md`](docs/decisions.md)             | 13 ADRs (Klassifikation, Stack, Pattern, Fragen A–F, Actions-Updates, psycopg-LGPL-Akzeptanz, Rate-Limit als eigener Valkey-Counter) plus 16 Entscheidungsregeln |
-| [`docs/blockers.md`](docs/blockers.md)               | Aktive Blocker (aktuell keine; #001 am 2026-05-10 gelöst) und Erkennungs-Heuristiken                                                                             |
-| [`docs/logbuch.md`](docs/logbuch.md)                 | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen                                                                           |
-| [`CLAUDE.md`](CLAUDE.md)                             | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus)                                                                                                      |
+| Dokument                                             | Inhalt                                                                                                                                                                                  |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`docs/vision.md`](docs/vision.md)                   | Ursprüngliche Projektvision (eingefroren nach Modus-2-Abschluss)                                                                                                                        |
+| [`docs/project-context.md`](docs/project-context.md) | Aktueller Stack, Constraints, Qualitätsziele, Code-Standards                                                                                                                            |
+| [`docs/architecture.md`](docs/architecture.md)       | Systemarchitektur, 14 Module, 10 Schnittstellen, 5 Datenflüsse, Reifegrad-Übersicht                                                                                                     |
+| [`docs/fahrplan.md`](docs/fahrplan.md)               | Entwicklungsplan: 7 reguläre Phasen + Phase X (Verbund), Phase 1 voll detailliert                                                                                                       |
+| [`docs/decisions.md`](docs/decisions.md)             | 14 ADRs (Klassifikation, Stack, Pattern, Fragen A–F, Actions-Updates, psycopg-LGPL-Akzeptanz, Rate-Limit als eigener Valkey-Counter, Anbieter-Austauschbarkeit) plus 17 Entscheidungsregeln |
+| [`docs/blockers.md`](docs/blockers.md)               | Aktive Blocker (aktuell keine; #001 am 2026-05-10 gelöst) und Erkennungs-Heuristiken                                                                                                    |
+| [`docs/logbuch.md`](docs/logbuch.md)                 | Chronologischer Flugschreiber: Sessions, Beobachtungen, Reifegrad-Wechsel, ADR-Anlagen                                                                                                  |
+| [`CLAUDE.md`](CLAUDE.md)                             | Projektübergreifende Arbeitsmethodik (semi-autonomer Modus)                                                                                                                             |
 
 ## Lizenz
 
