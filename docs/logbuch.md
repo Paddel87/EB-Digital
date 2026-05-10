@@ -26,6 +26,26 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-10 – [BEOBACHTUNG]
+
+- **Anlass:** Strategie-Frage Patrick außerhalb der Phase-2-Schritt-Sequenz: „Muss MapTiler bis auf weiteres mit API genutzt werden oder ist in Zukunft ein eigener Server möglich?"
+- **Klärung:** Drei Migrationspfade möglich (A: MapTiler Server kommerziell selbst gehostet; B: OpenMapTiles + tileserver-gl rein OSS; C: Hybrid — Tiles OSS, Geocoding weiter Cloud). Architektonische Naht für späteren Provider-Wechsel ist **bereits gesetzt** (MapLibre GL JS provider-neutral im Frontend, `backend/geo`-Adapter + `infra/tile-proxy` als Backend-Kapsel; `architecture.md` Abschnitt 4 Schnittstelle S7). Phase-1-Entscheidung „MapTiler Cloud + nginx-Cache" bleibt ökonomisch überlegen bei aktueller Budget-/Last-Annahme.
+- **Erstkorrektur in der Diskussion:** Erste Antwort hatte „Selbsthosten-Qualität schlechter" pauschal formuliert; tatsächlich bietet MapTiler ein kommerzielles Self-Hosted-Produkt (MapTiler Server) mit identischer Daten-/Style-Qualität an. Korrektur in Folgeantwort gegenüber Patrick eingezogen, mit explizitem Trainingsstand-Vorbehalt zu Preisen und Geocoding-Verfügbarkeit (nicht öffentlich, in Reentscheidungsfall direkt bei MapTiler zu verifizieren).
+- **Entscheidung:** Aufnahme als Offene Grundsatzfrage in `project-context.md` Abschnitt 11 (neuer Sub-Block „Während Phase 2 zusätzlich identifiziert (2026-05-10)") mit drei Optionen, vier Triggern für Reentscheidung und Pflichten-Liste (Regel-016, ADR, Verifikations-Stempel, Architektur-Anpassung). Kein Phase-1–7-Spike geplant — rein Trigger-basierte Option.
+- **Methoden-Erfolg:** Frage wurde nicht stillschweigend mit „MapTiler ist fix" beantwortet, sondern als legitime strategische Reflexion über die Lebenszeit des Stacks behandelt. Architektonische Vorarbeit (Provider-neutrale Naht via Tile-Proxy + MapLibre) zahlt sich erst aus, wenn man sie auch dokumentiert sichtbar macht — sonst wird sie unterschwellig vergessen.
+- **Methoden-Reibung:** Erstantwort war zu pauschal in der Qualitätsaussage. Lerneffekt: Bei Aussagen über externe kommerzielle Produkte explizit den Trainingsstand-Vorbehalt setzen (analog zur Stack-Verifikations-Disziplin Schritt 2a), nicht erst auf Rückfrage. Korrektur in zweiter Antwort gegeben, aber besser wäre der Vorbehalt von Anfang an gewesen.
+- **Wirkung auf Fahrplan / Phasen:** keine Änderung an Phase 1–7. Phase X bleibt unverändert. Sperrungs-Override-Spike G und Tile-Caching-Frontend-Spike L sind unabhängig und werden weiterhin in Phase 5 vorbereitet.
+
+### 2026-05-10 – [SESSIONSTART]
+
+- **Letzter Stand:** Phase 2 Schritt 2.1 ERLEDIGT (PR #17 gemerged, Merge-Commit `49b5bc4`). Worktree `silly-almeida-90c405` zu Sessionbeginn `git status` clean, Branch `scp/silly-almeida-90c405` von `main` ausgehend. Phase 1 vollständig ERLEDIGT. Reaktiv-Quote 0/10. Keine aktiven Blocker. Keine offenen STOPP-Situationen. Schnittstelle S1 `[BELASTBAR]`, alle anderen Module/Schnittstellen `[VORLÄUFIG]`. Nächster geplanter Schritt laut `fahrplan.md`: 2.2 (`backend/auth` Login-Endpoint), beginnt mit kleinem OPERATIV-ADR zur Rate-Limit-Bibliothek.
+- **Auftrag:** Strategie-Klärung außerhalb der Schritt-Sequenz: Frage zur dauerhaften MapTiler-Cloud-API-Nutzung vs. späterem Self-Hosting. Kein Code-Auftrag, kein Phase-2.2-Start.
+- **Geplant für diese Session:** Strategie-Frage MapTiler beantworten; Ergebnis (Trigger-basierte Reentscheidungs-Option) als Offene Grundsatzfrage in `project-context.md` Abschnitt 11 dokumentieren, sodass die Architektur-Naht (Tile-Proxy + MapLibre) sichtbar als zukünftiger Migrationspfad festgehalten ist und nicht stillschweigend „verfällt". Keine Architekturänderung, keine Stack-Änderung, kein neuer ADR — nur Aufnahme einer offenen Frage mit Triggern.
+- **Vorabprüfung:**
+  - **Berührung freigabepflichtiger Kategorien (CLAUDE.md Abschnitt 4):** keine. Aufnahme einer offenen Frage ist Dokumentationspflege (Abschnitt 5 Autonomiebereich), nicht Stack-Änderung. Phase-1-Entscheidung pro MapTiler Cloud bleibt unverändert.
+  - **Versions-Re-Verifikation:** nicht nötig — kein neuer Pin, keine Stack-Aufnahme.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus, Worktree `scp/silly-almeida-90c405` (Opus 4.7 1M-Kontext).
+
 ### 2026-05-10 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 3 h (Sessionstart unmittelbar nach PR-#17-Merge bis Sessionende-Commit-Vorbereitung).
