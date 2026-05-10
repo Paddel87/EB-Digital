@@ -420,6 +420,21 @@ Punkte, die zu Projektstart bewusst offen sind. Claude arbeitet nicht an Bereich
   - **Lebensdauer:** fertiges ZIP unter `/var/eb-digital/exports/{tenant_id}/{job_id}.zip`, 7 Tage abrufbar (mehrfacher Download), danach Cleanup-Job (zweiter Procrastinate-Job).
   - **Begründung:** asynchron nutzt vorhandenen Procrastinate-Stack und löst Worker-Block-Risiko bei großen Mandanten; ZIP+JSON+manifest ist migrations-tauglich und versioniert; vollständige Daten erfüllen DSGVO-Anspruch ohne Phase-1-Komplexität von Karten-Anhängen. ADR folgt in Modus-2-Schritt 5. **Hinweis:** Endpunkt-Skizze in Abschnitt 6 unten ist mit angepasst.
 
+**Während Phase 2 zusätzlich identifiziert (2026-05-10):**
+
+- **MapTiler: Self-Hosting-Übergang als spätere strategische Option** – Phase 1 nutzt MapTiler Cloud (Tiles + Geocoding) hinter `infra/tile-proxy`-Cache; fixiert in Abschnitt 3 und 5. Die Frage „muss MapTiler dauerhaft per Cloud-API genutzt werden?" ist offen; **architektonisch ist die Naht für einen späteren Provider-Wechsel bereits gesetzt** (Frontends nutzen MapLibre GL JS provider-neutral, Backend kapselt MapTiler im `backend/geo`-Adapter und in `infra/tile-proxy` — `architecture.md` Abschnitt 4 Schnittstelle S7). Drei Migrationspfade stehen zur Wahl, sobald ein Trigger zieht:
+  - **Option A — MapTiler Server (kommerziell, selbst gehostet):** offizielles MapTiler-Produkt, gleiche Daten/Styles/Qualität wie MapTiler Cloud, läuft als Container auf eigener Infrastruktur (Privacy-Vorteil: Tile-Requests verlassen den Server nicht). **Lizenz: kommerziell**, jährliches Subskriptionsmodell, Preise nicht öffentlich. **Hinweis:** ob Geocoding ohne separaten Tier enthalten ist, muss bei MapTiler direkt verifiziert werden — **nicht aus Trainingsstand annehmen**.
+  - **Option B — OpenMapTiles + tileserver-gl (rein OSS):** OSM-Extracts (Geofabrik o. ä.), tileserver-gl als Renderer, OpenMapTiles-Schema und -Style. **Qualität merklich unter MapTiler Cloud** (Datenanreicherung, POI-Dichte, Hausnummern-Vollständigkeit). Geocoding separat (Photon/Pelias/Nominatim) mit eigener Qualitäts-Diskussion. Operativer Aufwand (Storage ~10–30 GB für Deutschland-Vektor-Tiles, periodische Daten-Updates, Style-Pflege) liegt beim Plattform-Betreiber.
+  - **Option C — Hybrid:** MapTiler Cloud nur fürs Geocoding behalten, Tiles selbst hosten (B). Tile-Volumen ist der Hauptbudget-Hebel (~95 % der API-Calls); Geocoding-Qualität schwerer selbst nachzubauen. Pragmatische Mittellösung, falls Budget primär durch Tiles getrieben wird.
+  - **Trigger für Reentscheidung (irgendeiner reicht):**
+    - API-Budget reißt anhaltend — Verbrauchszähler in `backend/geo` (`geo_usage_daily`) schlägt mehrfach an, nicht nur in Spitzen-Großlagen.
+    - MapTiler-Lizenz- oder Preisbedingungen ändern sich substanziell (Pricing-Sprung, Tier-Umbau, neue Restriktion auf Caching-Dauer).
+    - Vision-Constraint Self-Hosting wird härter gezogen (z. B. „keine Tile-Requests dürfen die Plattform verlassen", als explizite DSGVO-Verschärfung oder Mandanten-Anforderung).
+    - DPolG oder ein anderer Mandant fordert Self-Hosting als Vertragsbestandteil.
+  - **Phase-1-Entscheidung (unverändert):** MapTiler Cloud + aggressives nginx-Caching (≥ 7 Tage TTL) ist bei aktuellem Budget-Rahmen (~50 €/Monat) und aktueller Last-Annahme (50 Disponenten + 500 Einsatzkräfte) wirtschaftlich überlegen. Self-Hosting wird **kein Spike in Phase 1–7**, sondern reine Trigger-basierte Option.
+  - **Pflichten bei Reentscheidung:** Lizenz-Prüfung gemäß Regel-016 (Sub-Dependency-Lizenzen vor Aufnahme); ADR mit Architektur-Anpassung; Verifikations-Stempel für die gewählte Tile-/Geocoding-Komponente; Architektur-Pattern in `architecture.md` ggf. erweitern (zusätzlicher Service-Container neben den bestehenden).
+  - **Begründung der Aufnahme als Offene Grundsatzfrage statt direkter Klärung:** Provider-Wechsel ist heute weder budgetär noch architektonisch erzwungen; vorzeitige Festlegung wäre verfrühte Optimierung. Die Trigger-Liste verhindert, dass der Punkt verloren geht, wenn die Bedingungen sich ändern.
+
 ### Triage-Stand 2026-05-07 (Klärungs-Session vor Modus-2-Schritt 4)
 
 Die obigen sechs „GEKLÄRT 2026-05-07"-Einträge bilden Schublade 1 der Triage. Die übrigen Punkte werden in Modus-2-Schritt 6 (Fahrplan-Befüllung) wie folgt eingearbeitet:
