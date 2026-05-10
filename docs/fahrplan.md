@@ -8,10 +8,10 @@
 ## Aktueller Stand
 
 - **Stand vom:** 2026-05-10
-- **Laufende Phase:** Phase 1 – Repository-Bootstrap & Tech-Foundations (UMSETZUNG).
-- **Phasentyp:** UMSETZUNG (Phase-1-Sonderregel: Eingangsdisziplin abgemildert, Modul-Schnitt durch ADR-002/003/004 fixiert).
-- **Aktiver Schritt:** keiner. **1.1 [ERLEDIGT]** 2026-05-08, **1.2 [ERLEDIGT]** 2026-05-08, **1.3 [ERLEDIGT]** 2026-05-09, **1.4 [ERLEDIGT]** 2026-05-09, **1.5 [ERLEDIGT]** 2026-05-09, **1.6 [ERLEDIGT]** 2026-05-10, **1.7 [ERLEDIGT]** 2026-05-10, **1.8 [ERLEDIGT]** 2026-05-10 (Caddy 2.11.2 reverse-proxy mit `tls internal` für `eb.local`/`localhost` + Routing `/api/*`/`/health` → backend, `/disponent` `/betreuer` `/einsatzkraft` Path-Strip → Vite-Dev-Server; nginx 1.30.0-alpine tile-proxy mit `proxy_cache_path` 7d-TTL + 204-Stub für Tiles/Geocoding/Routing — produktiver Pass-through aktiviert in Phase 6 Spike L; Compose-Profile `dev`/`staging`/`production` für db/cache/backend/worker/db-init/tile-proxy/reverse-proxy plus separates `frontends`-Profil für die drei Vite-Dev-Server; Volume-Backup-Marker via `eb-digital.backup`-Label; `db-init`-Service mit `service_completed_successfully`-Dependency wendet Alembic-Migrationen vor backend/worker an; `scripts/dev-smoke.sh` läuft alle Akzeptanzkriterien grün durch — 6 Services healthy, `/api/health` + `/health` über Caddy 200 mit JSON-Payload, tile-proxy-Stub 204, tile-proxy `/health` 200; backend `/api/health` als zusätzlicher API-Router-Endpunkt + 2 neue Tests, Coverage 94 % bei 103 Tests). Architektur-Modul-Reifegrade `infra/reverse-proxy` und `infra/tile-proxy` bleiben `[VORLÄUFIG]` per Fahrplan-Regel — produktive TLS, Sub-Domain-Routing und Cache-Pass-through stehen für Phase 7 STABILISIERUNG.
-- **Nächster Schritt:** **Phase 1 abgeschlossen.** Übergang in **Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2)** (UMSETZUNG): vollständige Auth-Schicht über Bootstrap-Schiene aus 1.6 hinaus (Login, Sessions, Rate-Limit, Multi-User-Verwaltung), Mandanten-Onboarding, `operation_tenant_participation` als alleinige Operation↔Mandant-Verknüpfung (ADR-009 Invariante I1), abstrakter Berechtigungs-Filter (Invariante I2). Detail siehe Phase 2 unten.
+- **Laufende Phase:** Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2) (UMSETZUNG).
+- **Phasentyp:** UMSETZUNG (**Phase-2-Sonderregel:** Eingangsdisziplin analog Phase 1 abgemildert — alle berührten Module bleiben durch Skelett-Existenz `[VORLÄUFIG]`; Modul-Schnitt durch ADR-002/003/004/008/009 fixiert, Datenmodell-Grundzüge durch ADR-006/007 fixiert. Reifegrad-Beförderung `[VORLÄUFIG]` → `[BELASTBAR]` erfolgt mit dem jeweiligen funktionalen Schritt, nicht mit dem Datenmodell-Skelett. Patrick freigegeben 2026-05-10.).
+- **Aktiver Schritt:** keiner. **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett: 6 neue Tabellen `tenant`, `dispatcher`, `carer`, `operation` ohne Tenant-FK [I1], `operation_tenant_participation` mit Partial-Unique-Index `ix_operation_tenant_participation_owner_unique` auf `(operation_id) WHERE role='owner'`, `operation_audit_log` Strukturskelett mit JSONB-Payload und `(operation_id, at)`-Index; Alembic-Migration `c1465f544fd0` autogenerate + sauber, Naming-Convention durchgängig, `alembic upgrade/downgrade/upgrade` Round-Trip grün, `alembic check` ohne Drift; 57 neue Tests bringen Backend von 103 auf 160 (alle drei `models.py`-Dateien 100 % Coverage, gesamt 95.43 %); Compose-Smoke mit clean Volume durchgelaufen — db-init wendet Migration auf frischer DB an, alle 6 Services healthy, `/api/health` 200, alle Pflichtgates grün). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
+- **Nächster Schritt:** **2.2** (`backend/auth` Login-Endpoint, Session-Cookie via Starlette `SessionMiddleware`, Argon2id-Hash-Vergleich, Rate-Limit; OPERATIVE Bibliotheks-Wahl Rate-Limit per kleinem ADR vor Schritt-Beginn — Kandidaten `slowapi` vs. `fastapi-limiter` vs. eigener Valkey-basierter Counter).
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
 - **CI-Hygiene-Sonderfall in Phase 1 (2026-05-10):** ADR-012 — `actions/upload-artifact@v4` → `@v7` als Major-Update gegen Node-20-Deprecation, analog zu ADR-010 in 1.2. Reaktiv-Quote bleibt 0 / 10.
@@ -88,7 +88,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 | Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                 |
 | ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | -------------------------------------- |
 | 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10) |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | OFFEN                                  |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | IN ARBEIT (2.1 ERLEDIGT 2026-05-10)    |
 | 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                  |
 | 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                  |
 | 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                  |
@@ -400,7 +400,58 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 **Schritte (gröber):**
 
-- **2.1** Datenmodell: `tenant`, `dispatcher`, `carer`, `operation` (ohne Tenant-FK!), `operation_tenant_participation`, `operation_audit_log` (Strukturskelett). Alembic-Migration.
+#### 2.1: Datenmodell-Skelett (Tenant + Dispatcher + Carer + Operation + Participation + AuditLog) – Typ: UMSETZUNG
+
+- **Status:** ERLEDIGT 2026-05-10 (begonnen 2026-05-10 nach Patrick-Freigabe Detail-Plan + Phase-2-Sonderregel)
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 2, Phase-2-Sonderregel: Eingangsdisziplin abgemildert; siehe „Aktueller Stand")
+- **Abhängigkeiten:** Phase 1 vollständig ERLEDIGT (`db.Base`, `TimestampMixin`, Naming-Convention, Alembic-Setup, Procrastinate-Schema-Migration aktiv).
+- **Freigabepflichtig:** ja (Datenmodelländerung CLAUDE.md Abschnitt 4 Punkt 4) — Detail-Plan im Chat 2026-05-10 vorgelegt, Patrick freigegeben („geht davon aus, dass die Tabellen richtig in Bezug auf Vision und Projekt-Kontext erstellt sind"). Kein neuer ADR; die Grobstruktur liegt durch ADR-006/007/008/009 fest.
+- **Eingangskriterien:** Phase 1 ERLEDIGT ✓; Phase-2-Sonderregel akzeptiert ✓; alle benötigten Bibliotheken (SQLAlchemy 2.0.49, Alembic 1.18.x, asyncpg 0.31.x, psycopg 3.3.4) bereits in Phase 1 verifiziert und produktiv.
+- **Zu tun:**
+  1. **Modul-Skelette:**
+     - `backend/eb_digital/tenants/__init__.py` + `tenants/models.py` (neu): `Tenant`, `OperationTenantParticipation`.
+     - `backend/eb_digital/operations/__init__.py` + `operations/models.py` (neu): `Operation`, `OperationAuditLog`.
+     - `backend/eb_digital/auth/models.py` (Erweiterung): `DispatcherUser`, `CarerUser` parallel zu bestehender `PlatformAdmin`-Klasse.
+  2. **`backend/migrations/env.py`**: Imports der drei neuen Module ergänzen, damit Alembic-Autogenerate alle Tabellen sieht.
+  3. **Alembic-Migration**: `alembic revision --autogenerate -m "add tenant dispatcher carer operation participation auditlog"`. Nach Autogenerate-Lauf manuell prüfen, dass:
+     - Naming-Convention auf alle PK/FK/UQ/CK/IX angewendet ist (Stichprobe `pk_…`, `fk_…`, `uq_…`, `ck_…`, `ix_…`).
+     - Partial-Unique-Index `ix_operation_tenant_participation_owner_unique` mit `postgresql_where=sa.text("role = 'owner'")` enthalten ist; falls Autogenerate den Partial-Filter ausgelassen hat, manuell ergänzen.
+     - JSONB-Spalte `operation_audit_log.payload` als `postgresql.JSONB` typisiert ist.
+  4. **Tests** (neu/erweitert): siehe Akzeptanzkriterien.
+- **Akzeptanzkriterien (UMSETZUNG → funktionsbasiert):**
+  1. `alembic upgrade head` läuft fehlerfrei gegen die Compose-DB; alle sechs neuen Tabellen werden erzeugt.
+  2. `alembic check` nach Upgrade: „No new upgrade operations detected".
+  3. `alembic downgrade -1` rollt sauber zurück auf Pre-2.1-Stand und `upgrade head` wieder hoch.
+  4. **Constraint-Tests grün:**
+     - `tenant.status` CHECK lehnt unbekannte Werte ab.
+     - `operation.status` CHECK lehnt unbekannte Werte ab.
+     - `(dispatcher.tenant_id, dispatcher.username)` UNIQUE; selbe Username-/Tenant-Kombination scheitert mit IntegrityError; gleicher Username für anderen Tenant ist erlaubt.
+     - `(carer.tenant_id, carer.username)` analog.
+     - `operation_tenant_participation.role` CHECK auf `('owner','participant')`.
+     - **Partial-Unique-Index**: zwei Inserts mit `role='owner'` für dieselbe Operation scheitern mit IntegrityError; ein zweiter Eintrag mit `role='participant'` für dieselbe Operation ist erlaubt.
+     - `operation_audit_log` Insert mit JSONB-Payload und Lookup über `(operation_id, at)`-Index.
+  5. `uv run pytest` grün; neue `models.py`-Dateien bei 100 % Coverage; Backend-Coverage gesamt ≥ 80 %.
+  6. `uv run ruff check backend` + `ruff format --check backend` + `uv run mypy --strict` + `uv run pre-commit run --all-files` grün.
+  7. Compose-Smoke: `docker compose --profile dev up -d` führt `db-init` mit der neuen Migration aus; `docker compose exec db psql -U eb_digital -c "\dt"` zeigt die sechs neuen Tabellen.
+- **Betroffene Module:** `backend/auth`, `backend/auth_anonymous` (nur indirekt — kein Modul-Code in 2.1, aber `operation.access_code_hash` und `operation.url_token` legen die Felder vor, die 2.3 nutzt), `backend/tenants`, `backend/operations`.
+- **Reifegrad-Wirkung:** Keine Beförderung in 2.1. Module bleiben `[VORLÄUFIG]` (Skelett ohne funktionale Belastbarkeit, analog zur Phase-1-Sonderregel).
+- **Artefakte:**
+  - `backend/eb_digital/tenants/__init__.py`, `tenants/models.py` (neu)
+  - `backend/eb_digital/operations/__init__.py`, `operations/models.py` (neu)
+  - `backend/eb_digital/auth/models.py` (Erweiterung)
+  - `backend/migrations/env.py` (Import-Erweiterung)
+  - `backend/migrations/versions/<timestamp>_<rev>_add_tenant_dispatcher_carer_operation_participation_auditlog.py` (neu)
+  - `backend/tests/test_tenants_models.py`, `test_operations_models.py`, `test_operation_tenant_participation.py`, `test_operation_audit_log.py` (neu)
+  - `backend/tests/test_auth_models.py` (Erweiterung um `DispatcherUser`/`CarerUser`)
+- **Notizen:**
+  - **Partial-Unique-Index** schützt Phase-1-Invariante I1 („genau ein Owner pro Operation") auf DB-Ebene; bleibt in Phase X gültig, weil dort nur `role='participant'` additiv hinzukommt.
+  - **`access_code_hash` (Argon2id) statt Klartext**: Konstantzeit-Vergleich (Regel-006); kein Klartext im DB-Dump.
+  - **`actor_dispatcher_id` ON DELETE SET NULL** statt CASCADE: Audit-Log-Erhalt vor FK-Konsistenz priorisiert (DSGVO-Anonymisierung erhält Audit-Spur, entfernt Personenbezug).
+  - **`target_id` NOT NULL**: bei Operation-Level-Aktionen Convention `target_id = operation_id`.
+  - Kein neuer ADR; Architektur-Spec-Update in `architecture.md` Abschnitt 7 nur falls beim Implementieren Detail-Drift sichtbar wird.
+
+#### 2.2–2.7: Folgeschritte (gröber)
+
 - **2.2** `backend/auth`: Login-Endpoint, Session-Cookie (Starlette-SessionMiddleware), Argon2id-Hash-Vergleich, Rate-Limit (`slowapi` oder ähnliches; OPERATIVE Bibliotheks-Wahl per kleinem ADR vor Schritt-Beginn).
 - **2.3** `backend/auth_anonymous`: einsatzgebundene URL-Token (`itsdangerous`), AccessCode-Validierung (Konstantzeit-Vergleich + Hash-Speicherung gemäß Regel-006), Session-Lifecycle anonym.
 - **2.4** `backend/tenants`: Self-Service-Antrag, Plattform-Admin-Freischaltung-Endpoint, Mandanten-CRUD, abstrakter Teilnahme-Filter (Invariante I2 + Regel-014).

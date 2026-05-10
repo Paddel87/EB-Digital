@@ -16,7 +16,9 @@ from eb_digital.db import (
     Base,
     models,  # noqa: F401  # register ORM models with metadata
 )
+from eb_digital.operations import models as _operations_models  # noqa: F401  # register ORM models
 from eb_digital.settings import get_settings
+from eb_digital.tenants import models as _tenants_models  # noqa: F401  # register ORM models
 
 config = context.config
 
