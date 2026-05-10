@@ -59,6 +59,7 @@ Pflicht: jede Version trägt einen Vermerk `Verifiziert: YYYY-MM-DD` (Datum, an 
 - argon2-cffi 25.1.x – Argon2id-Hashing direkt — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-09 Schritt 1.6: Python 3.13/3.14 als Trove-Classifier offiziell aufgeführt, MIT, kein neuer Hotfix seit 2025-06-03)
 - itsdangerous 2.2.x – signierte Tokens für Reset-Flows und Einsatz-URLs — `Verifiziert: 2026-05-09` (Schritt 1.6); BSD-3-Clause; einzige stabile 2.x-Linie seit 2024-04-16, langsame Pallets-Cadence, kein 2.3 in Sicht
 - Starlette `SessionMiddleware` – Cookie-basierte Sessions (Bestandteil von FastAPI-Stack)
+- redis 7.4.x – async Valkey-Client für Rate-Limit-Counter (ADR-013) und ab Phase 4 WebSocket-Pub/Sub. Wire-protokoll-kompatibel mit Valkey 8.1.7. — `Verifiziert: 2026-05-10` (Schritt 2.2); MIT; reguläre Cadence (7.2.1, 7.3.0, 7.4.0 vom 2026-03-24); gewählt gegenüber `valkey-py 6.1.1` (9 Monate Stable-Cadence-Pause, Beta-Linie 6.2.0rc), weil operative Reife schlägt Marken-Konsistenz im Client (siehe Sub-Entscheidung Schritt 2.2). Lizenzproblem ADR-002 betrifft den Server, nicht den MIT-lizenzierten Client.
 
 Begründung: FastAPI-Users im Maintenance-Mode (kein Feature-Wachstum), passlib seit 2020-10 ohne Release. Eigener Auth-Code basiert auf etablierten Bausteinen, keine eigene Krypto-Implementierung. Begleitende Pflichten: Auth-Modul-Coverage ≥ 95 %, externe Security-Review vor Produktivstart, ADR mit Threat-Model.
 
@@ -113,6 +114,7 @@ Bibliotheken und Tools, die ohne separate Freigabe eingesetzt werden dürfen, so
 - pytest 9.0.x — `Verifiziert: 2026-05-07`
 - pytest-asyncio 1.3.x — `Verifiziert: 2026-05-07`
 - pytest-cov 7.1.x — `Verifiziert: 2026-05-07`
+- fakeredis 2.35.x – In-Process-Fake für `redis-py` in Unit-Tests — `Verifiziert: 2026-05-10` (Schritt 2.2); BSD-3-Clause; reguläre Cadence (last release 2026-04-12); Integration-Test gegen den echten Valkey-Container im Compose-Stack via `dev-smoke.sh`.
 - ruff 0.15.x (Linter und Formatter, Konfiguration in `pyproject.toml`, Zeilenlänge 100) — `Verifiziert: 2026-05-07`
 - mypy 1.20.2 (`--strict`; **bewusst nicht 2.0.x** – mypy 2.0.0 wurde 2026-05-06 released, „Stabilität vor Aktualität": Migration auf 2.x per ADR, sobald 2.0.x-Patches stabilisiert sind) — `Verifiziert: 2026-05-07`
 - bandit 1.9.x — `Verifiziert: 2026-05-07`

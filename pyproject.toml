@@ -35,6 +35,7 @@ dependencies = [
     "httpx~=0.28.0",                # Verifiziert: 2026-05-07
     "argon2-cffi~=25.1.0",          # Verifiziert: 2026-05-07; Re-Bestätigung 2026-05-09 (Schritt 1.6)
     "itsdangerous~=2.2.0",          # Verifiziert: 2026-05-09 (Schritt 1.6); BSD-3-Clause; einzige stabile 2.x-Linie seit 2024-04-16, kein 2.3 in Sicht
+    "redis~=7.4.0",                 # Verifiziert: 2026-05-10 (Schritt 2.2); MIT; async-Client gegen Valkey 8.1.7 (wire-protokoll-kompatibel). ADR-013 Rate-Limit-Counter; ab Phase 4 zusätzlich WebSocket-Pub/Sub. Sub-Wahl gegenüber valkey-py 6.1.1 in Schritt 2.2 dokumentiert.
 ]
 
 [dependency-groups]
@@ -48,6 +49,7 @@ dev = [
     "bandit[toml]~=1.9.0",      # Verifiziert: 2026-05-07
     "pip-audit~=2.10.0",        # Verifiziert: 2026-05-07
     "pre-commit~=4.6.0",        # Verifiziert: 2026-05-07
+    "fakeredis~=2.35.1",        # Verifiziert: 2026-05-10 (Schritt 2.2); BSD-3-Clause; In-Process-Fake für redis-py-Unit-Tests, vermeidet Container-Pflicht.
 ]
 
 [build-system]

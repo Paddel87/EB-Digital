@@ -169,5 +169,94 @@ else
 	exit 1
 fi
 
+step "Auth-Smoke (Schritt 2.2): Admin anlegen → Login → /me → Logout"
+SMOKE_USER="smoke_login_$(date +%s)"
+SMOKE_PW="smoke-password-12345"
+COOKIE_JAR=$(mktemp)
+# shellcheck disable=SC2064 — cookie-jar variable is interpolated at trap-creation time.
+trap "rm -f $COOKIE_JAR" RETURN
+
+# Admin direkt über die Repository-Funktion anlegen — die Bootstrap-CLI
+# nutzt getpass, das ohne TTY nicht aus stdin liest. Funktional äquivalent.
+if docker compose exec -T \
+	-e EB_SMOKE_USER="$SMOKE_USER" -e EB_SMOKE_PW="$SMOKE_PW" \
+	backend python -c "
+import asyncio, os
+from eb_digital.auth.cli import create_platform_admin
+from eb_digital.db import create_db_engine, create_session_factory
+from eb_digital.settings import get_settings
+
+async def main():
+    s = get_settings()
+    engine = create_db_engine(s.database_url)
+    factory = create_session_factory(engine)
+    try:
+        async with factory() as session, session.begin():
+            await create_platform_admin(
+                session,
+                username=os.environ['EB_SMOKE_USER'],
+                password=os.environ['EB_SMOKE_PW'],
+            )
+    finally:
+        await engine.dispose()
+
+asyncio.run(main())
+" >/dev/null 2>&1; then
+	ok "Admin '$SMOKE_USER' angelegt"
+else
+	fail "Admin-Anlage fehlgeschlagen"
+	exit 1
+fi
+
+# Login.
+login_status=$(curl --silent --insecure --max-time 10 \
+	-c "$COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-login.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"username\":\"$SMOKE_USER\",\"password\":\"$SMOKE_PW\"}" \
+	https://localhost/api/auth/login)
+if [[ "$login_status" == "200" ]]; then
+	ok "/api/auth/login 200 — Session-Cookie gesetzt ($(jq -r .kind /tmp/dev-smoke-login.json))"
+else
+	fail "/api/auth/login Status $login_status (body: $(cat /tmp/dev-smoke-login.json))"
+	exit 1
+fi
+
+# /me mit Cookie.
+me_status=$(curl --silent --insecure --max-time 10 \
+	-b "$COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-me.json \
+	https://localhost/api/auth/me)
+if [[ "$me_status" == "200" ]]; then
+	ok "/api/auth/me 200 — eingeloggt als $(jq -r .username /tmp/dev-smoke-me.json)"
+else
+	fail "/api/auth/me Status $me_status (body: $(cat /tmp/dev-smoke-me.json))"
+	exit 1
+fi
+
+# Logout → 204.
+logout_status=$(curl --silent --insecure --max-time 10 \
+	-X POST -b "$COOKIE_JAR" -c "$COOKIE_JAR" \
+	-w '%{http_code}' -o /dev/null \
+	https://localhost/api/auth/logout)
+if [[ "$logout_status" == "204" ]]; then
+	ok "/api/auth/logout 204"
+else
+	fail "/api/auth/logout Status $logout_status"
+	exit 1
+fi
+
+# /me nach Logout → 401.
+me_after_logout=$(curl --silent --insecure --max-time 10 \
+	-b "$COOKIE_JAR" \
+	-w '%{http_code}' -o /dev/null \
+	https://localhost/api/auth/me)
+if [[ "$me_after_logout" == "401" ]]; then
+	ok "/api/auth/me nach Logout 401 — Session abgelaufen"
+else
+	fail "/api/auth/me nach Logout Status $me_after_logout (erwartet 401)"
+	exit 1
+fi
+
 step "Smoke-Test komplett grün"
 exit 0

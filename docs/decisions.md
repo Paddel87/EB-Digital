@@ -27,10 +27,11 @@
 | 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                     |
 | 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime               |
 | 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)     |
+| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY | Externe Abhängigkeiten     | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 0 / 10 = 0 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-003 bis ADR-012).
+- **Aktueller Wert:** 0 / 10 = 0 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-004 bis ADR-013).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 
@@ -388,6 +389,30 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - **Strukturelle Konsistenz mit ADR-010:** ADR-010 hatte `setup-uv` und `pnpm/action-setup` aktualisiert, `upload-artifact` aber bewusst belassen. Diese Lücke war bei der damaligen Verifikation nicht sichtbar, weil v4 zum 2026-05-08 noch keine Deprecation-Annotation auf Job-Ebene auslöste oder die Annotation in den damaligen Run-Logs noch nicht auftauchte. Sie wurde sichtbar, sobald Frontend-Coverage-Uploads (1.7) eingeführt waren und die Annotation pro Job-Abschluss erschien. Methodische Lehre: zukünftige Verifikations-Runden lesen CI-Run-Logs auf Annotations gegen, nicht nur Versions-Verfügbarkeit auf der Releases-Seite.
   - **Re-Test der Pipeline** auf dem PR-Branch dieser Session. Erwartung: keine Node-20-Deprecation-Annotations mehr in `test-backend` oder `test-frontend`-Matrix.
 - **Abgeleitete Regel:** keine neue Regel — Regel-015 hat den Fall bereits abgedeckt, dieser ADR ist die regelkonforme Anwendung.
+
+#### ADR-013: Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)
+
+- **Datum:** 2026-05-10
+- **Status:** Aktiv
+- **Tags:** `[OPERATIV]` `[STACK]` `[SECURITY]`
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 2, vor Schritt 2.2 — explizit im Fahrplan-Schritt-Text als „OPERATIVE Bibliotheks-Wahl per kleinem ADR vor Schritt-Beginn" verlangt).
+- **Reifegrad-Wirkung:** keine direkten Modul-Reifegrad-Beförderungen durch den ADR selbst. Wirkt vorbereitend auf Schritt 2.2 (`backend/auth` → `[BELASTBAR]`) und Schritt 2.3 (`backend/auth_anonymous` → `[BELASTBAR]`); Pub/Sub-Pfad via Valkey bleibt `[VORLÄUFIG]` bis Phase 4.
+- **Kategorie:** Externe Abhängigkeiten (CLAUDE.md Abschnitt 4 Punkt 3 — die Wahl _vermeidet_ eine neue Top-Level-Dependency, dokumentiert das aber als bewusste Entscheidung) plus Sicherheit (Punkt 6 — Rate-Limit ist Bestandteil der Login-Hardening-Schicht).
+- **Kontext:** Schritt 2.2 verlangt eine Rate-Limit-Implementierung für `POST /api/auth/login` mit der in `project-context.md` Abschnitt 6 fixierten Spec „5 Fehlversuche pro 15 min pro IP-Adresse plus pro User getrennt". Schritt 2.3 verlangt analog ein Rate-Limit auf der AccessCode-Validierung in `backend/auth_anonymous` (architecture.md Modul-Block: „analog zu Login: 5 Fehlversuche pro 15 min pro IP"). Die Wahl trägt also für beide Auth-Module und ist im Fahrplan explizit als „kleiner ADR vor Schritt-Beginn" markiert.
+- **Optionen:**
+  - **A: `slowapi`** (Flask-Limiter-Port für Starlette/FastAPI). – Lizenz MIT (✓), aktiv gepflegt, Decorator-API. Storage pluggable über `limits`-Library: in-memory Default, Valkey/Redis möglich (Valkey ist Redis-protokoll-kompatibel). Multi-Key (IP + User) realisierbar. – Konsequenzen: Drei neue transitive Dependencies (`slowapi`, `limits`, `redis-py`), die alle der Versions-Verifikations-Disziplin (Regel-001) unterworfen sind. Funktional vollwertig, aber zusätzliche Wartungs-Oberfläche.
+  - **B: `fastapi-limiter`** (async-native, Redis-only). – Konsequenzen: Strukturell dieselbe Risikoklasse wie `FastAPI-Users` und `passlib`, die in `project-context.md` Abschnitt 3 explizit als Maintenance-Falle benannt und vermieden wurden. Kein in-memory-Fallback. Kleinere und unsichere Maintainer-Basis.
+  - **C: Eigener Valkey-basierter Counter.** ~80 Zeilen in `backend/eb_digital/auth/rate_limit.py`: `INCR key` plus `EXPIRE key 900` (Valkey `INCR` und `EXPIRE` sind einzeln atomar; das race-window für „IncrOhneExpire" hat keinen Sicherheits-Effekt, weil ein Limit-Slot maximal 15 min lebt). Multi-Key (IP + User) durch zwei Counter, beide müssen unter dem Schwellwert liegen. – Konsequenzen: keine neue Top-Level-Dependency, keine Versions-Verifikations-Pflicht in Folgeversionen. Erste produktive Valkey-Nutzung des Backends — Connection-Pool wird in 2.2 etabliert. Eigener Test-Aufwand höher (6–10 Tests inkl. Edge-Cases: Window-Rollover, Multi-Key-AND, Counter-Reset nach Erfolg).
+- **Entscheidung:** **Option C** — eigener Valkey-basierter Counter. Patrick freigegeben am 2026-05-10.
+- **Konsequenzen:**
+  - **Konsistenz mit Auth-Philosophie:** dieselbe Argumentation, die in `project-context.md` Abschnitt 3 zu „kein FastAPI-Users, kein passlib" geführt hat, gilt für Rate-Limit noch stärker — Rate-Limit ist Counter-Logik, keine Krypto, eigener Code daher unkritisch im Threat-Modell.
+  - **Neuer Modul-Bestandteil** in `backend/eb_digital/auth/rate_limit.py` (~80 Zeilen Async-Code) plus Tests. Coverage muss das Auth-Modul-Niveau erreichen (≥ 95 % Lines, ≥ 90 % Branches).
+  - **Erste produktive Valkey-Nutzung des Backends:** Connection-Pool-Wiring in App-Lifespan (`lifespan`-Context oder Startup-Event), Health-Check-Erweiterung um Valkey-Reachability optional (Entscheidung im Detail-Plan zu 2.2).
+  - **Wiederverwendung in Schritt 2.3:** AccessCode-Validierung nutzt dieselbe Rate-Limit-Schicht. Modul-Schnitt: Rate-Limit liegt in `backend/auth/rate_limit.py` (Auth-Querschnittsfunktion) und wird von `backend/auth_anonymous` importiert; alternativ in `backend/common/`-Modul, falls Schritt 2.3 zeigt, dass auch nicht-auth-bezogene Endpunkte (z. B. `register-tenant`) profitieren — Entscheidung in 2.3.
+  - **Counter-Reset bei Erfolg:** Nach erfolgreichem Login wird der User-Counter zurückgesetzt (`DEL` auf User-Key); IP-Counter bleibt bestehen (würde sonst Brute-Force gegen viele Usernames vom selben IP nicht abfangen). Dokumentiert in der `rate_limit.py`-Modul-Docstring.
+  - **Key-Konvention:** `auth:ratelimit:login:ip:<ip>` und `auth:ratelimit:login:user:<username>`; analog für anonymen AccessCode-Pfad. Redis/Valkey-Namespacing macht künftige Cross-Modul-Konflikte sichtbar.
+  - **Keine Versions-Verifikations-Pflicht:** Der ADR fügt keinen Pin in `pyproject.toml` hinzu. Die Valkey-Client-Bibliothek (vermutlich `valkey-py` oder `coredis`) **wird** mit Schritt 2.2 als neue Dep geprüft und verifiziert — diese Sub-Entscheidung ist im Detail-Plan zu 2.2 zu klären (zwei Kandidaten haben unterschiedliche Maintenance-Lage; im Detail-Plan vorzulegen, kein eigener ADR nötig solange MIT/BSD/Apache-2.0).
+- **Abgeleitete Regel:** keine neue allgemeine Regel — der Fall „Auth-Querschnittsfunktion → eigener Code statt Bibliothek" ist bereits durch die Auth-Philosophie in `project-context.md` Abschnitt 3 verankert. Dieser ADR ist deren operative Anwendung auf Rate-Limit.
 
 ---
 
