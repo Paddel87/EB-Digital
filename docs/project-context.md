@@ -88,11 +88,12 @@ Begründung: PostgreSQL als Backing nutzt vorhandene Infrastruktur und macht Job
 
 **Infrastruktur**
 
-- nginx 1.30.0 stable (Hinweis zur Konvention: gerade Minor = stable, ungerade = mainline) — `Verifiziert: 2026-05-07`
-- Caddy 2.11.x — `Verifiziert: 2026-05-07`
-- Docker Engine 29.4.x — `Verifiziert: 2026-05-07`
-- Docker Compose v5.1.x („Mont Blanc"; Major-Sprung über v3/v4 zur Vermeidung von Verwechslung mit alten YAML-Schemas) — `Verifiziert: 2026-05-07`
+- nginx 1.30.0 stable (Hinweis zur Konvention: gerade Minor = stable, ungerade = mainline; GA des stable 1.30-Branches am 2026-04-15, kein 1.30.1 in Sicht) — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-10 Schritt 1.8); im Compose als `nginx:1.30.0-alpine` gepinnt (Manifest-List-Digest in `docker-compose.yml`)
+- Caddy 2.11.2 (released 2026-04-17, Bug-Fix-Release auf 2.11-Linie) — `Verifiziert: 2026-05-10` (Schritt 1.8); im Compose als `caddy:2.11.2` gepinnt (Manifest-List-Digest)
+- Docker Engine 29.4.2 (released 2026-05-01, CVE-Fix-Patch innerhalb 29.4.x-Pin; Hostsystem-Erwartungswert) — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-10 Schritt 1.8: lokal `docker version` gegen die laufende Engine geprüft)
+- Docker Compose v5.1.3 („Mont Blanc"; Major-Sprung über v3/v4 zur Vermeidung von Verwechslung mit alten YAML-Schemas; v5.1.3 released 2026-04-15 innerhalb 5.1.x-Pin) — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-10 Schritt 1.8: lokal `docker compose version` geprüft)
 - docker buildx 0.33.x — `Verifiziert: 2026-05-07`
+- Valkey 8.1.7 (Re-Bestätigung 2026-05-10 Schritt 1.8) — siehe „Datenbank, Cache, Realtime"-Block oben; im Compose als `valkey/valkey:8.1.7-alpine` gepinnt (Manifest-List-Digest)
 
 **Laufzeitumgebung**
 

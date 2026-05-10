@@ -19,3 +19,17 @@ def test_health_responds_with_json_content_type() -> None:
     with TestClient(create_app()) as client:
         response = client.get("/health")
     assert response.headers["content-type"].startswith("application/json")
+
+
+def test_api_health_returns_ok_status_and_version() -> None:
+    with TestClient(create_app()) as client:
+        response = client.get("/api/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "version": __version__}
+
+
+def test_api_health_and_root_health_return_identical_payload() -> None:
+    with TestClient(create_app()) as client:
+        root = client.get("/health").json()
+        api = client.get("/api/health").json()
+    assert root == api

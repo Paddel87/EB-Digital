@@ -27,13 +27,22 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         logger.info("application_shutdown")
 
 
+def _health_payload() -> dict[str, str]:
+    return {"status": "ok", "version": __version__}
+
+
 def create_app() -> FastAPI:
     app = FastAPI(title="EB Digital", version=__version__, lifespan=lifespan)
     api_router = APIRouter(prefix="/api")
+
+    @api_router.get("/health")
+    async def api_health() -> dict[str, str]:
+        return _health_payload()
+
     app.include_router(api_router)
 
     @app.get("/health")
     async def health() -> dict[str, str]:
-        return {"status": "ok", "version": __version__}
+        return _health_payload()
 
     return app

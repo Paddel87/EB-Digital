@@ -1,0 +1,89 @@
+# EB Digital — Caddy reverse proxy (dev profile).
+#
+# Phase 1 Schritt 1.8: Skelett-Konfiguration für `docker compose --profile dev`.
+# Caddy bedient `eb.local` (und `localhost` als Fallback ohne /etc/hosts-Eintrag)
+# mit Caddy-internem CA. Browser zeigt Warnung; curl benötigt -k. Production-
+# Konfiguration mit Let's-Encrypt und drei Sub-Domains (architecture.md
+# Abschnitt 3, Modul `infra/reverse-proxy`) folgt in Phase 7 STABILISIERUNG.
+#
+# Routing-Übersicht:
+#   /api/*         → backend:8000   (FastAPI; S8 REST API)
+#   /health        → backend:8000   (Plain-Health, parallel zu /api/health)
+#   /disponent/*   → frontend-disponent:5173   (Vite-Dev-Server)
+#   /betreuer/*    → frontend-betreuer:5174    (Vite-Dev-Server, PWA)
+#   /einsatzkraft/* → frontend-einsatzkraft:5175 (Vite-Dev-Server, PWA)
+#   sonst          → kurze HTML-Landing zur Orientierung
+#
+# Bekannte Phase-1-Limitierung: SvelteKit-Frontends haben in 1.7 keine
+# `kit.paths.base`-Konfiguration. `handle_path` strippt das URL-Präfix vor
+# der Weiterleitung, damit der Vite-Dev-Server (lauscht auf /) reagiert.
+# Interne Asset-/Link-Auflösung der Frontends nimmt die Sub-Pfade in dieser
+# Phase noch nicht zur Kenntnis — Initial-Page-Load funktioniert, Folge-
+# Navigation kann brechen. Sub-Domain-Refactor und `paths.base`-Konfiguration
+# stehen für Phase 7 (STABILISIERUNG/Roll-out-Vorbereitung) auf dem Plan.
+
+{
+	# Dev-Profil: kein automatisches HTTPS via ACME, nur internes CA.
+	auto_https disable_redirects
+	local_certs
+	# Strukturiertes JSON-Logging in stdout (`docker compose logs` greift es).
+	log {
+		output stdout
+		format json
+		level INFO
+	}
+}
+
+eb.local, localhost {
+	tls internal
+
+	# Sicherheit: einheitliche Header (CSP-Skelett wird in Phase 7 verschärft).
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		# Etwaige vom Backend gesetzte gleiche Header werden überschrieben.
+		defer
+	}
+
+	# Backend — Haupt-API-Pfad.
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	# Backend — Root-Health (für direkte Smoke-Tests ohne /api-Präfix).
+	handle /health {
+		reverse_proxy backend:8000
+	}
+
+	# Frontends — Path-Routing mit Präfix-Strip (Vite-Dev lauscht auf /).
+	handle_path /disponent/* {
+		reverse_proxy frontend-disponent:5173
+	}
+	handle_path /betreuer/* {
+		reverse_proxy frontend-betreuer:5174
+	}
+	handle_path /einsatzkraft/* {
+		reverse_proxy frontend-einsatzkraft:5175
+	}
+
+	# Default: kurze Landing als Lebenszeichen des Reverse-Proxy.
+	handle {
+		respond <<HTML
+<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="utf-8"><title>EB Digital — dev</title></head>
+<body>
+<h1>EB Digital — dev reverse-proxy</h1>
+<ul>
+<li><a href="/api/health">/api/health</a> — Backend</li>
+<li><a href="/disponent/">/disponent/</a> — Disponent-Frontend</li>
+<li><a href="/betreuer/">/betreuer/</a> — Betreuer-PWA</li>
+<li><a href="/einsatzkraft/">/einsatzkraft/</a> — Einsatzkraft-PWA</li>
+</ul>
+</body>
+</html>
+HTML 200
+	}
+}
