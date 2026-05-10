@@ -26,10 +26,11 @@
 | 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL     | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5             |
 | 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                     |
 | 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime               |
+| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)     |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 0 / 10 = 0 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
+- **Aktueller Wert:** 0 / 10 = 0 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-003 bis ADR-012).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 
@@ -363,6 +364,30 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - **Klassifikation `[OPERATIV]`, nicht `[REAKTIV]`:** Die LGPL-Frage war prinzipiell aus procrastinates `pyproject.toml` ableitbar. Sie wurde in ADR-002 nicht erfasst, weil die damalige Modus-2-Methodik keine Sub-Dependency-Lizenz-Prüfung vorgesehen hat. Es ist eine nachgezogene Festlegung im Rahmen einer strategisch gesetzten Stack-Wahl, kein unerwarteter Pivot. Reaktiv-Quote bleibt 0/10.
   - **Methodische Lehre:** Sub-Dep-Lizenz-Prüfung wird in das Verifikations-Regime aufgenommen (Regel-016), greift bei jeder neuen Top-Level-Stack-Komponente.
 - **Abgeleitete Regel:** Regel-016 (Sub-Dependency-Lizenz-Prüfung im Verifikations-Regime) – siehe Teil C.
+
+---
+
+#### ADR-012: actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)
+
+- **Datum:** 2026-05-10
+- **Status:** Aktiv
+- **Tags:** `[OPERATIV]` `[STACK]` `[DEPLOYMENT]`
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 1, vor Schritt 1.8 — CI-Hygiene-Sonderfall analog zu ADR-010 vor Schritt 1.3).
+- **Reifegrad-Wirkung:** keine direkten Architektur-Reifegrad-Beförderungen; festigt den Status der CI-Pipeline (`[BELASTBAR]`) gegen die Node-20-Deprecation-Frist (forced default 2026-06-02, Removal 2026-09-16).
+- **Kategorie:** Externe Abhängigkeiten (CLAUDE.md Abschnitt 4 Punkt 3 – Major-Update bestehender Abhängigkeiten ist freigabepflichtig). Zusätzlich greift Regel-015: „Bei Deprecation-Warnings in CI-Annotations: Mini-ADR vor Ablauf der Frist anlegen".
+- **Kontext:** ADR-010 (2026-05-08) hat `actions/upload-artifact@v4` bewusst als Major-Tag-Pin belassen mit der Begründung „GitHub-Org-Maintainer pflegen Tag-Stabilität". Diese Begründung schützt vor Pin-Bruch, nicht aber vor der Node-Runtime-Deprecation: `upload-artifact@v4` läuft auf Node.js 20 und löst seit mindestens 2026-05-09 in jedem CI-Run die Annotation `Node.js 20 actions are deprecated` aus. Patrick fragte am 2026-05-10 nach (Vermutung: zieht sich schon länger durch). Untersuchung der CI-Logs bestätigte: einzige verbleibende Node-20-Action im Workflow-Set ist `upload-artifact@v4` (alle anderen sind durch ADR-010 oder durch Major-Tag-Stabilität bereits auf Node 24). Hard-Deadlines laut GitHub-Blog: 2026-06-02 forced default auf Node 24 (kann v4 brechen), 2026-09-16 Node-20-Removal.
+- **Optionen:**
+  - **A:** Bump auf `actions/upload-artifact@v7` (Major-Tag, latest). v7.0.0 (2026-02-26) addiert nur additive Erweiterungen (`archive: false`-Option für Direct-Uploads, ESM-intern); keine API-Brüche für unsere Nutzung (nur `name`, `path`, `retention-days`). – Konsequenzen: Warnung beseitigt, Node-24-Runtime, ~12+ Monate Ruhe vor nächster Major-Erwartung. Re-Test der CI-Pipeline nötig.
+  - **B:** Bump auf `actions/upload-artifact@v6` (Major-Tag). v6.0.0 (2025-12-12) ist die erste Version, die Node 24 default macht. – Konsequenzen: Warnung beseitigt, aber nächstes Major-Update v7 steht früher an; wir laufen erneut in eine Mini-ADR-Pflicht.
+  - **C:** Nichts tun, bis die Frist näher rückt. – Konsequenzen: CI-Reibung mitten in einer UMSETZUNG-Phase, Verstoß gegen Regel-015 (Mini-ADR-Pflicht bei Deprecation-Warnings).
+- **Entscheidung:** **Option A** — Bump auf `actions/upload-artifact@v7` (Major-Tag, gemäß ADR-010-Pin-Form-Regel: `actions/`-Org → Major-Tag, nicht Patch-Tag). Patrick freigegeben am 2026-05-10.
+- **Konsequenzen:**
+  - **Workflow-Pin aktualisiert** in `.github/workflows/ci.yml` an zwei Stellen (`test-backend`-Job und `test-frontend`-Matrix-Job). `security.yml` nutzt `upload-artifact` nicht; keine Änderung dort.
+  - **`project-context.md` Abschnitt 3** Sub-Block „GitHub Actions": Eintrag von `actions/upload-artifact@v4` (`Verifiziert: 2026-05-08`) auf `actions/upload-artifact@v7` (`Verifiziert: 2026-05-10`) aktualisiert mit Verweis auf diesen ADR.
+  - **Klassifikation `[OPERATIV]`, nicht `[REAKTIV]`:** planmäßige Antwort auf bekannte Deprecation-Frist mit Vorlauf, ausdrücklich von Regel-015 vorgesehen. Reaktiv-Quote bleibt 0 / 10 (zählt jetzt ADR-003 bis ADR-012).
+  - **Strukturelle Konsistenz mit ADR-010:** ADR-010 hatte `setup-uv` und `pnpm/action-setup` aktualisiert, `upload-artifact` aber bewusst belassen. Diese Lücke war bei der damaligen Verifikation nicht sichtbar, weil v4 zum 2026-05-08 noch keine Deprecation-Annotation auf Job-Ebene auslöste oder die Annotation in den damaligen Run-Logs noch nicht auftauchte. Sie wurde sichtbar, sobald Frontend-Coverage-Uploads (1.7) eingeführt waren und die Annotation pro Job-Abschluss erschien. Methodische Lehre: zukünftige Verifikations-Runden lesen CI-Run-Logs auf Annotations gegen, nicht nur Versions-Verfügbarkeit auf der Releases-Seite.
+  - **Re-Test der Pipeline** auf dem PR-Branch dieser Session. Erwartung: keine Node-20-Deprecation-Annotations mehr in `test-backend` oder `test-frontend`-Matrix.
+- **Abgeleitete Regel:** keine neue Regel — Regel-015 hat den Fall bereits abgedeckt, dieser ADR ist die regelkonforme Anwendung.
 
 ---
 

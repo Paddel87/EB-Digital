@@ -14,6 +14,7 @@
 - **Nächster Schritt:** **Phase 1 abgeschlossen.** Übergang in **Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2)** (UMSETZUNG): vollständige Auth-Schicht über Bootstrap-Schiene aus 1.6 hinaus (Login, Sessions, Rate-Limit, Multi-User-Verwaltung), Mandanten-Onboarding, `operation_tenant_participation` als alleinige Operation↔Mandant-Verknüpfung (ADR-009 Invariante I1), abstrakter Berechtigungs-Filter (Invariante I2). Detail siehe Phase 2 unten.
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
+- **CI-Hygiene-Sonderfall in Phase 1 (2026-05-10):** ADR-012 — `actions/upload-artifact@v4` → `@v7` als Major-Update gegen Node-20-Deprecation, analog zu ADR-010 in 1.2. Reaktiv-Quote bleibt 0 / 10.
 
 ## Phasen-Typen
 
