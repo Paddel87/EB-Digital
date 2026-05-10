@@ -22,72 +22,9 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
 
 ## Aktive Blocker
 
-### Blocker #001: uv-/venv-Korruption nach intensiven Reinstall-/Sync-Sequenzen
+_Keine aktiven Blocker._
 
-- **Datum:** 2026-05-10 (erstmals dokumentiert; vier Vorfälle in Schritten 1.4, 1.5, 1.6 zweimal, 1.7)
-- **Fahrplan-Referenz:** kein einzelner Schritt — taucht quer über Schritt-Verifikationen auf
-- **Modul:** Tooling (uv + .venv)
-- **Blocker-Typ:** Nicht-deterministisch (Heilung jedes Mal verfügbar, Auslöse-Trigger unklar)
-- **Beschreibung:**
-  Während Verifikations-Sequenzen mit häufigen `uv sync` / `uv pip install --reinstall` /
-  `uv run`-Wechseln (insbesondere zwischen Backend- und Frontend-Arbeit) verliert die `.venv`
-  einzelne Komponenten installierter Pakete. Symptome bisher gesehen:
-  - `python -m eb_digital` → `ModuleNotFoundError: No module named 'eb_digital'`
-    (`_editable_impl_*.pth`-Pattern, Schritt 1.4 + 1.6)
-  - `import pygments.plugin` schlägt fehl, obwohl `pygments` installiert (Schritt 1.6)
-  - `cannot import name 'BaseMetadata' from 'annotated_types'` (Schritt 1.6)
-  - `ModuleNotFoundError: No module named 'pytest'` direkt nach `uv sync` (Schritt 1.7)
-  - `ModuleNotFoundError: No module named '_argon2_cffi_bindings'` — argon2-cffi
-    installiert, aber Native-Bindings-Submodul fehlt (Schritt 1.7)
-
-  Die Symptome treten **nicht** an gleicher Stelle auf, sind aber alle Manifestationen
-  derselben Klasse: ein installiertes Paket ist im venv, aber dessen Resolver-Metadaten,
-  Native-Bindings oder Editable-Pointer sind inkonsistent.
-
-- **Reproduktion (best-effort, nicht 100 % deterministisch):**
-
-```
-# 1. Initialer healthy state nach `uv sync`.
-# 2. Eine Mischung aus:
-#    - mehreren `uv pip install --reinstall <pkg>` (gezielt einzelne Pakete)
-#    - `uv run pytest` und `uv run python -m eb_digital ...` zwischendrin
-#    - parallel `pnpm install` für andere Workspaces (Schritt 1.7)
-#    - Anschließend nochmal `uv sync` ohne `--reinstall`
-# 3. Beim nächsten Aufruf eines Pakets, das in der venv „sein sollte",
-#    schlägt der Import fehl — Symptom variiert.
-```
-
-- **Versuchte Ansätze (drei plus, alle Patches statt Lösung):**
-  1. `uv sync --reinstall-package eb-digital` — Heilung 1.4-Pattern, schlägt aber bei den
-     anderen Symptom-Varianten oft fehl.
-  2. `rm -rf .venv && uv sync` — Heilung 1.4 nuklear; in Schritt 1.6 erzeugte das **neue**
-     Symptome (`pygments`/`annotated_types` korrupt) — Cache-Wieder­verwendung uv-seitig.
-  3. `rm -rf .venv && uv sync --reinstall` (Cache-Bypass) — bisher zuverlässige Heilung
-     für alle vier Symptome, aber kostet vollständige Re-Download und ~5 s Build-Zeit pro
-     Lauf.
-- **Offene Hypothesen:**
-  - **uv-Cache-Inkonsistenz:** Wahrscheinlich erstellt uv unter `~/.local/share/uv/` Cache-Einträge,
-    die zwischen `--reinstall`-Aufrufen partial korrumpiert werden. Verifikation würde verlangen,
-    den uv-Cache nach jedem Symptom zu inspizieren.
-  - **macOS-spezifischer Symlink-/Inode-Bug:** Möglicherweise Race condition zwischen
-    `.venv`-Schreibern und Filesystem-Layer (apfs).
-  - **Native-Wheel-Repacking:** argon2-cffi liefert Native-Bindings als Sub-Package
-    (`_argon2_cffi_bindings`); `--reinstall <main>` lässt das Sub-Package nicht reinstallieren.
-  - **Worktree-spezifisch:** `.venv` liegt in einem git-worktree-Pfad; macOS könnte über
-    `find`-Timestamps oder Spotlight-Indexing intervenieren.
-- **Workaround (akzeptiert für jetzt):**
-  Bei jedem Symptom: `rm -rf .venv && uv sync --reinstall`. Kein blocker für aktive Schritte
-  — Zeit ~5 s. Dokumentiert hier, damit die Häufung sichtbar bleibt.
-- **Benötigt zur Auflösung:**
-  - Reproduzierbare minimale Repro (aktuell flaky; lässt sich nicht zuverlässig herstellen).
-  - Entweder uv-Bug-Report mit Repro oder ADR „uv durch pip+venv ersetzen" (sehr großer Eingriff
-    in Schritt 1.1 Repository-Bootstrap, ADR-pflichtig nach CLAUDE.md Abschnitt 4 Punkt 7
-    „Build- und Deploy-Pipeline").
-- **Vorgeschlagene Entscheidungsfrage:**
-  Wenn das Pattern ein fünftes Mal auftritt: Ressourcen-Investment (Repro-Zeit, möglicher
-  uv-Issue, möglicher Tool-Wechsel) — oder weiter nuklear heilen und akzeptieren?
-
-(Stand: 2026-05-07. Im Härtungs-Schritt von Modus-2-Schritt 3 wurden keine Blocker identifiziert; alle in Schublade 1 zusammengefassten Grundsatzfragen aus `project-context.md` Abschnitt 11 sind in der Klärungs-Session am 2026-05-07 abschließend entschieden, alle Schublade-2-Punkte als Spikes G–M in `fahrplan.md` Phasen 3 und 5 platziert, alle Schublade-3-Punkte als Roadmap-Meilensteine N/O/P in Phase 7. Damit gibt es keine offenen Architektur- oder Konzept-Lücken, die als Blocker gelten würden — der oben gelistete Blocker #001 ist ein **Tooling-Pattern**, kein Konzept-/Architektur-Defekt.)
+(Stand: 2026-05-10. Im Härtungs-Schritt von Modus-2-Schritt 3 wurden keine Blocker identifiziert; alle in Schublade 1 zusammengefassten Grundsatzfragen aus `project-context.md` Abschnitt 11 sind in der Klärungs-Session am 2026-05-07 abschließend entschieden, alle Schublade-2-Punkte als Spikes G–M in `fahrplan.md` Phasen 3 und 5 platziert, alle Schublade-3-Punkte als Roadmap-Meilensteine N/O/P in Phase 7. Blocker #001 wurde am 2026-05-10 ursächlich aufgeklärt und nach „Gelöste Blocker" verschoben.)
 
 ### Eintrags-Format (Vorlage – nicht löschen)
 
@@ -128,7 +65,18 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
 [Nach Auflösung hierher verschieben. Ergänzungen: "Lösungsdatum", "Lösung", "ADR-Referenz falls zutreffend".
 Bei hoher Anzahl: nach `docs/archiv/blockers-YYYY-MM.md` auslagern.]
 
-_Bisher keine Blocker aufgelöst, weil bisher keine Blocker aufgetreten sind._
+### Blocker #001: uv-/venv-Korruption nach intensiven Reinstall-/Sync-Sequenzen – GELÖST 2026-05-10
+
+- **Ursprüngliche Beschreibung (gekürzt):** Nach intensiven Sequenzen aus `uv sync` / `uv pip install --reinstall` / `uv run` (insbesondere zwischen Backend- und Frontend-Arbeit) traten in den Schritten 1.4, 1.5, 1.6 (zweimal) und 1.7 immer wieder Import-Fehler auf — primär `ModuleNotFoundError: No module named 'eb_digital'` (Editable-Pattern), sekundär verschiedene Folgesymptome (`pygments.plugin`, `annotated_types.BaseMetadata`, `_argon2_cffi_bindings`, `pytest`). Der Workaround `rm -rf .venv && uv sync --reinstall` wirkte zuverlässig, behob aber nicht die Ursache.
+- **Lösung (Diagnose-Spike 2026-05-10):**
+  - **Direkte Ursache:** macOS BSD-File-Flag **`UF_HIDDEN`** ist auf allen `.venv`-Dateien gesetzt (nachgewiesen mit `ls -lO`). **Python 3.13** überspringt `.pth`-Dateien mit diesem Flag in `Lib/site.py` mit der Meldung `Skipping hidden .pth file: …` (neues Sicherheits-Verhalten). Damit landet der Editable-Pfad zum `backend/eb_digital`-Source-Tree nie in `sys.path` → `eb_digital` ImportError.
+  - **Trigger:** Der Worktree-Stamm `.../EB-Digital/.claude/worktrees/<name>/` und das Eltern-Verzeichnis `.claude/worktrees/` tragen das `hidden`-Flag. Beim **allerersten** `uv sync` in einem neuen Worktree übernimmt uv (oder das macOS-Filesystem beim `mkdir .venv` unter einem hidden Parent) das Flag auf die `.venv`-Inhalte. Folge-Syncs in derselben venv schreiben nicht-hidden Files.
+  - **Heilung:** `chflags -R nohidden .venv` — ein-Schritt, idempotent, kein `--reinstall`, kein `rm -rf` nötig. Heilt _alle_ bekannten Symptom-Varianten gleichzeitig.
+  - **Tooling-Fix:** [`scripts/fix-venv-flags.sh`](scripts/fix-venv-flags.sh) führt das `chflags`-Kommando idempotent aus; einmal pro Worktree-Lebensdauer manuell auszulösen (nach erstem `uv sync`).
+  - **Cross-Check:** Hauptcheckout (`/Users/.../EB-Digital/`) hat keine Hidden-Flags — der Bug ist worktree-spezifisch unter `.claude/worktrees/`.
+- **ADR:** keiner. Diagnose ist Bug-Aufklärung mit Tooling-Fix, keine Architektur-Entscheidung. Eine etwaige strategische Folge-Entscheidung „venv-Speicherort außerhalb von `.claude/worktrees/`" ist als `ENTSCHEIDUNG ERFORDERLICH` im Logbuch-Eintrag vom 2026-05-10 vorgelegt; falls sie gewählt wird, entsteht ein OPERATIV-ADR.
+- **Abgeleitete Regel (methodisch):** Eine zuverlässige Workaround-Sequenz, die wiederholt nötig wird (≥ 3 Vorfälle der gleichen Klasse), ist selbst ein Indikator für eine offene Ursache. Spätestens beim dritten Vorfall ist ein Diagnose-Spike auszulösen — der Workaround maskiert den Bug, ohne ihn zu lösen.
+- **Logbuch-Verweis:** Eintrag vom 2026-05-10 `[PROBLEM-GELÖST]` enthält die vollständige Verifikations-Sequenz.
 
 ### Eintrags-Format gelöste Blocker (Vorlage)
 

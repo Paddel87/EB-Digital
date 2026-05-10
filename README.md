@@ -51,7 +51,7 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
 - **Status:** Konzeption
 - **Letzte Änderung:** 2026-05-10
 - **Architektur-Reife:** 10 Bestandteile `[BELASTBAR]` (Stack-/NFR-/Datenschutz-Constraints + Schnittstelle S1 Admin-Bootstrap-CLI seit 2026-05-10), ca. 34 `[VORLÄUFIG]` (Module inkl. drei Frontend-Skelette, restliche Schnittstellen, Datenmodell-Invarianten), 9 `[OFFEN]` (Spikes G–M, Bedrohungsmodell, Tracing). Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends bleibt bis zum Last-/Funktionstest in Phase 7 `[VORLÄUFIG]`.
-- **Aktive Blocker:** 1 ([`docs/blockers.md`](docs/blockers.md): uv-/venv-Korruption nach intensiven Reinstall-Sequenzen, Workaround `rm -rf .venv && uv sync --reinstall` zuverlässig, kein Schritt-Blocker).
+- **Aktive Blocker:** 0 (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — macOS `UF_HIDDEN`-File-Flag auf `.venv` lässt Python 3.13 die Editable-`.pth` skippen; Heilung als Skript [`scripts/fix-venv-flags.sh`](scripts/fix-venv-flags.sh), siehe [`docs/blockers.md`](docs/blockers.md)).
 - **ADRs:** 11 (9 `[STRATEGISCH]` aus INITIALISIERUNG + ADR-010 `[OPERATIV]` zu GitHub-Actions Major-Update + Verifikations-Regime + ADR-011 `[OPERATIV]` zu psycopg-LGPL-Akzeptanz und Sub-Dep-Lizenz-Regime); Reaktiv-Quote 0/11 (Schwellenwert 20 % nicht überschritten).
 - **Klassifikation:** Klasse G (Groß) – ADR-001.
 
@@ -80,6 +80,11 @@ cat docs/fahrplan.md
 
 # Tooling installieren und Pre-Commit-Hooks aktivieren
 uv sync                                              # Python-Dev-Tooling (ruff, mypy, pytest, bandit, …)
+# macOS-Hinweis: Wenn der Checkout unter einem versteckten Parent-Verzeichnis liegt
+# (z. B. ein Claude-Code-Worktree unter .claude/worktrees/), nach dem ersten `uv sync`
+# einmalig ausführen — entfernt UF_HIDDEN von der frischen .venv, sonst skippt
+# Python 3.13 die Editable-.pth (siehe docs/blockers.md → Blocker #001):
+bash scripts/fix-venv-flags.sh
 pnpm install                                         # Node-Dev-Tooling (commitlint, prettier, …)
 uv run pre-commit install \
   --hook-type pre-commit --hook-type commit-msg      # Hooks lokal aktivieren

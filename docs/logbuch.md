@@ -26,6 +26,39 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-10 – [PROBLEM-GELÖST]
+
+- **Bezug:** Blocker #001 „uv-/venv-Korruption nach intensiven Reinstall-/Sync-Sequenzen" — vier Vorfälle in 1.4, 1.5, 1.6 (zweimal), 1.7. Aufforderung des Menschen am 2026-05-10: „ursache feststellen".
+- **Methode:** Diagnose-Spike im Worktree `practical-tesla-baab22` auf grünem Boden (`.venv` existierte zu Sessionstart nicht). Systematische Verifikation der vier Hypothesen aus dem Blocker-Eintrag, jede mit eigenem reproduzierbaren Test, ohne vorab zu „heilen" (Beweise-Erhalt).
+- **Ursache (zweifelsfrei nachgewiesen):**
+  - macOS BSD-File-Flag **`UF_HIDDEN`** ist auf allen `.venv`-Dateien gesetzt (nachgewiesen mit `ls -lO`-Spalte `hidden` auf vier verschiedenen Worktrees).
+  - **Python 3.13** hat in [`Lib/site.py`](https://github.com/python/cpython/blob/3.13/Lib/site.py) ein neues Sicherheits-Verhalten: `.pth`-Dateien mit `UF_HIDDEN` werden mit der expliziten Meldung `Skipping hidden .pth file: …` übersprungen. Verifiziert per `uv run --no-sync python -v` direkt im Worktree.
+  - Das **Editable-Install** für `eb_digital` läuft über genau so eine `.pth` (`_editable_impl_eb_digital.pth`, Inhalt: `<projektroot>/backend`). Wird sie geskipt → `eb_digital`-Pfad nie in `sys.path` → `ModuleNotFoundError: No module named 'eb_digital'`.
+- **Trigger:** Der Worktree-Stamm (`.../EB-Digital/.claude/worktrees/<name>/`) und das Eltern-Verzeichnis `.claude/worktrees/` tragen das `hidden`-Flag (mit hoher Wahrscheinlichkeit gesetzt vom Worktree-anlegenden Tooling). Beim **allerersten** `uv sync` in einem neuen Worktree übernimmt uv (oder das macOS-Filesystem beim `mkdir .venv` unter einem hidden Parent) das Flag auf die `.venv`-Inhalte. **Folge-Syncs in derselben venv erzeugen nicht-hidden Dateien** — daher ist die Heilung mit `chflags -R nohidden .venv` stabil, sobald sie einmal angewandt ist.
+- **Verifikations-Sequenz:**
+  1. ✅ `uv run --no-sync python -v -c "pass"` druckt sechsmal `Skipping hidden .pth file: …` (für `_editable_impl_eb_digital.pth`, `_virtualenv.pth`, `a1_coverage.pth`).
+  2. ✅ `site.addpackage(sp, '_editable_impl_eb_digital.pth', set())` bei manuellem Aufruf fügt den Pfad **nicht** zu `sys.path` hinzu (Hidden-Skip in der internen Logik).
+  3. ✅ Manueller `sys.path.insert(0, '<projektroot>/backend')` lässt `import eb_digital` sofort gelingen — Pfad und Modul-Existenz sind also korrekt.
+  4. ✅ `chflags -R nohidden .venv` heilt alle Importe in einem Schritt (`eb_digital`, `pytest`, `pygments`, `pygments.plugin`, `annotated_types`, `argon2`, `_argon2_cffi_bindings`) — **kein** `--reinstall`, **kein** `rm -rf .venv` nötig.
+  5. ✅ Cross-Check: Hauptcheckout `/Users/patrickschulz/Documents/GitHub/EB-Digital/` (außerhalb von `.claude/worktrees/`) hat **keine** Hidden-Flags auf seinen Dateien — der Bug ist worktree-spezifisch.
+- **Erklärt damit alle bekannten Symptom-Varianten von Blocker #001:**
+  - **`eb_digital`-Pattern (1.4, 1.6):** direkt — `.pth` skipped → Editable-Pfad nicht in `sys.path`.
+  - **`pygments.plugin`, `BaseMetadata`, `_argon2_cffi_bindings`, `pytest` fehlt (1.6, 1.7):** Folgeschäden. Wenn `eb_digital` fehlt, hat der Mensch (oder ich) reaktiv mit `uv pip install --reinstall <pkg>` und `rm -rf .venv && uv sync` gegengearbeitet, was Cache-Inkonsistenzen / partielle Installationen produzieren kann. In der jetzt frisch geheilten venv funktionieren _alle_ diese Module ohne `--reinstall`.
+  - **Heilungs-Mythos:** `rm -rf .venv && uv sync --reinstall` wirkte zuverlässig nicht weil `--reinstall` nötig war, sondern weil der **zweite** Sync auf eine bereits zur Hälfte aufgesetzte venv schreibt, deren neue Files nicht-hidden geschrieben werden.
+- **Fix (eingeführt):** [`scripts/fix-venv-flags.sh`](scripts/fix-venv-flags.sh) — minimalistisches Bash-Skript, prüft `.venv` und entfernt rekursiv das Hidden-Flag mit `chflags -R nohidden .venv`. Idempotent, no-op außerhalb von macOS, klare Begründungs-Header. Manuell auszuführen nach jedem _ersten_ `uv sync` in einem neuen Worktree (also einmalig pro Worktree-Lebensdauer).
+- **Hinweis im README:** Quick-Start-Sektion um eine kurze Notiz „macOS-Worktrees: nach erstem `uv sync` einmalig `bash scripts/fix-venv-flags.sh` ausführen" ergänzt.
+- **Blocker-Bewegung:** Blocker #001 in `docs/blockers.md` von „Aktive Blocker" nach „Gelöste Blocker" verschoben mit Lösungs-Eintrag und Verweis auf diesen Logbuch-Eintrag. Aktive-Blocker-Anzahl: **0**.
+- **Reaktiv-Quote nach diesem Eintrag:** **0 / 11 (0 %)**, unverändert. Es entstand kein ADR — die Diagnose ist reine Bug-Aufklärung mit Tooling-Fix, keine Architektur-Entscheidung. Eine als `ENTSCHEIDUNG ERFORDERLICH` vorgelegte strategische Folge-Frage (venv-Speicherort außerhalb von `.claude/worktrees/` per `UV_PROJECT_ENVIRONMENT`) wurde von Patrick am 2026-05-10 zugunsten **Option A (Status quo + Sofort-Fix-Skript)** entschieden — keine Build-Pipeline-Änderung, kein ADR. Begründung: Aufwand-Nutzen marginal gegenüber 14 Zeilen Bash, einmalig pro Worktree-Setup.
+- **Lerneffekt (methodisch):** Die Heuristik im Logbuch 1.5 „Drittauftritt rechtfertigt einen Blocker-Stub-Eintrag noch nicht — Heilung ist deterministisch" war im Nachhinein zu zurückhaltend. Eine zuverlässige Workaround-Sequenz, die wiederholt nötig wird, ist **selbst** ein Indikator für eine offene Ursache und sollte spätestens beim **dritten** Vorfall einen Diagnose-Spike auslösen, nicht erst beim vierten oder fünften. Der Workaround maskiert den Bug, ohne ihn zu lösen.
+
+### 2026-05-10 – [SESSIONSTART]
+
+- **Letzter Stand:** 1.7 ERLEDIGT (PR #13 in `main`); Blocker #001 vom 2026-05-10 als „Aktiv" eingetragen aber ohne Schritt-Blockade. Worktree `practical-tesla-baab22` zu Sessionbeginn ohne `.venv`.
+- **Auftrag:** Mensch fragt „Wieso taucht der vorfall in Blocker 001 immerwieder auf?" — Antwort liefert die Selbst-Erklärung des Blockers (symptomatische Heilung ohne Ursachenbehebung). Folgeauftrag: **„ursache feststellen"**.
+- **Charakter:** Diagnose-Spike, kein Code-Schritt. Phasentyp-formal entspricht das einer ERKUNDUNG, läuft aber als Sonderfall innerhalb Phase 1 (UMSETZUNG) — kein neuer Fahrplan-Schritt nötig, weil die Aufgabe einen einzelnen Tag umfasst und ein bestehendes Blocker-Item auflöst.
+- **Vorabprüfung:** `git fetch --all --prune` zeigt Worktree synchron mit `origin/main` (`d31812f`). Keine berührten Module, keine ADR-Pflicht antizipiert.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus, Worktree `scp/practical-tesla-baab22` (Opus 4.7 1M-Kontext).
+
 ### 2026-05-10 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 1 h 30 min (Sessionstart unmittelbar nach PR-#12-Merge bis Sessionende-Commit-Vorbereitung).
