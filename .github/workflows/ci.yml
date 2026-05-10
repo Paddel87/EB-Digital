@@ -111,7 +111,7 @@ jobs:
         # [tool.coverage.report] mit per-Modul-Konfiguration durchgesetzt.
         run: uv run pytest --cov=backend/eb_digital --cov-report=xml --cov-report=term --cov-fail-under=80
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-backend
           path: coverage.xml
@@ -188,7 +188,7 @@ jobs:
         # Globaler Mindestwert 80 % Lines konfiguriert in vitest.config.ts pro Paket.
         run: pnpm --filter ${{ matrix.package }} test --coverage
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.package }}
           path: apps/${{ matrix.package }}/coverage/

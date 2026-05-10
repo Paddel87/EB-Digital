@@ -151,7 +151,7 @@ Pin-Form je nach Maintainer-Praxis: **Major-Tag** für Actions aus der `actions/
 - `actions/checkout@v6` — `Verifiziert: 2026-05-08`
 - `actions/setup-python@v6` — `Verifiziert: 2026-05-08`
 - `actions/setup-node@v6` — `Verifiziert: 2026-05-08`
-- `actions/upload-artifact@v4` — `Verifiziert: 2026-05-08` (current ist v7, v4 bleibt supported; Update folgt bei Bedarf per ADR)
+- `actions/upload-artifact@v7` — `Verifiziert: 2026-05-10` (Major-Update v4→v7 in ADR-012 dokumentiert; Auslöser: Node-20-Deprecation-Annotation auf v4)
 - `astral-sh/setup-uv@v8.1.0` — `Verifiziert: 2026-05-08` (Major-Update v5→v8 in ADR-010 dokumentiert)
 - `pnpm/action-setup@v6.0.5` — `Verifiziert: 2026-05-08` (Major-Update v4→v6 in ADR-010 dokumentiert)
 
