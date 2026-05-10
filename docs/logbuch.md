@@ -28,6 +28,74 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ### 2026-05-10 – [SESSIONENDE]
 
+- **Session-Dauer:** ca. 3 h (Sessionstart unmittelbar nach PR-#17-Merge bis Sessionende-Commit-Vorbereitung).
+- **Bearbeitet:** **Phase 2 Schritt 2.2 — `backend/auth` Login-Endpoint + Cookie-Sessions + Rate-Limit.** Status `[OFFEN]` → `[ERLEDIGT]`. Zweiter Schritt der Phase 2.
+- **Erreicht:**
+  - **ADR-013** (`[OPERATIV] [STACK] [SECURITY]`) angelegt — Rate-Limit als eigener Valkey-Counter statt slowapi/fastapi-limiter. Begründung: Konsistenz mit Auth-Philosophie aus `project-context.md` Abschnitt 3 („eigener Auth-Code basiert auf etablierten Bausteinen, keine eigene Krypto-Implementierung" — Rate-Limit ist Counter, keine Krypto), Infrastruktur-Synergie mit Valkey im Stack, keine zusätzliche Versions-Verifikations-Pflicht in Folgeversionen. Reaktiv-Quote bleibt **0/10** (zählt jetzt ADR-004 bis ADR-013).
+  - **Sub-Wahl Valkey-Client:** PyPI-Recherche zeigt `valkey-py 6.1.1` (last Stable 2025-08-11, 9 Monate Cadence-Pause, Beta-Linie 6.2.0rc) gegenüber `redis-py 7.4.0` (last Stable 2026-03-24, reguläre Cadence, 13.525 Stars vs. 267, MIT, wire-protokoll-kompatibel mit Valkey). Patrick wählte **B = redis-py**, weil operative Reife schlägt Marken-Konsistenz im Client; ADR-002 betrifft den Server, nicht den MIT-Client. Plus `fakeredis 2.35.1` (BSD-3-Clause, In-Process-Fake) als Test-Dep für Unit-Tests.
+  - **Detail-Plan vor Code** (analog 2.1-Methode): Schritt-Format-Block 2.2 mit 15 Akzeptanzkriterien Patrick vorgelegt + freigegeben mit „zustimmung". Fahrplan-Block in `fahrplan.md` Phase 2 eingesetzt vor Implementation.
+  - **Sechs neue/erweiterte Backend-Module:**
+    - **`backend/eb_digital/cache/__init__.py`** (neu) — async Connection-Pool über `redis.asyncio.Redis.from_url`; URL-Schema-Adapter `valkey://` → `redis://` analog zu `_to_psycopg_conninfo` für Postgres; `ping_valkey(client)`-Health-Helper, der Exceptions zu `False` umsetzt.
+    - **`backend/eb_digital/auth/hashing.py`** (Erweiterung) — `verify_dummy(password)`-Funktion plus vor-berechneter `_DUMMY_HASH` zur Modul-Ladezeit. Liefert immer `False`, hat aber identischen Argon2-Aufwand wie echter `verify_password`. Mit Heuristik-Test gegen Timing-Divergenz (Faktor 0.5x–2x toleriert).
+    - **`backend/eb_digital/auth/rate_limit.py`** (neu, ~130 Zeilen) — `incr_and_check(client, key, *, limit, window_seconds)` mit `INCR`+`EXPIRE`-Pattern (Atomaritäts-Argument im Modul-Docstring); `check_login(client, *, ip, username)` als Multi-Key-AND mit konservativster `Retry-After`-Berechnung; `reset_user(client, username)` für die Counter-Reset-Disziplin „nur User-Counter, nicht IP-Counter" (Schutz gegen Brute-Force-Sweep über Username-Variation).
+    - **`backend/eb_digital/auth/repositories.py`** (neu) — `find_by_username(session, username) -> AuthSubject | None` mit deterministischer Suchreihenfolge PlatformAdmin → Dispatcher → Carer; bei Mehrfach-Treffern in Dispatcher/Carer (gleicher Username in verschiedenen Mandanten) gewinnt der älteste Eintrag pro Tabelle (`order_by(created_at ASC, id ASC).limit(1)`). `AuthSubject` als frozen dataclass mit `kind`, `id`, `username`, `password_hash`, `is_active`, `tenant_id`.
+    - **`backend/eb_digital/auth/sessions.py`** (neu) — `set_session/get_current_session_user/clear_session`-Trio über `request.session`; Session-Payload datenarm (`kind`, `id`, `username`, `tenant_id`, `expires_at`); rollenspezifische Timeouts (8 h PlatformAdmin / 24 h Dispatcher+Carer aus `project-context.md` Abschnitt 6); Cleanup-on-Read bei abgelaufener Session.
+    - **`backend/eb_digital/auth/api.py`** (neu) — drei Endpunkte unter `/api/auth/`: `POST /login` (Rate-Limit-Check **vor** DB-Lookup, `verify_dummy` für non-existing-user, identische 401-Antwort für inactive User → kein Info-Leak), `POST /logout` (204), `GET /me` (200/401). FastAPI-Dependencies `get_valkey_client`/`get_db_session` lesen aus `request.app.state` und werfen `RuntimeError` bei fehlender Initialisierung. `_extract_client_ip(request)` bevorzugt `X-Forwarded-For` (ersten Eintrag), fällt zurück auf `request.client.host`, dann auf `UNKNOWN_IP`.
+  - **App-Wiring** (`backend/eb_digital/app.py`): Lifespan öffnet DB-Engine + Session-Factory + Valkey-Client, setzt sie auf `app.state`, schließt sauber bei Shutdown. SessionMiddleware mit `secret_key` aus Settings, `same_site='strict'`, `https_only=True` außer in dev. Auth-Router an `api_router` gehängt unter `/api/auth/`.
+  - **`pyproject.toml`** Erweiterung: `redis~=7.4.0` (Runtime), `fakeredis~=2.35.1` (dev). `.pre-commit-config.yaml` mypy-Hook um `redis~=7.4.0`-`additional_dependencies` ergänzt, damit der isolierte Hook-Env die Stubs sieht (klassischer Drift zwischen uv-Env und mypy-pre-commit-Env, auf den ADR-002 nicht eingeht — wird ohne neuen ADR fortlaufend gepflegt).
+  - **Tests:** 60 neue Tests in 5 Test-Dateien (`test_cache.py`, `test_auth_rate_limit.py`, `test_auth_repositories.py`, `test_auth_sessions.py`, `test_auth_login_api.py`) plus 2 Erweiterungen in `test_auth_hashing.py`. **Coverage backend/auth gesamt 100 % Lines/Branches** (deutlich über Pflicht-Schwellwert ≥ 95 %), Backend gesamt **97.27 %** bei **220 Tests**.
+  - **`scripts/dev-smoke.sh`** um Auth-Smoke erweitert: Admin-Anlage über inline-Python im Backend-Container (Bootstrap-CLI nutzt `getpass`, das ohne TTY nicht aus stdin liest — pragmatisch über `create_platform_admin`-Direktaufruf); danach Login → `/me` → Logout → `/me-401`. Cookie-Jar via `mktemp`, Cleanup im RETURN-Trap.
+  - **Verifikations-Sequenz (alle 15 Akzeptanzkriterien aus Fahrplan 2.2 erfüllt):**
+    1. ✅ PlatformAdmin loggt erfolgreich ein, Cookie mit `Secure; HttpOnly; SameSite=Strict; Path=/`.
+    2. ✅ Dispatcher-Login liefert `tenant_id` in Response.
+    3. ✅ Wrong-password → 401, identische Antwortzeit (Heuristik-Test in `test_auth_hashing.py`).
+    4. ✅ Non-existent username → 401, IP+User-Counter erhöht.
+    5. ✅ 5 Fehlversuche desselben Users + 1 weiterer → 429 mit `Retry-After`.
+    6. ✅ 5 Fehlversuche von derselben IP gegen 5 verschiedene Usernames + 1 weiterer → 429 (IP-Counter).
+    7. ✅ Erfolgreicher Login löscht User-Counter, IP-Counter bleibt (Test prüft beide via `fake_valkey.get`).
+    8. ✅ Login auf `is_active=False` → 401 (identische Response zu wrong-password).
+    9. ✅ `/me` ohne Cookie → 401, mit gültiger Session → 200, mit abgelaufener Session → 401 + Session-Clear.
+    10. ✅ `/logout` → 204; Folge-`/me` → 401.
+    11. ✅ Session-Timeout role-spezifisch (8 h Admin / 24 h Disp+Carer), Test über manipulierten `expires_at` ohne Sleep.
+    12. ✅ Coverage `backend/auth` 100 % Lines/Branches; `backend/cache` 100 %.
+    13. ✅ `uv run pre-commit run --all-files` grün auf allen Hooks.
+    14. ✅ `alembic check` „No new upgrade operations detected" (kein Schema-Update in 2.2).
+    15. ✅ `bash scripts/dev-smoke.sh` grün — alle 6 Services healthy, `/api/health` + `/health` 200, tile-proxy 204/200, Auth-Smoke (Admin → Login → /me → Logout → /me-401) durchgängig grün.
+- **Reibungen während der Session:**
+  - **Methoden-Erfolg — Versions-Sub-Verifikation als Einzeiler-Frage:** Statt `valkey-py` aus Marken-Konsistenz blind zu nehmen, beide Optionen mit konkreten Zahlen (Cadence, Stars, last release) als A/B-Frage vorgelegt. Patrick wählte B = redis-py mit knappem „B". Effizient (eine Antwort), transparent, methoden-konsistent zu den 1.3/1.5/1.6/1.7/1.8-Verifikationen.
+  - **Mypy-pre-commit-Hook braucht eigene `additional_dependencies`:** Nach Implementation lief mypy lokal grün (uv-Env), aber `pre-commit run mypy` schlug mit „Cannot find implementation or library stub for module named 'redis.asyncio'" fehl. Klassischer Drift: mypy-pre-commit nutzt isolierte Hook-venv ohne den uv-Env-Pfad. Lösung: `redis~=7.4.0` zu `additional_dependencies` ergänzt. Lerneffekt: jede neue Backend-Runtime-Dep braucht Spiegel im pre-commit-mypy-Block. Schon 11 Pakete im Block, bei nächster Erweiterung Zähler beobachten.
+  - **Bootstrap-CLI nutzt `getpass`, kein `--stdin-password`:** Die Phase-1-CLI ist auf interaktive Nutzung designed; `<<<"$PW"` funktioniert nicht ohne TTY. Pragmatisch im Smoke-Skript: `create_platform_admin` direkt via `python -c` aufgerufen statt CLI. Funktional äquivalent. Möglicher Phase-7-Verbesserungspfad: `--stdin-password`-Flag für Automation, aber nicht jetzt.
+  - **Mypy-Inkonsistenz `redis-py.ping()`-Rückgabetyp:** redis-py 7 typed `Redis.ping()` als `Awaitable[bool] | bool`, weil sync- und async-Facade dieselbe Methode haben. `await client.ping()` löst mypy-Fehler aus. Pragmatischer Fix: `result: object = await client.ping()  # type: ignore[misc]` plus `return bool(result)`. Wird mit redis-py 8.x evtl. sauber, dann ignore entfernen.
+  - **Unique-pro-Tabelle-Username im Phase-1-Datenmodell:** `dispatcher.username` und `carer.username` sind nur unique pro Tenant, nicht global. Bei `find_by_username` in 2.2 könnte ein Username in mehreren Mandanten existieren — der Login-Pfad braucht eine deterministische Wahl. Implementierung: `order_by(created_at ASC, id ASC).limit(1)`, älterer Eintrag gewinnt. Damit ist 2.2 Phase-1-tauglich; der Phase-2-Frontend-Login wird in 2.5 zusätzlich einen Mandanten-Selector haben (Tenant-spezifischer Login). Für PlatformAdmin-Login bleibt die globale Username-Eindeutigkeit unangetastet.
+- **Reaktiv-Quote nach dieser Session:** **0/10 (0 %)**, ADR-013 ist `[OPERATIV]`. Schwellenwert 20 % nicht erreicht.
+- **Architektur-Spec-Anpassung:** `backend/auth` Modul-Reifegrad `[VORLÄUFIG]` → `[BELASTBAR]` (durch produktive Login-/Session-/Rate-Limit-Implementation, 100 %-Coverage und End-to-End-Smoke). Neue Schnittstelle S8a (`/api/auth/login`/`/logout`/`/me`) als `[BELASTBAR]` ergänzt; das Mutter-S8 bleibt insgesamt `[VORLÄUFIG]` für Tenants-/Users-CRUD-Surfaces. Neuer Eintrag „Valkey-Connection-Pool für Backend" auf `[BELASTBAR]`; Pub/Sub-Pfad bleibt `[VORLÄUFIG]` bis Phase 4.
+- **Bekannter Stand der lokalen DB:** `platform_admin` enthält jetzt zusätzlich einen `smoke_login_<timestamp>`-User aus dem Auth-Smoke-Lauf. Optional Cleanup vor 2.3.
+- **Nächster Schritt:** **Schritt 2.3 — `backend/auth_anonymous`** (URL-Token via `itsdangerous`, AccessCode-Validierung mit Konstantzeit-Vergleich + Hash-Speicherung gemäß Regel-006, anonyme Session-Lifecycle). Wiederverwendung der Rate-Limit-Schicht aus 2.2 (`reset_user`-Variante für AccessCode-Counter ggf. ergänzen). Versions-Verifikation `itsdangerous` nicht nötig (in 1.6 verifiziert).
+
+### 2026-05-10 – [SESSIONSTART]
+
+- **Letzter Stand:** Phase 2 Schritt 2.1 ERLEDIGT (PR #17 in `main` als `49b5bc4`/`2de4b89`, Datenmodell-Skelett `tenant`/`dispatcher`/`carer`/`operation`/`operation_tenant_participation`/`operation_audit_log` plus Alembic-Migration `c1465f544fd0`, Backend 160 Tests / 95.43 % Coverage). Phase 1 vollständig erledigt. Reaktiv-Quote 0/10. Keine aktiven Blocker.
+- **Auftrag:** „Weiter mit 2.2" — Phase 2 Schritt 2.2 (`backend/auth`: Login-Endpoint, Session-Cookie via Starlette `SessionMiddleware`, Argon2id-Hash-Vergleich, Rate-Limit).
+- **Vorabprüfung:**
+  - **Branch-Awareness:** Worktree `scp/compassionate-keller-88d0ca` startete 2 Commits hinter `origin/main` (auf `c648053` Stand vor PR #17). Per `git fetch --all --prune` festgestellt, dann `git merge --ff-only origin/main` auf `49b5bc4` gehoben. Worktree-Stand entspricht jetzt Fahrplan-Stand 2.1 ERLEDIGT, 2.2 OFFEN.
+  - **Eingangskriterium 2.2:** Datenmodell aus 2.1 (`dispatcher` mit `password_hash` Argon2id-PHC, `is_active` Boolean, `username` unique pro Tenant) liegt vor. ✓
+  - **Phase-2-Sonderregel** (Eingangsdisziplin abgemildert, Patrick freigegeben 2026-05-10) gilt — `backend/auth` darf trotz `[VORLÄUFIG]`-Reifegrad ohne Reklassifikations-ADR umgesetzt werden, Reifegrad-Beförderung erfolgt mit funktionaler Implementation.
+  - **Berührung freigabepflichtiger Kategorien (CLAUDE.md Abschnitt 4):**
+    1. **Externe Abhängigkeit (Punkt 3):** Schritt 2.2 verlangt eine **Rate-Limit-Bibliothek** — die Wahl ist neue Top-Level-Dependency, im Fahrplan-Schritt-Text **explizit** als „OPERATIVE Bibliotheks-Wahl per kleinem ADR vor Schritt-Beginn" markiert. Kandidaten laut Fahrplan: `slowapi` vs. `fastapi-limiter` vs. eigener Valkey-basierter Counter. → ENTSCHEIDUNG ERFORDERLICH wird in dieser Antwort vorgelegt.
+    2. **Sicherheit/Datenschutz (Punkt 6):** Login-Endpoint berührt Authentifizierungslogik. Spec ist durch `project-context.md` Abschnitt 6 Sicherheit + Abschnitt 3 Auth-Bausteine vollständig: Argon2id über `argon2-cffi`, Cookie-Sessions Starlette `SessionMiddleware`, `Secure`+`HttpOnly`+`SameSite=Strict`, Session-Timeout 24 h Disponent, Rate-Limit 5 Fehlversuche/15 min pro IP **plus** pro User getrennt. Implementierung im Rahmen dieser fixen Spec ist nicht zusätzlich freigabepflichtig.
+  - **Versions-Verifikations-Hinweis aus 2.1-Logbuch:** `argon2-cffi 25.1.x` und `itsdangerous 2.2.x` in 1.6 verifiziert, keine Re-Verifikation nötig. Die in 2.2 zu wählende Rate-Limit-Bibliothek braucht Erst-Verifikation **nach** ADR-Entscheidung (Modus-2-Schritt-2a-Disziplin).
+  - **macOS-Worktree-Vorsorge:** `.venv` existiert noch nicht. Plan: nach erstem `uv sync` einmalig `bash scripts/fix-venv-flags.sh` (Hidden-Flag-Heilung).
+- **Plan dieser Session (vorläufig — wartet auf Rate-Limit-Library-Entscheidung):**
+  1. Rate-Limit-Library-ADR (`[OPERATIV] [STACK] [SECURITY]`) anlegen nach Patrick-Freigabe.
+  2. Versions-Verifikation der gewählten Bibliothek.
+  3. `pyproject.toml` ergänzen, `uv sync`, `fix-venv-flags.sh`.
+  4. **Detail-Plan vor Code** (analog 2.1-Methode): Schritt-Format-Block 2.2 in `fahrplan.md` mit konkreten Akzeptanzkriterien Patrick vorlegen.
+  5. Implementation: `backend/eb_digital/auth/passwords.py` (Argon2id-Hasher-Wrapper), `backend/eb_digital/auth/sessions.py` (SessionMiddleware-Wiring + Cookie-Konfiguration), `backend/eb_digital/auth/api.py` (`POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`), Rate-Limit-Wiring auf Login-Route (IP- und User-getrennt), Tests inkl. Coverage ≥ 95 % Lines auf `backend/auth`.
+  6. Reifegrad-Wechsel `backend/auth` `[VORLÄUFIG]` → `[BELASTBAR]` (entspricht Phase-Reifegrad-Erwartung); Schnittstelle S8 (Authentifizierte REST-API) anteilig auf `[BELASTBAR]`.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus, Worktree `scp/compassionate-keller-88d0ca` (Opus 4.7 1M-Kontext).
+
+### 2026-05-10 – [SESSIONENDE]
+
 - **Session-Dauer:** ca. 2 h (Sessionstart unmittelbar nach PR-#16-Merge bis Sessionende-Commit-Vorbereitung).
 - **Bearbeitet:** **Phase 2 Schritt 2.1 — Datenmodell-Skelett für Auth + Tenants + Operations.** Status `[OFFEN]` → `[ERLEDIGT]`. Erster Schritt der Phase 2.
 - **Erreicht:**

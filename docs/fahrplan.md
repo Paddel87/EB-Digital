@@ -10,8 +10,8 @@
 - **Stand vom:** 2026-05-10
 - **Laufende Phase:** Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2) (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (**Phase-2-Sonderregel:** Eingangsdisziplin analog Phase 1 abgemildert — alle berührten Module bleiben durch Skelett-Existenz `[VORLÄUFIG]`; Modul-Schnitt durch ADR-002/003/004/008/009 fixiert, Datenmodell-Grundzüge durch ADR-006/007 fixiert. Reifegrad-Beförderung `[VORLÄUFIG]` → `[BELASTBAR]` erfolgt mit dem jeweiligen funktionalen Schritt, nicht mit dem Datenmodell-Skelett. Patrick freigegeben 2026-05-10.).
-- **Aktiver Schritt:** keiner. **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett: 6 neue Tabellen `tenant`, `dispatcher`, `carer`, `operation` ohne Tenant-FK [I1], `operation_tenant_participation` mit Partial-Unique-Index `ix_operation_tenant_participation_owner_unique` auf `(operation_id) WHERE role='owner'`, `operation_audit_log` Strukturskelett mit JSONB-Payload und `(operation_id, at)`-Index; Alembic-Migration `c1465f544fd0` autogenerate + sauber, Naming-Convention durchgängig, `alembic upgrade/downgrade/upgrade` Round-Trip grün, `alembic check` ohne Drift; 57 neue Tests bringen Backend von 103 auf 160 (alle drei `models.py`-Dateien 100 % Coverage, gesamt 95.43 %); Compose-Smoke mit clean Volume durchgelaufen — db-init wendet Migration auf frischer DB an, alle 6 Services healthy, `/api/health` 200, alle Pflichtgates grün). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
-- **Nächster Schritt:** **2.2** (`backend/auth` Login-Endpoint, Session-Cookie via Starlette `SessionMiddleware`, Argon2id-Hash-Vergleich, Rate-Limit; OPERATIVE Bibliotheks-Wahl Rate-Limit per kleinem ADR vor Schritt-Beginn — Kandidaten `slowapi` vs. `fastapi-limiter` vs. eigener Valkey-basierter Counter).
+- **Aktiver Schritt:** keiner. **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv: 5 neue Backend-Module unter `backend/eb_digital/cache` und `backend/eb_digital/auth/{rate_limit,repositories,sessions,api}.py`; `auth/hashing.py` um `verify_dummy()` für Timing-Attack-Schutz erweitert; SessionMiddleware-Wiring + Valkey-Lifespan in `app.py`; **ADR-013** Rate-Limit als eigener Valkey-Counter, **redis-py 7.4.0** als Sub-Wahl gegenüber valkey-py 6.1.1; backend-`auth`-Modul-Coverage 100 % Lines/Branches; gesamtes Backend 220 Tests / 97.27 % Coverage; alle Pflicht-Hooks pre-commit grün; `dev-smoke.sh` um Auth-Smoke (Admin-Anlage → Login → /me → Logout → /me-401) erweitert, End-to-End grün gegen Compose-Stack). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett: 6 neue Tabellen `tenant`, `dispatcher`, `carer`, `operation` ohne Tenant-FK [I1], `operation_tenant_participation` mit Partial-Unique-Index `ix_operation_tenant_participation_owner_unique` auf `(operation_id) WHERE role='owner'`, `operation_audit_log` Strukturskelett mit JSONB-Payload und `(operation_id, at)`-Index; Alembic-Migration `c1465f544fd0` autogenerate + sauber, Naming-Convention durchgängig, `alembic upgrade/downgrade/upgrade` Round-Trip grün, `alembic check` ohne Drift; 57 neue Tests bringen Backend von 103 auf 160 (alle drei `models.py`-Dateien 100 % Coverage, gesamt 95.43 %); Compose-Smoke mit clean Volume durchgelaufen — db-init wendet Migration auf frischer DB an, alle 6 Services healthy, `/api/health` 200, alle Pflichtgates grün). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
+- **Nächster Schritt:** **2.3** `backend/auth_anonymous` — einsatzgebundene URL-Token (`itsdangerous`), AccessCode-Validierung mit Konstantzeit-Vergleich + Hash-Speicherung (Regel-006), anonyme Session-Lifecycle. Wiederverwendung der Rate-Limit-Schicht aus 2.2 (`reset_user`-Variante für AccessCode-Counter ggf. ergänzen).
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
 - **CI-Hygiene-Sonderfall in Phase 1 (2026-05-10):** ADR-012 — `actions/upload-artifact@v4` → `@v7` als Major-Update gegen Node-20-Deprecation, analog zu ADR-010 in 1.2. Reaktiv-Quote bleibt 0 / 10.
@@ -85,16 +85,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                 |
-| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | -------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10) |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | IN ARBEIT (2.1 ERLEDIGT 2026-05-10)    |
-| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                  |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                  |
-| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                  |
-| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                  |
-| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                  |
-| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                  |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                  |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | --------------------------------------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10)  |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | IN ARBEIT (2.1+2.2 ERLEDIGT 2026-05-10) |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                   |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                   |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                   |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                   |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                   |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                   |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -450,10 +450,60 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
   - **`target_id` NOT NULL**: bei Operation-Level-Aktionen Convention `target_id = operation_id`.
   - Kein neuer ADR; Architektur-Spec-Update in `architecture.md` Abschnitt 7 nur falls beim Implementieren Detail-Drift sichtbar wird.
 
-#### 2.2–2.7: Folgeschritte (gröber)
+#### 2.2: backend/auth Login + Session + Rate-Limit – Typ: UMSETZUNG
 
-- **2.2** `backend/auth`: Login-Endpoint, Session-Cookie (Starlette-SessionMiddleware), Argon2id-Hash-Vergleich, Rate-Limit (`slowapi` oder ähnliches; OPERATIVE Bibliotheks-Wahl per kleinem ADR vor Schritt-Beginn).
-- **2.3** `backend/auth_anonymous`: einsatzgebundene URL-Token (`itsdangerous`), AccessCode-Validierung (Konstantzeit-Vergleich + Hash-Speicherung gemäß Regel-006), Session-Lifecycle anonym.
+- **Status:** ERLEDIGT 2026-05-10 (begonnen 2026-05-10 nach Patrick-Freigabe Detail-Plan + ADR-013 + redis-py-Sub-Wahl).
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 2, Phase-2-Sonderregel: Eingangsdisziplin abgemildert)
+- **Abhängigkeiten:** 2.1 ERLEDIGT (Tabellen `dispatcher`, `carer` mit `password_hash`, `is_active`, `username` unique pro Tenant); PlatformAdmin aus 1.6; **ADR-013** (Rate-Limit-Strategie als eigener Valkey-Counter).
+- **Freigabepflichtig:** ja — neue Top-Level-Dependency `redis~=7.4.0` plus Test-Dep `fakeredis~=2.35.1` (CLAUDE.md Abschnitt 4 Punkt 3). Login-Endpoint-Spec ist durch `project-context.md` Abschnitt 6 + Abschnitt 3 fixiert, daher selbst nicht zusätzlich freigabepflichtig.
+- **Eingangskriterien:** 2.1 ERLEDIGT ✓; ADR-013 entschieden ✓; Compose-Stack bringt Valkey hoch (1.8 `cache`-Service) ✓; Phase-2-Sonderregel akzeptiert ✓.
+- **Zu tun:**
+  1. **Dependencies pinnen** in `pyproject.toml`: `redis~=7.4.0` (runtime), `fakeredis~=2.35.1` (dev). PyPI-Verifikation am 2026-05-10 dokumentiert; `project-context.md` Abschnitt 3 entsprechend ergänzen.
+  2. **`backend/eb_digital/cache/__init__.py`** (neu): async Connection-Pool gegen `settings.valkey_url` (Schema `valkey://` → `redis://` adaptieren analog `_to_psycopg_conninfo`); App-Lifespan-Wiring (Startup öffnet Pool, Shutdown schließt); Health-Helper `await ping_valkey(client)`.
+  3. **`backend/eb_digital/auth/hashing.py`** (Erweiterung): `verify_dummy()`-Helper für Timing-Attack-Schutz bei nicht existierenden Usern (Aufwand identisch zu echter Verifikation).
+  4. **`backend/eb_digital/auth/rate_limit.py`** (neu): `incr_and_check(client, key, *, limit, window_seconds) -> RateLimitResult` (`{allowed: bool, retry_after_seconds: int, current: int}`) per `INCR` + `EXPIRE`; `reset(client, key)` per `DELETE`; Multi-Key-AND-Helper `check_login(client, ip, username) -> RateLimitResult` (5/15min auf beiden Keys, AND-Logik). Key-Konvention: `auth:ratelimit:login:ip:<ip>` und `auth:ratelimit:login:user:<username>`.
+  5. **`backend/eb_digital/auth/repositories.py`** (neu): `find_by_username(session, username) -> AuthSubject | None` (Union-Suchstrategie über `PlatformAdmin`, `Dispatcher`, `Carer`); deterministische Suchreihenfolge dokumentiert; bei Konflikten (gleiches Username in mehreren Tabellen) hat PlatformAdmin Vorrang. `AuthSubject` als typisierte Container-Klasse mit `kind`, `id`, `username`, `password_hash`, `is_active`, `tenant_id`.
+  6. **`backend/eb_digital/auth/sessions.py`** (neu): `set_session(request, subject)`, `get_current_subject(request) -> AuthSubject | None` (Session-Payload-Validierung inkl. `expires_at`-Check), `clear_session(request)`. Session-Payload: `{kind, id (str), tenant_id (str|null), expires_at (iso8601)}`. Timeouts: 8 h für `platform_admin`, 24 h für `dispatcher`/`carer`.
+  7. **`backend/eb_digital/auth/api.py`** (neu): drei FastAPI-Endpunkte unter `/api/auth/`:
+     - `POST /api/auth/login` — Body `{username, password}`. Rate-Limit-Check (IP+User AND) **vor** DB-Lookup; danach `find_by_username`, `verify_password` oder `verify_dummy` (Timing-Attack-Schutz), bei Erfolg User-Counter-Reset + `set_session` + 200 mit `{kind, id, username, tenant_id}`; bei Misserfolg 401 mit konstanter Antwortzeit; bei Rate-Limit 429 mit `Retry-After`-Header.
+     - `POST /api/auth/logout` — `clear_session`, 204.
+     - `GET /api/auth/me` — 200 mit aktueller Subject-Info, 401 ohne/abgelaufene Session.
+  8. **App-Wiring** (`backend/eb_digital/app.py`): `SessionMiddleware` mit `secret_key` aus Settings, `https_only` an Production gebunden, `same_site='strict'`, `session_cookie=settings.session_cookie_name`; Valkey-Pool im `lifespan`-Context; Session-Provider und Valkey-Client als FastAPI-Dependencies; `auth.api.router` an `api_router` hängen.
+  9. **`scripts/dev-smoke.sh`-Erweiterung**: nach den bestehenden Health-Checks ein Login-Smoke-Block — Admin via `docker compose exec backend python -m eb_digital admin create` anlegen, danach `curl -k -c /tmp/cookies https://localhost/api/auth/login -d {…}` 200 mit Cookie, `curl -k -b /tmp/cookies https://localhost/api/auth/me` 200, `curl -k -X POST -b /tmp/cookies https://localhost/api/auth/logout` 204.
+  10. **Tests** (neu): `test_cache.py`, `test_auth_hashing.py`-Erweiterung (`verify_dummy`), `test_auth_rate_limit.py`, `test_auth_repositories.py`, `test_auth_sessions.py`, `test_auth_login_api.py`. Coverage `backend/auth` ≥ 95 % Lines / ≥ 90 % Branches.
+- **Akzeptanzkriterien (UMSETZUNG → funktionsbasiert):**
+  1. PlatformAdmin loggt erfolgreich ein → 200, Session-Cookie mit Flags `Secure; HttpOnly; SameSite=Strict; Path=/` (Test gegen ASGI-Client).
+  2. Dispatcher (Test-DB) loggt erfolgreich ein → 200, Response enthält `tenant_id`.
+  3. Login mit falschem Passwort → 401; konstante Antwortzeit (`verify_dummy()` deckt non-existing-user-Pfad).
+  4. Login mit nicht-existentem Username → 401, Counter (User-Key UND IP-Key) erhöht.
+  5. 5 falsche Login-Versuche desselben Users innerhalb 15 min → 6. Versuch 429 mit `Retry-After`-Header.
+  6. 5 falsche Versuche von derselben IP gegen 5 verschiedene Usernames → 6. Versuch 429 (IP-Counter zieht).
+  7. Erfolgreicher Login löscht User-Counter, IP-Counter bleibt bestehen.
+  8. Login auf User mit `is_active=False` → 401 (identisch zu wrong-password, kein Info-Leak).
+  9. `GET /api/auth/me` ohne Cookie → 401; mit gültiger Session → 200; mit abgelaufener Session → 401 + Session-Clear.
+  10. `POST /api/auth/logout` → 204; Folge-`/me` → 401.
+  11. Session-Timeout: PlatformAdmin nach 8 h, Dispatcher/Carer nach 24 h (Test über manipulierten `expires_at`, kein Sleep).
+  12. Coverage `backend/auth` ≥ 95 % Lines / ≥ 90 % Branches; Coverage `backend/eb_digital/cache` ≥ 90 %.
+  13. `uv run pre-commit run --all-files` grün auf allen Hooks.
+  14. `alembic check` „No new upgrade operations detected" (kein Schema-Update in 2.2).
+  15. `bash scripts/dev-smoke.sh` grün — inklusive neuem Login-Smoke-Block (Admin-CLI → Login → /me → logout).
+- **Betroffene Module:** `backend/auth` (Hauptarbeit), neuer Querschnitts-Bestandteil `backend/eb_digital/cache` (Valkey-Pool), `backend/eb_digital/app.py` (Wiring), `backend/eb_digital/settings.py` (gegebenenfalls Erweiterung um `session_cookie_secure: bool`). Keine Berührung von `backend/tenants`, `backend/operations`.
+- **Reifegrad-Wirkung:**
+  - `backend/auth` `[VORLÄUFIG]` → `[BELASTBAR]` (Login + Sessions + Rate-Limit produktiv, Timing-/Hash-Disziplin etabliert).
+  - Schnittstelle S8 (Authentifizierte REST-API): bleibt insgesamt `[VORLÄUFIG]`, aber Sub-Surface `/api/auth/login`, `/api/auth/logout`, `/api/auth/me` als spezifischer Sub-Eintrag in Architektur-Reifegrad-Tabelle auf `[BELASTBAR]` (analog S1-Spec-Korrektur in 1.6).
+  - Pub/Sub via Valkey bleibt `[VORLÄUFIG]` (in 2.2 nur Counter, kein Pub/Sub).
+  - Connection-Pool-Pfad zu Valkey de-facto belastbar; ergänzender Architektur-Eintrag in Abschnitt 9.
+- **Artefakte:** 5 neue Backend-Module (`cache/__init__.py`, `auth/rate_limit.py`, `auth/repositories.py`, `auth/sessions.py`, `auth/api.py`); Erweiterung `auth/hashing.py`, `app.py`, `settings.py`, `pyproject.toml`, `uv.lock`, `.env.example`, `scripts/dev-smoke.sh`; 5+ neue/erweiterte Test-Dateien; Logbuch- und Architektur-Updates zu Sessionende.
+- **Notizen:**
+  - **Counter-Reset-Disziplin:** Erfolgreicher Login löscht **nur** den User-Counter, nicht den IP-Counter (sonst Brute-Force-Sweep „1 falsches Passwort × 5 Usernames + 1 richtiges = neuer IP-Slot" möglich). Dokumentiert in `rate_limit.py`-Modul-Docstring.
+  - **Test-Strategie für Valkey:** Unit-Tests gegen `fakeredis` (In-Process-Fake, kompatibel mit `redis-py`). Integration-Test gegen echten Valkey-Container im Compose-Stack via `dev-smoke.sh`-Login-Smoke. Vermeidet Container-Pflicht für Unit-Tests.
+  - **Carer-Login** strukturell mit-eingebaut, aber Akzeptanztest auf PlatformAdmin + Dispatcher fokussiert; Carer-Coverage zählt mit zur 95 %-Schwelle.
+  - **Coverage-Risiko:** `verify_dummy()` erzeugt einen Code-Pfad, der in der Coverage-Messung sichtbar sein muss → expliziter Test.
+  - **URL-Schema-Adaption:** Settings nutzt `valkey://` als URL-Schema (Marken-Konsistenz mit ADR-002), `redis-py.from_url()` erwartet `redis://` oder `rediss://`. Cache-Modul macht das gleiche Schema-Replace wie `_to_psycopg_conninfo` für Postgres-URL.
+
+#### 2.3–2.7: Folgeschritte (gröber)
+
+- **2.3** `backend/auth_anonymous`: einsatzgebundene URL-Token (`itsdangerous`), AccessCode-Validierung (Konstantzeit-Vergleich + Hash-Speicherung gemäß Regel-006), Session-Lifecycle anonym. Wiederverwendung der Rate-Limit-Schicht aus 2.2.
 - **2.4** `backend/tenants`: Self-Service-Antrag, Plattform-Admin-Freischaltung-Endpoint, Mandanten-CRUD, abstrakter Teilnahme-Filter (Invariante I2 + Regel-014).
 - **2.5** `frontend-disponent`: Login-Flow + Dashboard-Skelett (zeigt Mandanten-Übersicht und „leere Operations" der eigenen Teilnahme).
 - **2.6** `frontend-einsatzkraft`: AccessCode-Eingabe-UI (anonyme Session mit Code-Validierung).

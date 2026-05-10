@@ -51,6 +51,7 @@ repos:
           - "psycopg[binary,pool]~=3.3.4"
           - "argon2-cffi~=25.1.0"
           - "itsdangerous~=2.2.0"
+          - "redis~=7.4.0"
 
   # Python: Static Security (bandit 1.9.x, project-context.md Abschnitt 3).
   - repo: https://github.com/PyCQA/bandit
