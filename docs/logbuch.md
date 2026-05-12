@@ -26,6 +26,83 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-12 22:57 – [SESSIONENDE]
+
+- **Session-Dauer:** ca. 50 min (Sessionstart 22:06 → Sessionende-Commit-Vorbereitung 22:57).
+- **Bearbeitet:** **Phase 2 Schritt 2.4 — `backend/tenants`** Self-Service-Antrag + Approve + Mandanten-CRUD + Dispatcher-/Carer-Invite mit Reset-Token-Flow + S10 Participation-Lookup + Tenant-Status-Check im Login-Pfad. Status `[OFFEN]` → `[ERLEDIGT]`. Vierter (und letzter Backend-)Schritt der Phase 2 vor den Frontend-Schritten 2.5/2.6.
+- **Erreicht:**
+  - **Detail-Plan vor Code** (analog 2.1/2.2/2.3-Methode): Schritt-Format-Block mit 22 Akzeptanzkriterien plus vier Detail-Entscheidungen (Slug-Eingabe vs. Auto-Sluggify, Initial-Disponent-Anlage atomar vs. separater Reset-Token-Endpoint, Wer-darf-Dispatcher-anlegen, Rate-Limit-Strenge) Patrick vorgelegt. Patrick wählte **B/B/A/A** (alle wie Empfehlung): Antragsteller-eingegebener Slug mit Reserved-Liste, separater Reset-Token-Endpoint statt atomarem Approve+Initial-Dispatcher, alle Dispatcher des Mandanten dürfen Dispatcher/Carer anlegen, Rate-Limit 3/24h pro IP ohne globalen Counter.
+  - **6 neue Backend-Module unter `backend/eb_digital/tenants/`:**
+    - **`slug.py`** — Slug-Validierung mit Pattern `^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$`, Reserved-Liste (`admin`, `api`, `auth`, `anon`, `health`, `static`, `assets`, `ws`, `openapi`, `docs`, `redoc`), Doppel-`-` separat geblockt.
+    - **`username.py`** — Username-Validierung (3-32 Zeichen, `^[a-zA-Z0-9_.-]+$`, beginnt/endet mit Alphanum). Lockerer als Slug, weil Username Tenant-scoped ist (kein globaler Konflikt-Vektor).
+    - **`repositories.py`** — `create_tenant_application`, `find_tenant_by_id/slug`, `list_tenants` (mit Status-Filter), `approve_tenant`/`deactivate_tenant` (idempotent), `invite_dispatcher`/`invite_carer` (Pending-User mit `is_active=False` + leerem Hash-Sentinel), `set_password_and_activate` (atomar mit Replay-Schutz: schlägt fehl wenn User schon aktiv), `is_dispatcher_of_tenant`. IntegrityError-Mapping auf Domain-Exceptions (`SlugAlreadyTakenError`, `UsernameTakenInTenantError`).
+    - **`use_cases.py`** — `apply_for_tenant`, `approve_tenant`, `deactivate_tenant`, `invite_dispatcher`, `invite_carer`, `complete_password_reset`. Dünne Orchestrierungs-Schicht über Repository, Validierung + Status-Checks + Token-Generierung. Domain-Exceptions: `TenantNotFoundError`, `TenantNotActiveError`, `InvalidResetTokenError`, `UserAlreadyActiveError`, `PasswordTooShortError`. Konsistent mit „Use-Cases kennen weder FastAPI noch Pydantic"-Konvention.
+    - **`participation.py`** — S10: `list_operations_for_tenant`, `tenant_participates_in_operation`, `owners_of_operation`. Implementiert ADR-009 Invarianten I1/I2 + Regel-013/014 (JOIN über `operation_tenant_participation`, kein Direkt-FK).
+    - **`api.py`** — FastAPI-Router unter `/api/tenants/*` mit 6 Endpunkten. Berechtigungs-Modell: Plattform-Admin alles, Dispatcher des Mandanten alles auf eigenem Tenant + Invites, Carer 403, ohne Auth 401.
+  - **Neues Modul `backend/eb_digital/auth/reset_token.py`** — `URLSafeTimedSerializer` mit Salt `"eb-digital.user-password-reset"` (Context-Separation gegen `auth_anonymous.tokens`-Salt aus 2.3, Detail-Plan-Frage 4-A). 24-h-Default-TTL. `generate_reset_token(kind, subject_id, secret) -> str` und `verify_reset_token(token, secret, max_age_seconds) -> tuple | None`. Alle Fehlerklassen (`SignatureExpired`, `BadData`, kaputte Payload-Struktur) werden zu `None` umgesetzt — kein Info-Leak über Replay-Status.
+  - **Erweiterung `backend/eb_digital/auth/api.py`:**
+    - `POST /api/auth/register-tenant` (public, 3/24 h/IP-Rate-Limit via Valkey-Counter, neuer Schlüsselraum `auth:ratelimit:register_tenant:ip:*`).
+    - `POST /api/auth/reset-password` (public, 5/15 min/IP-Rate-Limit, Replay-Schutz via `set_password_and_activate`-False-Pfad, identische 410-Response für ungültig/abgelaufen/Replay).
+    - **Login-Pfad-Erweiterung:** `_tenant_login_allowed`-Helper prüft Tenant-Status für Dispatcher/Carer. Tenant in `applied`/`deactivated` → 401 (identische Antwort zu wrong-password, kein Info-Leak). PlatformAdmin unverändert.
+  - **Datenmodell-Erweiterung `OperationTenantParticipation`:** zwei zusätzliche Indizes (`(tenant_id, operation_id)` und `(operation_id, role)`) für die S10-Spec, in 2.1-Migration vergessen. Modell-Definition in `tenants/models.py` ergänzt + neue Migration `a7c3b2d8e9f1` (additiv, nicht-disruptiv, Round-Trip-getestet).
+  - **App-Wiring** (`backend/eb_digital/app.py`): `tenants.api.router` unter `/api/tenants` an `api_router` gehängt. `migrations/env.py` registriert `tenants.models` bereits aus 2.1.
+  - **10 neue Test-Dateien** mit insgesamt **153 neuen Tests** (Backend von 286 auf 439):
+    - `test_tenants_slug.py` (34) — Pattern, Reserved-Liste, Edge-Cases.
+    - `test_tenants_username.py` (20) — Pattern, Edge-Cases.
+    - `test_auth_reset_token.py` (11) — Roundtrip, Salt-Separation gegen `URL_TOKEN_SALT`, Expired, Wrong-Secret, Garbage.
+    - `test_tenants_repositories.py` (23) — Stub-Session, IntegrityError-Mapping, Idempotenz, Sentinel-Hash, Replay-Schutz.
+    - `test_tenants_use_cases.py` (17) — Domain-Exceptions, Status-Checks, Token-Generierung, monkeypatched Repository.
+    - `test_tenants_participation.py` (6) — Stub-Session für die drei S10-Funktionen.
+    - `test_tenants_api.py` (24) — Berechtigungs-Modell End-to-End mit Cookie-Sessions + dependency_overrides.
+    - `test_auth_register_tenant.py` (7) — Public-Endpoint, Rate-Limit, Slug-Kollision, Reserved-Slug.
+    - `test_auth_reset_password.py` (6) — Public-Endpoint, Rate-Limit, Replay-Schutz, Mindest-Länge.
+    - `test_auth_login_tenant_status.py` (5) — Tenant-Status-Check für Dispatcher/Carer.
+    - **Coverage:** Backend gesamt **95.82 %**, `backend/tenants` 95–100 % (slug 100, username 100, participation 100, repositories 95, use_cases 96, api 89). `backend/auth` 96–100 %. Alle Pflicht-NFR-Schwellwerte deutlich übertroffen (≥ 80 % Standard, ≥ 95 % für `backend/auth`).
+  - **`scripts/dev-smoke.sh`-Erweiterung:** Tenants-Smoke-Block mit 10 Schritten (register → admin-relogin → list-applied → approve → invite-dispatcher → reset-password → dispatcher-login → reset-token-replay → deactivate → blocked-login). Live-Verifikation gegen den Compose-Stack erfolgreich.
+  - **Verifikations-Sequenz (alle 22 Akzeptanzkriterien aus Fahrplan 2.4 per Test-Suite + Compose-Smoke erfüllt):** AC-1–AC-5 (Self-Service-Antrag mit Slug-Validierung + Rate-Limit), AC-6–AC-8 (Tenant-Listen mit Rollen-Filter), AC-9–AC-11 (Approve mit Idempotenz + Plattform-Admin-Pflicht), AC-12–AC-15 (Dispatcher-Invite mit Reset-Token, Berechtigungen, Username-Kollision), AC-16–AC-19 (Reset-Password mit Replay-Schutz + Mindest-Länge), AC-20 (Tenant-Status-Check im Login), AC-21 (S10-Funktionen), AC-22 (Coverage + caplog-Klartext-Test).
+  - **Pflicht-Hooks grün:** `uv run pre-commit run` (ruff legacy alias, ruff format, mypy --strict, bandit, prettier, trim-whitespace, end-of-file, large-files, merge-conflicts, private-key-detect) — alle bestanden auf staged-Dateien. `uv run pytest backend/tests/` 439 Tests grün, 1 skipped (Slug-Min-Length-Param-Skip). `alembic check` „No new upgrade operations detected".
+- **Reibungen während der Session:**
+  - **Plan-Korrektur Index-Migration:** Detail-Plan sagte „keine Migration nötig in 2.4". Bei der Implementation der S10-Funktionen wurde klar: Die in `architecture.md` Abschnitt 4 Schnittstelle S10 spezifizierten Lookup-Indizes `(tenant_id, operation_id)` und `(operation_id, role)` waren in der 2.1-Migration `c1465f544fd0` versehentlich nicht angelegt worden — der Composite-PK liefert nur die spiegelverkehrte Reihenfolge `(operation_id, tenant_id)`. Pragmatisch in 2.4 mit Migration `a7c3b2d8e9f1` nachgezogen (additiv, nicht-disruptiv, Round-Trip-getestet). Lerneffekt: Architektur-Spec sollte beim Datenmodell-Skelett (2.1) bereits exakt geprüft werden, nicht erst beim ersten Konsumenten der Schnittstelle.
+  - **EmailStr ohne email-validator-Dep:** Erste API-Implementierung nutzte `pydantic.EmailStr`, das transitiv das `email-validator`-Paket erfordert (nicht in `pyproject.toml`). Statt eine neue Top-Level-Dep zu ziehen (CLAUDE.md §4: freigabepflichtig), pragmatisch auf `str | None` mit `max_length=254`-Constraint umgestellt. Email ist in Phase 1 eh nur Vorrat (kein Versand vor Phase 7). Strenge Validierung kommt mit dem Email-Versand.
+  - **N818-Convention-Refactoring:** Ruff verlangt `XxxError`-Suffix für Exception-Klassen. Sieben Domain-Exceptions umbenannt (`SlugAlreadyTaken` → `SlugAlreadyTakenError` etc.) per `sed` in 9 Dateien. Lerneffekt: bei künftigen Modulen direkt `Error`-Suffix verwenden.
+  - **Pending-User-Hash-Sentinel:** Statt eine `pending=True`-Spalte zu ergänzen (Schema-Migration zusätzlich zu 2.4-Scope) habe ich den leeren String als Hash-Sentinel verwendet. Argon2-Verify schlägt strukturell fehl, plus `is_active=False` blockiert Login ohnehin (defensive Doppel-Sicherung). Phase-7-Stabilisierungs-Pfad: eigene `pending`-Spalte für saubereres Domain-Modell.
+  - **Test-Stub für `_tenant_login_allowed`:** Die existierenden `test_auth_login_api.py`-Tests stub'en nur `find_by_username`, nicht den DB-Tenant-Lookup. Mein neuer Tenant-Status-Check brach 4 Login-Tests. Lösung: zentrale `monkeypatch`-Anweisung in der `make_client`-Fixture, die `_tenant_login_allowed` auf `True` setzt. Tenant-Status-Check selbst wird in `test_auth_login_tenant_status.py` separat getestet.
+  - **EN-DASH-Ambiguität in Strings/Docstrings/Kommentaren:** Ruff RUF001/002/003 lehnt EN-DASH (`–`) in Code-Strings ab. Drei Dateien mit deutschen Range-Notationen wie „3–120 Zeichen" → auf HYPHEN (`-`) umgestellt. Lerneffekt: in Code-Strings konsequent ASCII-HYPHEN, EN-DASH nur in Markdown-Prosa.
+- **Reaktiv-Quote nach dieser Session:** **0 / 10 (0 %)**, unverändert. Schritt 2.4 erzeugte keinen ADR — alle Detail-Entscheidungen waren entweder durch ADR-008/009 + Regel-013/014 vorgeprägt oder reine Implementierungs-Wahlen ohne Architektur-Wirkung.
+- **Architektur-Spec-Anpassung:**
+  - `backend/tenants` Modul-Reifegrad `[VORLÄUFIG]` → `[BELASTBAR]`.
+  - Schnittstelle **S8b** (Sub-Surface `/api/auth/register-tenant`, `/api/auth/reset-password`, `/api/tenants/*`) als neuer Eintrag `[BELASTBAR]` aufgenommen. S8 insgesamt bleibt `[VORLÄUFIG]` bis Operations-Endpoints in 4.x.
+  - Schnittstelle **S10** (Tenant Participation Lookup) `[VORLÄUFIG]` → `[BELASTBAR]`.
+  - Invariante **I1** und **I2** `[VORLÄUFIG]` → `[BELASTBAR]` durch funktionierende S10-Implementation und Berechtigungs-Filter im Tenant-API.
+  - S8a-Eintrag um Tenant-Status-Check-Erweiterung ergänzt.
+  - Stand-Datum in Abschnitt 9 auf 2026-05-12 aktualisiert.
+- **README-Synchronisation:** Status-Block aktualisiert (Schritt 2.4 ERLEDIGT, 23 `[BELASTBAR]` statt 18, Letzte-Änderung-Datum 2026-05-12, „Nächste Schritte" auf 2.5 umgestellt, Quick-Start-Hinweis um Tenants-Verwaltung erweitert).
+- **Compose-Smoke + Alembic-Round-Trip durchgeführt (2026-05-12):** Stack mit clean Volume hochgefahren, alle 6 Services healthy, Migration `a7c3b2d8e9f1` durch db-init auf frischer DB angewandt, alle 10 Tenants-Smoke-Schritte grün (inklusive Reset-Token-Replay → 410 und Login-in-deaktiviertem-Tenant → 401). Stack manuell hochgefahren für `alembic check` (kein Drift) und Round-Trip `downgrade -1` → `upgrade head` (sauber). Stack via `docker compose --profile dev down -v --remove-orphans` sauber abgeschaltet.
+- **Bekannter Stand:** Backend-Code synchron mit Fahrplan-Stand 2.4 ERLEDIGT. Migration `a7c3b2d8e9f1` handgeschrieben (analog zu 2.1/2.3, weil im Sandbox kein Docker für Autogenerate). `pre-commit run` auf staged-Dateien grün. Worktree `scp/clever-cerf-1b4387` mit ca. 18 modifizierten/neu angelegten Dateien staged.
+- **Nächster Schritt:** **Schritt 2.5 — `frontend-disponent`** Login-Flow + Dashboard-Skelett. Eingangskriterium: 2.1+2.2+2.3+2.4 ERLEDIGT ✓. Erste Frontend-Implementation in Phase 2; nutzt `/api/auth/login` aus 2.2 und `GET /api/tenants` aus 2.4 für Dashboard-Mandantenliste.
+
+### 2026-05-12 22:55 – [REIFEGRAD-WECHSEL]
+
+- **Bestandteile (alle aus Schritt 2.4):**
+  - `backend/tenants` Modul: `[VORLÄUFIG]` (seit 2026-05-07) → `[BELASTBAR]` (seit 2026-05-12).
+  - Schnittstelle **S8b** (`/api/auth/register-tenant`, `/api/auth/reset-password`, `/api/tenants/*`): neuer Eintrag `[BELASTBAR]`.
+  - Schnittstelle **S10** (Tenant Participation Lookup): `[VORLÄUFIG]` → `[BELASTBAR]`.
+  - Invariante **I1** (`operation_tenant_participation` als alleinige Mandanten-Verknüpfung): `[VORLÄUFIG]` → `[BELASTBAR]`.
+  - Invariante **I2** (abstrakter Berechtigungs-Filter): `[VORLÄUFIG]` → `[BELASTBAR]`.
+- **Auslöser:** Schritt 2.4-Implementation produktiv mit 22 erfüllten Akzeptanzkriterien, 96 % Coverage und End-to-End-Compose-Smoke (10 Schritte grün). Damit BELASTBAR-Zähler in `architecture.md` Abschnitt 9 von 18 auf 23 (+5 neue Einträge).
+- **Datum in `architecture.md` Abschnitt 9 nachgetragen:** ja, 2026-05-12.
+
+### 2026-05-12 22:06 – [SESSIONSTART]
+
+- **Letzter Stand:** Phase 2 Schritt 2.3 ERLEDIGT (2026-05-11, PR #21 `claude/focused-black-02702b` gemerged als Merge-Commit `18d6548` in `origin/main` am 2026-05-10 22:59 UTC). Worktree `scp/clever-cerf-1b4387` frisch von `main` ausgehend, `git status` clean, `HEAD = origin/main = 18d6548`. Reaktiv-Quote 0/10. Keine aktiven Blocker (#001 ursächlich aufgeklärt, Heilungs-Skript `scripts/fix-venv-flags.sh` liegt vor). Keine offenen STOPP-Situationen. `backend/auth` und `backend/auth_anonymous` `[BELASTBAR]`, Schnittstellen S1, S2a, S8a `[BELASTBAR]`, Valkey-Connection-Pool `[BELASTBAR]`.
+- **Auftrag:** noch offen — User hat „Neue Session" signalisiert mit Erwartung, dass das GitHub-Repo ahead ist. Befund: Repo ist **nicht** ahead; lokaler Stand und `origin/main` stehen auf `18d6548` (PR #21 Merge). Klarstellung an User abgegeben; Auftragsannahme abwartend.
+- **Vorabprüfung:**
+  - **Plattform-Hinweis:** dieser Worktree liegt unter `~/Documents/GitHub/EB-Digital/.claude/worktrees/clever-cerf-1b4387` auf **macOS** (`darwin/zsh`). Blocker #001 (gelöstes `UF_HIDDEN`-Flag-Problem in Worktree-`.venv`) ist auf macOS einschlägig. Falls in dieser Session `uv sync` ausgeführt wird, danach einmalig `bash scripts/fix-venv-flags.sh` ausführen.
+  - **Pflichtlektüre nach `CLAUDE.md` Abschnitt 2 vollständig durchlaufen:** `project-context.md` (gesamt), `logbuch.md` (letzter `[SESSIONENDE]`-Eintrag vom 2026-05-11 plus alle Einträge danach — keine danach), `fahrplan.md` „Aktueller Stand" + laufende Phase 2, `architecture.md` Abschnitte 1/2/9 plus auszugsweise Module-Tabelle, `decisions.md` Teil A (ADR-Tabelle, Reaktiv-Quote), `blockers.md` „Aktive Blocker" (keine).
+  - **Berührung freigabepflichtiger Kategorien:** wird bei Auftragsannahme geprüft.
+- **Nächster planmäßiger Schritt laut `fahrplan.md`:** **2.4** `backend/tenants` — Self-Service-Mandanten-Antrag, Plattform-Admin-Freischaltungs-Endpoint, Mandanten-CRUD, abstrakter Teilnahme-Filter (Invariante I2 + Regel-014). Eingangskriterien 2.1+2.3 ERLEDIGT ✓. Keine neue Top-Level-Dependency erwartet. Nutzt `Tenant`-Tabelle und `OperationTenantParticipation` aus 2.1.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus, Worktree `scp/clever-cerf-1b4387` (Opus 4.7, 1M-Kontext).
+
 ### 2026-05-11 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 2 h 30 min (Sessionstart 2026-05-10 → über Tageswechsel auf 2026-05-11 fortgesetzt; Sessionende-Commit-Vorbereitung).

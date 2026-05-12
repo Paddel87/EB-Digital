@@ -361,5 +361,154 @@ else
 	exit 1
 fi
 
+step "Tenants-Smoke (Schritt 2.4): register-tenant → approve → invite → reset → login → deactivate"
+TENANT_SLUG="smoke-tenant-$(date +%s)"
+TENANT_NAME="Smoke Verein $(date +%H%M%S)"
+NEW_DISP_USER="newdisp_$(date +%s)"
+NEW_DISP_PW="dispatcher-password-12345"
+TENANTS_COOKIE_JAR=$(mktemp)
+DISP_COOKIE_JAR=$(mktemp)
+# shellcheck disable=SC2064
+trap "rm -f $TENANTS_COOKIE_JAR $DISP_COOKIE_JAR" RETURN
+
+# 1. Self-Service-Antrag (public, kein Auth-Cookie).
+register_status=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /tmp/dev-smoke-register-tenant.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"name\":\"$TENANT_NAME\",\"slug\":\"$TENANT_SLUG\"}" \
+	https://localhost/api/auth/register-tenant)
+if [[ "$register_status" == "201" ]]; then
+	TENANT_ID=$(jq -r .tenant_id /tmp/dev-smoke-register-tenant.json)
+	ok "/api/auth/register-tenant 201 — tenant_id=$TENANT_ID, status=$(jq -r .status /tmp/dev-smoke-register-tenant.json)"
+else
+	fail "/api/auth/register-tenant Status $register_status (body: $(cat /tmp/dev-smoke-register-tenant.json))"
+	exit 1
+fi
+
+# 2. Plattform-Admin neu einloggen (Smoke-Admin von oben wurde ausgeloggt).
+admin_relogin=$(curl --silent --insecure --max-time 10 \
+	-c "$TENANTS_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-admin-relogin.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"username\":\"$SMOKE_USER\",\"password\":\"$SMOKE_PW\"}" \
+	https://localhost/api/auth/login)
+if [[ "$admin_relogin" == "200" ]]; then
+	ok "Plattform-Admin re-login (für Tenants-Aktionen) 200"
+else
+	fail "Plattform-Admin re-login Status $admin_relogin"
+	exit 1
+fi
+
+# 3. GET /api/tenants als Plattform-Admin liefert mindestens unseren Antrag.
+list_status=$(curl --silent --insecure --max-time 10 \
+	-b "$TENANTS_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-tenants-list.json \
+	"https://localhost/api/tenants?status=applied")
+if [[ "$list_status" == "200" ]]; then
+	count=$(jq 'length' /tmp/dev-smoke-tenants-list.json)
+	ok "/api/tenants?status=applied 200 — $count applied-Tenants"
+else
+	fail "/api/tenants Status $list_status (body: $(cat /tmp/dev-smoke-tenants-list.json))"
+	exit 1
+fi
+
+# 4. POST /api/tenants/{id}/approve.
+approve_status=$(curl --silent --insecure --max-time 10 \
+	-X POST -b "$TENANTS_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-tenant-approve.json \
+	"https://localhost/api/tenants/$TENANT_ID/approve")
+if [[ "$approve_status" == "200" ]]; then
+	ok "/api/tenants/$TENANT_ID/approve 200 — status=$(jq -r .status /tmp/dev-smoke-tenant-approve.json)"
+else
+	fail "/api/tenants/.../approve Status $approve_status (body: $(cat /tmp/dev-smoke-tenant-approve.json))"
+	exit 1
+fi
+
+# 5. POST /api/tenants/{id}/dispatchers liefert Reset-Token.
+invite_status=$(curl --silent --insecure --max-time 10 \
+	-b "$TENANTS_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-invite.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"username\":\"$NEW_DISP_USER\"}" \
+	"https://localhost/api/tenants/$TENANT_ID/dispatchers")
+if [[ "$invite_status" == "201" ]]; then
+	RESET_TOKEN=$(jq -r .reset_token /tmp/dev-smoke-invite.json)
+	ok "/api/tenants/$TENANT_ID/dispatchers 201 — Reset-Token-Länge ${#RESET_TOKEN}, expires_in=$(jq -r .expires_in_seconds /tmp/dev-smoke-invite.json)s"
+else
+	fail "/api/tenants/.../dispatchers Status $invite_status (body: $(cat /tmp/dev-smoke-invite.json))"
+	exit 1
+fi
+
+# 6. Reset-Password mit Token + neuem Passwort.
+reset_status=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /dev/null \
+	-H 'Content-Type: application/json' \
+	-d "{\"token\":\"$RESET_TOKEN\",\"new_password\":\"$NEW_DISP_PW\"}" \
+	https://localhost/api/auth/reset-password)
+if [[ "$reset_status" == "204" ]]; then
+	ok "/api/auth/reset-password 204 — Passwort gesetzt + User aktiviert"
+else
+	fail "/api/auth/reset-password Status $reset_status (erwartet 204)"
+	exit 1
+fi
+
+# 7. Login als neuer Dispatcher → 200 mit tenant_id.
+disp_login_status=$(curl --silent --insecure --max-time 10 \
+	-c "$DISP_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-disp-login.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"username\":\"$NEW_DISP_USER\",\"password\":\"$NEW_DISP_PW\"}" \
+	https://localhost/api/auth/login)
+if [[ "$disp_login_status" == "200" ]]; then
+	disp_tenant=$(jq -r .tenant_id /tmp/dev-smoke-disp-login.json)
+	if [[ "$disp_tenant" == "$TENANT_ID" ]]; then
+		ok "Dispatcher-Login 200 — tenant_id matches ($disp_tenant)"
+	else
+		fail "Dispatcher-Login tenant_id mismatch: erwartet $TENANT_ID, gelesen $disp_tenant"
+		exit 1
+	fi
+else
+	fail "Dispatcher-Login Status $disp_login_status (body: $(cat /tmp/dev-smoke-disp-login.json))"
+	exit 1
+fi
+
+# 8. Replay des Reset-Tokens → 410 (Replay-Schutz).
+replay_status=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /dev/null \
+	-H 'Content-Type: application/json' \
+	-d "{\"token\":\"$RESET_TOKEN\",\"new_password\":\"another-password-1234\"}" \
+	https://localhost/api/auth/reset-password)
+if [[ "$replay_status" == "410" ]]; then
+	ok "/api/auth/reset-password Replay 410 — User schon aktiv, Token verbraucht"
+else
+	fail "/api/auth/reset-password Replay Status $replay_status (erwartet 410)"
+	exit 1
+fi
+
+# 9. POST /api/tenants/{id}/deactivate als Plattform-Admin.
+deactivate_status=$(curl --silent --insecure --max-time 10 \
+	-X POST -b "$TENANTS_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-deactivate.json \
+	"https://localhost/api/tenants/$TENANT_ID/deactivate")
+if [[ "$deactivate_status" == "200" ]]; then
+	ok "/api/tenants/$TENANT_ID/deactivate 200 — status=$(jq -r .status /tmp/dev-smoke-deactivate.json)"
+else
+	fail "/api/tenants/.../deactivate Status $deactivate_status (body: $(cat /tmp/dev-smoke-deactivate.json))"
+	exit 1
+fi
+
+# 10. Login als Dispatcher in deaktiviertem Tenant → 401.
+disp_blocked_status=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /dev/null \
+	-H 'Content-Type: application/json' \
+	-d "{\"username\":\"$NEW_DISP_USER\",\"password\":\"$NEW_DISP_PW\"}" \
+	https://localhost/api/auth/login)
+if [[ "$disp_blocked_status" == "401" ]]; then
+	ok "Dispatcher-Login in deaktiviertem Tenant 401 — Tenant-Status-Check greift"
+else
+	fail "Dispatcher-Login in deaktiviertem Tenant Status $disp_blocked_status (erwartet 401)"
+	exit 1
+fi
+
 step "Smoke-Test komplett grün"
 exit 0

@@ -7,12 +7,12 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** 2026-05-11
+- **Stand vom:** 2026-05-12
 - **Laufende Phase:** Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2) (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (**Phase-2-Sonderregel:** Eingangsdisziplin analog Phase 1 abgemildert — alle berührten Module bleiben durch Skelett-Existenz `[VORLÄUFIG]`; Modul-Schnitt durch ADR-002/003/004/008/009 fixiert, Datenmodell-Grundzüge durch ADR-006/007 fixiert. Reifegrad-Beförderung `[VORLÄUFIG]` → `[BELASTBAR]` erfolgt mit dem jeweiligen funktionalen Schritt, nicht mit dem Datenmodell-Skelett. Patrick freigegeben 2026-05-10.).
-- **Erledigte Schritte Phase 2:** **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv: 5 neue Backend-Module unter `backend/eb_digital/cache` und `backend/eb_digital/auth/{rate_limit,repositories,sessions,api}.py`; `auth/hashing.py` um `verify_dummy()` für Timing-Attack-Schutz erweitert; SessionMiddleware-Wiring + Valkey-Lifespan in `app.py`; **ADR-013** Rate-Limit als eigener Valkey-Counter, **redis-py 7.4.0** als Sub-Wahl gegenüber valkey-py 6.1.1; backend-`auth`-Modul-Coverage 100 % Lines/Branches; gesamtes Backend 220 Tests / 97.27 % Coverage; alle Pflicht-Hooks pre-commit grün; `dev-smoke.sh` um Auth-Smoke (Admin-Anlage → Login → /me → Logout → /me-401) erweitert, End-to-End grün gegen Compose-Stack). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett: 6 neue Tabellen `tenant`, `dispatcher`, `carer`, `operation` ohne Tenant-FK [I1], `operation_tenant_participation` mit Partial-Unique-Index `ix_operation_tenant_participation_owner_unique` auf `(operation_id) WHERE role='owner'`, `operation_audit_log` Strukturskelett mit JSONB-Payload und `(operation_id, at)`-Index; Alembic-Migration `c1465f544fd0` autogenerate + sauber, Naming-Convention durchgängig, `alembic upgrade/downgrade/upgrade` Round-Trip grün, `alembic check` ohne Drift; 57 neue Tests bringen Backend von 103 auf 160 (alle drei `models.py`-Dateien 100 % Coverage, gesamt 95.43 %); Compose-Smoke mit clean Volume durchgelaufen — db-init wendet Migration auf frischer DB an, alle 6 Services healthy, `/api/health` 200, alle Pflichtgates grün). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
-- **Aktiver Schritt:** keiner. **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv: 7 neue Backend-Module unter `backend/eb_digital/auth_anonymous/` — `tokens.py` mit `itsdangerous.URLSafeSerializer` und Salt `eb-digital.operation-url-token`, `access_code.py` mit Crockford-Base32-Generator + Argon2id-Wrapper + `verify_dummy_access_code()`, `models.py` mit `AnonymousSession`-ORM, `repositories.py`, `sessions.py` mit `request.session['anon']`-Subkey, `api.py` mit zwei Endpunkten; Alembic-Migration `f14e7ecace66` für neue Tabelle `anonymous_session` (PK UUID, FK auf `operation.id` CASCADE, kein Tenant-FK, kein `client_ip_hash`, 24-h-Hard-Cap-`expires_at`) + Spalten-Widening `operation.url_token` 64 → 255; Schnittstelle S2a (`/info`, `/session`) mit Rate-Limit IP+URL AND (5/15 min via Valkey, Schlüsselraum `auth_anonymous:ratelimit:session:*` mit SHA-256-Hash auf URL-Token); `auth.api._extract_client_ip` zu Public-API `extract_client_ip` promotet; 64 neue Tests in 6 Test-Dateien; Backend 286 Tests / 97.93 % Coverage gesamt, `backend/auth_anonymous` 100 % Lines/Branches; alle Pflicht-Hooks pre-commit grün auf staged-Dateien; Architektur-Spec-Cleanup `architecture.md` Abschnitte 3+6 (AccessCode-Hash-Wortlaut); `dev-smoke.sh` um Anon-Smoke-Block erweitert; **Compose-Smoke + Alembic-Round-Trip live im Stack verifiziert** — alle 6 Services healthy, Migration durch db-init angewandt, Anon-Smoke grün, Round-Trip auf leerer Operation-Tabelle sauber, `alembic check` ohne Drift).
-- **Nächster Schritt:** **2.4** `backend/tenants` — Self-Service-Mandanten-Antrag, Plattform-Admin-Freischaltungs-Endpoint, Mandanten-CRUD, abstrakter Teilnahme-Filter (Invariante I2 + Regel-014).
+- **Erledigte Schritte Phase 2:** **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv: 6 neue Module unter `backend/eb_digital/tenants/{slug,username,repositories,use_cases,participation,api}.py` + `auth/reset_token.py`; Tenant-Modell um zwei Lookup-Indizes erweitert + Migration `a7c3b2d8e9f1` (S10-Pflicht-Indizes, in 2.1 versehentlich ausgelassen); Erweiterung `auth/api.py` um `register-tenant`, `reset-password` und Tenant-Status-Check im Login-Pfad; 7 neue Domain-Exception-Klassen; 10 neue Test-Dateien mit 153 neuen Tests bringen Backend von 286 auf 439 / 95.82 % Coverage gesamt, `backend/tenants` 95–100 %; alle Pflicht-Hooks pre-commit grün; `dev-smoke.sh` um Tenants-Block (10 Schritte) erweitert; Compose-Smoke + Alembic-Round-Trip live im Stack verifiziert; Detail-Plan mit 4 Detail-Entscheidungen Patrick am 2026-05-12 mit B/B/A/A freigegeben). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013 + redis-py-Sub-Wahl). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
+- **Aktiver Schritt:** keiner.
+- **Nächster Schritt:** **2.5** `frontend-disponent` Login-Flow + Dashboard-Skelett (zeigt Mandanten-Übersicht und „leere Operations" der eigenen Teilnahme über S10-Filter).
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
 - **CI-Hygiene-Sonderfall in Phase 1 (2026-05-10):** ADR-012 — `actions/upload-artifact@v4` → `@v7` als Major-Update gegen Node-20-Deprecation, analog zu ADR-010 in 1.2. Reaktiv-Quote bleibt 0 / 10.
@@ -87,16 +87,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                  |
-| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | --------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10)  |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | IN ARBEIT (2.1+2.2 ERLEDIGT 2026-05-10) |
-| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                   |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                   |
-| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                   |
-| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                   |
-| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                   |
-| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                   |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                                                                    |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ----------------------------------------------------------------------------------------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10)                                                    |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | IN ARBEIT (2.1+2.2 ERLEDIGT 2026-05-10, 2.3 ERLEDIGT 2026-05-11, 2.4 ERLEDIGT 2026-05-12) |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                                                                     |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                                                                     |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                                                                     |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                                                                     |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                                                                     |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                                                                     |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -582,9 +582,116 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
   - **Regel-007** (Toggle wirkt nur auf neue Sessions): in 2.3 nur indirekt umgesetzt (Code-Validierung passiert ausschließlich im `POST /session`; bestehende `anonymous_session`-Records werden bei Toggle nicht invalidiert). Expliziter Test zur Toggle-Semantik kommt mit der Toggle-Action in 4.x (`backend/operations.ToggleAccessCode`).
   - **`status='planned'`-Verhalten in `/info`:** 404 statt 200, damit die Einsatzkraft-PWA erst dann die Operation „sieht", wenn sie aktiv ist. `planned` ist Disponenten-Vorbereitungsphase. Begründung in `tokens.py` und `api.py` als Doc-Kommentar.
 
-#### 2.4–2.7: Folgeschritte (gröber)
+#### 2.4: backend/tenants Self-Service-Antrag + Approve + CRUD + Reset-Token + S10 – Typ: UMSETZUNG
 
-- **2.4** `backend/tenants`: Self-Service-Antrag, Plattform-Admin-Freischaltung-Endpoint, Mandanten-CRUD, abstrakter Teilnahme-Filter (Invariante I2 + Regel-014).
+- **Status:** ERLEDIGT 2026-05-12 (alle 22 Akzeptanzkriterien erfüllt, inkl. Compose-Smoke und Alembic-Round-Trip live im Stack: 439 Tests grün / 95.82 % Coverage gesamt, `backend/tenants` 95–100 %; Stack-Smoke alle 6 Services healthy, Migration `a7c3b2d8e9f1` durch db-init auf frischer DB angewandt, alle 10 Tenants-Smoke-Schritte grün, Alembic downgrade/upgrade Round-Trip auf der neuen Index-Migration sauber, `alembic check` ohne Drift).
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 2, Phase-2-Sonderregel: Eingangsdisziplin abgemildert; `backend/tenants`-Skelett aus 2.1 vorhanden, Modul-Reifegrad-Beförderung mit diesem Schritt).
+- **Abhängigkeiten:** 2.1 ERLEDIGT (`Tenant`, `OperationTenantParticipation`, `Dispatcher`, `Carer`, `Operation` als Skelett); 2.2 ERLEDIGT (Cookie-Sessions, Rate-Limit-Schicht, `AuthSubject`, `find_by_username`, Argon2-Hashing, `verify_dummy`); 2.3 ERLEDIGT (`itsdangerous`-Token-Pattern als Vorlage für Reset-Token-Modul); ADR-008 (Multi-Disponent ohne Lead), ADR-009 (Verbund-Reinterpretation V2 + Invarianten I1/I5), Regel-013 (Operation↔Mandant ausschließlich über Participation), Regel-014 (Berechtigungs-Filter als Teilnahme-Filter).
+- **Freigabepflichtig:** ja — neue API-Verträge (Self-Service-Antrag, Approve, Tenant-CRUD, Dispatcher-/Carer-Anlage mit Reset-Token, Reset-Password, Mandanten-Deaktivierung) gemäß CLAUDE.md Abschnitt 4 Punkt 5. Detail-Plan + 4 Detail-Entscheidungen (Slug-Eingabe vs. Auto-Sluggify, Initial-Disponent-Anlage Atomar vs. separater Reset-Token-Endpoint, Wer-darf-Dispatcher-anlegen, Rate-Limit-Strenge) Patrick am 2026-05-12 vorgelegt und mit **B/B/A/A** freigegeben. Keine neue Top-Level-Dependency; keine Migration nötig (Schema steht aus 2.1).
+- **Eingangskriterien:** 2.1 + 2.2 + 2.3 ERLEDIGT ✓; ADR-008/009 + Regel-013/014 ✓; Phase-2-Sonderregel akzeptiert ✓; keine neue Top-Level-Dependency erwartet (`itsdangerous` aus 1.6, `argon2-cffi` aus 2.2, `redis-py` aus 2.2).
+- **Zu tun:**
+  1. **Slug-Validierung `backend/eb_digital/tenants/slug.py`** (neu): `validate_slug(value: str) -> None` (raises `SlugValidationError`), `RESERVED_SLUGS`-Frozenset (`{'admin', 'api', 'auth', 'anon', 'health', 'static', 'assets'}`); Pattern `^[a-z0-9](?:[a-z0-9-]{1,62}[a-z0-9])?$` (3–64 Zeichen, beginnt/endet mit Alphanum, dazwischen `-` erlaubt, kein Doppel-`-`).
+  2. **Reset-Token-Modul `backend/eb_digital/auth/reset_token.py`** (neu): `URLSafeTimedSerializer` aus `itsdangerous` mit Salt `"eb-digital.user-password-reset"` (Context-Separation gegen `auth_anonymous`-URL-Token); Funktionen `generate_reset_token(subject_kind, subject_id) -> str` und `verify_reset_token(token: str, *, max_age_seconds: int) -> tuple[Literal['platform_admin','dispatcher','carer'], UUID] | None` (24-h-Default-TTL, bei `BadSignature`/`SignatureExpired`/`BadPayload` → `None`, kein Throw).
+  3. **Tenant-Repository `backend/eb_digital/tenants/repositories.py`** (neu):
+     - `create_tenant_application(session, *, name, slug) -> Tenant` — Insert mit `status='applied'`.
+     - `find_tenant_by_id(session, tenant_id) -> Tenant | None`.
+     - `find_tenant_by_slug(session, slug) -> Tenant | None`.
+     - `list_tenants(session, *, status_filter=None) -> list[Tenant]` — Plattform-Admin-Sicht, optionaler Status-Filter.
+     - `approve_tenant(session, tenant_id) -> Tenant | None` — `status='active'`, `activated_at=now`. Idempotent-Check: bereits aktiver Tenant → unverändert zurückgeben.
+     - `deactivate_tenant(session, tenant_id) -> Tenant | None` — `status='deactivated'`, `deactivated_at=now`.
+     - **Dispatcher/Carer-Repository-Funktionen** (parallel im selben Modul oder Sub-File): `create_dispatcher_invite(session, *, tenant_id, username, email)`, `create_carer_invite(session, *, tenant_id, username, email)` — legen User mit `password_hash=NULL_SENTINEL` (oder `pending_password_hash`-Marker; siehe Detail-Plan), `is_active=False` an. Wir lösen das per **`is_active=False` + `password_hash=''`** (leerer String, Argon2-Verify schlägt strukturell fehl, Login-Pfad blockiert ohnehin durch `is_active=False`). Sauberer wäre eine `pending=True`-Spalte, die spar' ich für Phase 7-Stabilisierung.
+     - `set_password_and_activate(session, *, kind, subject_id, password_hash) -> bool` — setzt Hash + `is_active=True` atomar. Liefert `False`, wenn der User schon aktiv ist (Reset-Token-Replay-Schutz).
+     - **Helper `is_dispatcher_of_tenant(session, dispatcher_id, tenant_id) -> bool`** für die Berechtigungs-Prüfung „Dispatcher legt Carer im eigenen Mandanten an".
+  4. **Tenant-Use-Cases `backend/eb_digital/tenants/use_cases.py`** (neu, dünne Schicht über Repository): `apply_for_tenant`, `approve_tenant`, `deactivate_tenant`, `invite_dispatcher`, `invite_carer`, `complete_password_reset`. Use-Case-Schicht orchestriert Slug-Validierung, Username-Validierung (analog Slug-Pattern, mit eigenem Pattern), Tenant-Status-Check (`status='active'` für Invites Pflicht), Reset-Token-Generierung. **Keine HTTP-Wirkung** — Use-Cases liefern Domain-Objekte oder werfen domain-spezifische Exceptions (`SlugAlreadyTaken`, `TenantNotFound`, `TenantNotActive`, `UsernameTakenInTenant`, `UserAlreadyActive`, `InvalidResetToken`).
+  5. **S10-Funktions-Exporte `backend/eb_digital/tenants/participation.py`** (neu) gemäß ADR-009 + Regel-013/014:
+     - `list_operations_for_tenant(session, tenant_id) -> list[UUID]` — Filter über `JOIN operation_tenant_participation … WHERE tenant_id = $1` (Regel-014: Teilnahme-Filter, kein Direkt-FK).
+     - `tenant_participates_in_operation(session, tenant_id, operation_id) -> bool`.
+     - `owners_of_operation(session, operation_id) -> list[UUID]` — Phase 1 stets Liste mit einem Eintrag.
+     - **Hinweis:** Die DB-Indizes `(tenant_id, operation_id)` und `(operation_id, role)` erfordert die S10-Spec — wenn nach 2.1-Migration nicht vorhanden, in derselben Migration in 2.4 nachziehen (Pflicht-Check vor API-Implementation).
+  6. **Tenant-API `backend/eb_digital/tenants/api.py`** (neu): FastAPI-Router unter `/api/tenants` mit Cookie-Session-Auth (Plattform-Admin oder Dispatcher des Mandanten):
+     - `GET /api/tenants` — Plattform-Admin: alle Tenants (optional `?status=` Filter); Dispatcher: nur eigener Tenant (Liste mit 1 Eintrag). 401 ohne Auth.
+     - `GET /api/tenants/{tenant_id}` — Plattform-Admin: jeder Tenant. Dispatcher: nur eigener Tenant (sonst 403).
+     - `POST /api/tenants/{tenant_id}/approve` — nur Plattform-Admin. Idempotent. 200 mit aktualisiertem Tenant. 403 ohne Plattform-Admin-Rolle.
+     - `POST /api/tenants/{tenant_id}/deactivate` — nur Plattform-Admin. 200 mit aktualisiertem Tenant. **Hinweis:** Die kaskadierende Stammdaten-Löschung (DSGVO-Art. 17) ist explizit **NICHT** in 2.4 implementiert — das ist Procrastinate-Job-Pattern und gehört zu `backend/retention` in Phase 6. 2.4 setzt nur `status='deactivated'` + `deactivated_at`; sofortige Folgewirkung ist Login-Block via Tenant-Status-Check im Login-Pfad.
+     - `POST /api/tenants/{tenant_id}/dispatchers` — Plattform-Admin oder bestehender Dispatcher des Mandanten. Body `{username, email | null}`. Antwort 201 mit `{dispatcher_id, reset_token}` (Reset-Token in der Response, weil Email-Versand in Phase 1 nicht produktiv ist; Plattform-Admin/Dispatcher übermittelt manuell).
+     - `POST /api/tenants/{tenant_id}/carers` — analog für Carer-Anlage.
+  7. **Self-Service-Antrag `POST /api/auth/register-tenant`** in `backend/eb_digital/auth/api.py` (Erweiterung):
+     - Public-Endpoint, kein Auth-Header.
+     - Rate-Limit: 3 Anträge / 24 h / IP via Valkey-Counter, neuer Schlüsselraum `auth:ratelimit:register_tenant:ip:<ip>`. Bei Überschreitung 429 mit `Retry-After`.
+     - Body `{name, slug}` (beide Pflicht). Slug-Validierung via `slug.py` (422 bei Format-/Reserved-Verstoß, 409 bei Slug-Kollision).
+     - Antwort 201 mit `{tenant_id, status: 'applied'}`. Kein Login-Cookie, keine PII-Echo.
+  8. **Reset-Password-Endpoint `POST /api/auth/reset-password`** in `backend/eb_digital/auth/api.py` (Erweiterung):
+     - Public-Endpoint.
+     - Rate-Limit: 5 Versuche / 15 min / IP (analog Login).
+     - Body `{token, new_password}`. Mindest-Länge 12 Zeichen (analog `project-context.md` Abschnitt 6).
+     - Token verifizieren (`verify_reset_token`), bei `None` → 410 (Token ungültig/abgelaufen).
+     - Bei gültigem Token: `set_password_and_activate(kind, subject_id, hash_password(new_password))`. Bei `False` (User bereits aktiv) → 410 (Replay-Schutz). Bei Erfolg 204.
+  9. **Login-Pfad-Erweiterung in `backend/eb_digital/auth/api.py`** (kleine Änderung): Login-Pfad prüft beim Dispatcher/Carer-Login zusätzlich `Tenant.status='active'`. Bei `applied`/`deactivated` → 401 (identische Antwort zu wrong-password, kein Info-Leak). Plattform-Admin-Login bleibt unangetastet.
+  10. **App-Wiring** (`backend/eb_digital/app.py`): `tenants.api.router` an `api_router` unter `/tenants` hängen.
+  11. **`scripts/dev-smoke.sh`-Erweiterung** (Tenants-Block, nach Auth-Smoke und vor Anon-Smoke):
+      - `register-tenant` → 201 mit `{tenant_id}`.
+      - Plattform-Admin-Login (existiert aus Auth-Smoke).
+      - `GET /api/tenants` → liefert eingegangenen Antrag.
+      - `POST /api/tenants/{id}/approve` → 200, `status='active'`.
+      - `POST /api/tenants/{id}/dispatchers` → 201 mit Reset-Token.
+      - `POST /api/auth/reset-password` mit Token + neuem Passwort → 204.
+      - Login als neuer Dispatcher → 200 mit Cookie + `tenant_id` im Body.
+      - `GET /api/tenants/{id}` als Dispatcher → 200 (eigener Tenant).
+      - `POST /api/tenants/{id}/deactivate` als Plattform-Admin → 200, `status='deactivated'`.
+      - Folge-Login als Dispatcher → 401.
+  12. **Tests** (neu, ~9 Dateien):
+      - `test_tenants_slug.py` — Pattern, Reserved, Trim, Edge-Cases.
+      - `test_auth_reset_token.py` — Roundtrip, Expired (max_age=0), falsches Secret/Salt, Bad-Payload.
+      - `test_tenants_repositories.py` — alle CRUD-Funktionen, Slug-Kollision (`IntegrityError`), Idempotenz von approve/deactivate.
+      - `test_tenants_use_cases.py` — Domain-Exceptions, Status-Checks, Username-Validierung, Reset-Token-Erzeugung.
+      - `test_tenants_participation.py` — S10-Funktionen mit Test-Daten (1 Owner, perspektivisch 0 Owner = leere Liste).
+      - `test_tenants_api.py` — alle Endpunkte, alle Status-Codes, Rollen-Checks (Plattform-Admin vs. Dispatcher vs. cross-Tenant-Dispatcher).
+      - `test_auth_register_tenant.py` — Self-Service-Antrag, Rate-Limit, Slug-Kollision, ungültiger Slug.
+      - `test_auth_reset_password.py` — Token-Validierung, Mindest-Länge, Replay-Schutz, Rate-Limit.
+      - `test_auth_login_api.py` — Erweiterung um Tenant-Status-Check (Dispatcher in `applied`/`deactivated`-Tenant → 401).
+- **Akzeptanzkriterien (UMSETZUNG → funktionsbasiert, 22 Stück):**
+  1. `POST /api/auth/register-tenant` mit gültigen Daten → 201 mit `{tenant_id, status: 'applied'}`.
+  2. Self-Service-Antrag mit Slug-Kollision → 409.
+  3. Self-Service-Antrag mit reservierten Slug (`admin`, `api`, …) → 422.
+  4. Self-Service-Antrag mit Slug-Format-Verstoß (Großbuchstaben, Doppel-`-`, Sonderzeichen) → 422.
+  5. 4. Antrag von derselben IP innerhalb 24 h → 429 mit `Retry-After`.
+  6. `GET /api/tenants` als Plattform-Admin → 200, alle Tenants.
+  7. `GET /api/tenants` als Dispatcher → 200, nur eigener Tenant.
+  8. `GET /api/tenants/{id}` als Dispatcher mit fremder Tenant-ID → 403.
+  9. `POST /api/tenants/{id}/approve` als Plattform-Admin → 200, `status='active'`.
+  10. `POST /api/tenants/{id}/approve` zweimal hintereinander → idempotent, beide 200.
+  11. `POST /api/tenants/{id}/approve` als Dispatcher → 403.
+  12. `POST /api/tenants/{id}/dispatchers` als Plattform-Admin → 201 mit `{dispatcher_id, reset_token}`.
+  13. `POST /api/tenants/{id}/dispatchers` als Dispatcher des Mandanten → 201.
+  14. `POST /api/tenants/{id}/dispatchers` als Dispatcher eines anderen Mandanten → 403.
+  15. `POST /api/tenants/{id}/dispatchers` mit Username-Kollision im selben Tenant → 409.
+  16. `POST /api/auth/reset-password` mit gültigem Token + Passwort ≥ 12 Zeichen → 204; Folge-Login mit neuem Passwort → 200.
+  17. `POST /api/auth/reset-password` mit demselben Token zum zweiten Mal → 410 (Replay-Schutz, weil User schon aktiv).
+  18. `POST /api/auth/reset-password` mit verfälschtem/abgelaufenem Token → 410.
+  19. `POST /api/auth/reset-password` mit Passwort < 12 Zeichen → 422.
+  20. Login als Dispatcher in `applied`-Tenant → 401 (identische Antwort zu wrong-password).
+  21. S10-Funktionen liefern korrekte Werte (Test mit 1 Owner-Operation, Test mit 0-Owner-Edge-Case).
+  22. Coverage `backend/tenants` ≥ 80 % Lines (Standard-NFR); kein Hash-/Token-Klartext in Logs (caplog-Test).
+- **Pflicht-Hooks:** `uv run pre-commit run --all-files` grün; `uv run pytest` grün (Backend gesamt ≥ 80 % Coverage); `alembic check` „No new upgrade operations detected" (kein neues Schema in 2.4); `bash scripts/dev-smoke.sh` grün inkl. Tenants-Block.
+- **Betroffene Module:** `backend/tenants` (Hauptarbeit); `backend/auth` (Erweiterung um `register-tenant`, `reset-password`, Reset-Token-Modul, Tenant-Status-Check im Login-Pfad); `backend/eb_digital/app.py` (Router-Wiring). **Nicht** berührt: `backend/auth_anonymous`, `backend/operations`, `backend/fleet`, Frontends.
+- **Reifegrad-Wirkung:**
+  - `backend/tenants` `[VORLÄUFIG]` → `[BELASTBAR]`.
+  - Schnittstelle S8 Sub-Surfaces (`/api/auth/register-tenant`, `/api/auth/reset-password`, `/api/tenants/*`) als Sub-Eintrag `[BELASTBAR]` (S8 insgesamt bleibt `[VORLÄUFIG]` bis Operations-Endpunkte in 4.x).
+  - Schnittstelle **S10 (Tenant Participation Lookup)** `[VORLÄUFIG]` → `[BELASTBAR]`.
+  - Invarianten **I1** und **I2** `[VORLÄUFIG]` → `[BELASTBAR]` durch funktionierende S10-Implementation und Berechtigungs-Filter im Tenant-API.
+- **Artefakte:** ~7 neue Backend-Module (`tenants/slug.py`, `tenants/repositories.py`, `tenants/use_cases.py`, `tenants/participation.py`, `tenants/api.py`, `auth/reset_token.py`, evtl. `auth/passwords.py` für die Mindest-Länge-Validierung); ~2 Erweiterungen (`auth/api.py`, `app.py`); ~9 neue Test-Dateien; 1 Erweiterung `scripts/dev-smoke.sh`; Logbuch-, Architektur- und README-Updates zu Sessionende.
+- **Notizen:**
+  - **Initial-Reset-Token in API-Response**: Phase 1 hat keinen Email-Versand. Token wird im Response-Body zurückgegeben — Plattform-Admin/Dispatcher übermittelt ihn manuell an den neuen Dispatcher/Carer (Slack, persönlich, andere Out-of-Band-Kanäle). Phase 7 ergänzt Email-Versand und entfernt Token aus Response.
+  - **Reset-Token-Salt-Separation**: `"eb-digital.user-password-reset"` ist bewusst ein anderer Salt als `"eb-digital.operation-url-token"` aus 2.3 — Token-Replay zwischen den Kontexten ist damit ausgeschlossen, auch bei gemeinsamem `secret_key` (Detail-Plan-Frage 4-A aus 2.3).
+  - **`is_active=False` + leerer Hash für Pending-User**: Pragmatisch in Phase 1. Sauberer wäre eine `pending=True`-Spalte, aber das wäre eine Schema-Migration zusätzlich zum 2.4-Scope. Login-Pfad blockiert über `is_active=False` ohnehin korrekt; Argon2-Verify schlägt bei leerem Hash strukturell fehl (defensive Doppel-Sicherung).
+  - **Tenant-Status-Check im Login-Pfad**: Notwendig, weil `register-tenant` vor Approve einen `applied`-Tenant erzeugt — eingeladene Dispatcher sollen erst nach Approve einloggen können. Edge-Case: Wenn ein Tenant deaktiviert wird, blockiert das **sofort** alle Dispatcher/Carer-Logins, auch wenn die Stammdaten noch nicht gelöscht sind (DSGVO-konformer Zugriffs-Stop).
+  - **Audit-Log für Tenant-/User-Aktionen**: Regel-011 (Audit-Log-Pflicht) bezieht sich explizit auf **Operations**-Aktionen, nicht auf Tenants. Audit-Log für Tenant-Aktionen (Approve/Deactivate, Dispatcher-/Carer-Anlage) wäre ein methodisch sinnvoller Add-on, ist aber nicht 2.4-Pflicht. Für später (Phase 7-Stabilisierung) als Roadmap-Punkt notiert, hier nicht implementiert.
+  - **DSGVO-Cascade-Löschung**: Dispatcher/Carer-FK auf Tenant ist `RESTRICT`. Beim Tenant-Deactivate werden in 2.4 keine Stammdaten gelöscht — die kaskadierende Anonymisierung läuft als Procrastinate-Job in `backend/retention` (Phase 6). Phase-1-`deactivated`-Status ist ausreichend für Login-Block.
+  - **Username-Validierung**: analog zur Slug-Validierung, aber lockerer (3–32 Zeichen, `^[a-zA-Z0-9_.-]+$`, keine Reserved-Liste — Username ist Tenant-scoped, also kein globaler Konflikt-Vektor).
+  - **Reset-Token-TTL 24 h**: Pragmatisch. Plattform-Admin oder Dispatcher hat einen Tag, den Token weiterzugeben. Bei Ablauf: Re-Invite (Endpoint nochmal aufrufen, neuer Token).
+
+#### 2.5–2.7: Folgeschritte (gröber)
+
 - **2.5** `frontend-disponent`: Login-Flow + Dashboard-Skelett (zeigt Mandanten-Übersicht und „leere Operations" der eigenen Teilnahme).
 - **2.6** `frontend-einsatzkraft`: AccessCode-Eingabe-UI (anonyme Session mit Code-Validierung).
 - **2.7** Tests + Coverage; externe Security-Review als Issue erfasst (Phase 7).
