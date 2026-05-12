@@ -103,6 +103,14 @@ def make_client(
         app.dependency_overrides[get_db_session] = _override_db
         monkeypatch.setattr(auth_api, "find_by_username", _override_find)
 
+        # 2.4: Login-Pfad fragt Tenant-Status ab; ohne echte DB einfach
+        # durchlassen (Tenant-Status-Check wird in
+        # ``test_auth_login_tenant_status.py`` separat geprüft).
+        async def _allow_tenant_login(_db: Any, _subject: Any) -> bool:
+            return True
+
+        monkeypatch.setattr(auth_api, "_tenant_login_allowed", _allow_tenant_login)
+
         return TestClient(app)
 
     return _make

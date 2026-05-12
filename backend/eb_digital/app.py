@@ -15,6 +15,7 @@ from eb_digital.cache import create_valkey_client
 from eb_digital.db import create_db_engine, create_session_factory
 from eb_digital.logging import configure_logging, get_logger
 from eb_digital.settings import get_settings
+from eb_digital.tenants import api as tenants_api
 
 
 @asynccontextmanager
@@ -72,6 +73,7 @@ def create_app() -> FastAPI:
 
     api_router.include_router(auth_api.router)
     api_router.include_router(auth_anonymous_api.router)
+    api_router.include_router(tenants_api.router)
 
     app.include_router(api_router)
 

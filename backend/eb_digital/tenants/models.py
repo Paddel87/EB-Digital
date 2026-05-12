@@ -118,6 +118,23 @@ class OperationTenantParticipation(Base):
             unique=True,
             postgresql_where=text("role = 'owner'"),
         ),
+        # S10-Spec (architecture.md Abschnitt 4): Lookup-Pfade für die
+        # Participation-Funktionen. PK liefert ``(operation_id, tenant_id)``-
+        # Index automatisch — wir brauchen zusätzlich:
+        #   • ``(tenant_id, operation_id)`` für ``list_operations_for_tenant``
+        #   • ``(operation_id, role)`` für ``owners_of_operation``
+        # Ergänzt in 2.4 als additive Migration; 2.1-Migration hatte das
+        # versehentlich ausgelassen.
+        Index(
+            "ix_operation_tenant_participation_tenant_id_operation_id",
+            "tenant_id",
+            "operation_id",
+        ),
+        Index(
+            "ix_operation_tenant_participation_operation_id_role",
+            "operation_id",
+            "role",
+        ),
     )
 
     operation_id: Mapped[uuid.UUID] = mapped_column(
