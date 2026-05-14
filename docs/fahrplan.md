@@ -7,12 +7,12 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** 2026-05-12
+- **Stand vom:** 2026-05-15
 - **Laufende Phase:** Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2) (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (**Phase-2-Sonderregel:** Eingangsdisziplin analog Phase 1 abgemildert — alle berührten Module bleiben durch Skelett-Existenz `[VORLÄUFIG]`; Modul-Schnitt durch ADR-002/003/004/008/009 fixiert, Datenmodell-Grundzüge durch ADR-006/007 fixiert. Reifegrad-Beförderung `[VORLÄUFIG]` → `[BELASTBAR]` erfolgt mit dem jeweiligen funktionalen Schritt, nicht mit dem Datenmodell-Skelett. Patrick freigegeben 2026-05-10.).
-- **Erledigte Schritte Phase 2:** **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv: 6 neue Module unter `backend/eb_digital/tenants/{slug,username,repositories,use_cases,participation,api}.py` + `auth/reset_token.py`; Tenant-Modell um zwei Lookup-Indizes erweitert + Migration `a7c3b2d8e9f1` (S10-Pflicht-Indizes, in 2.1 versehentlich ausgelassen); Erweiterung `auth/api.py` um `register-tenant`, `reset-password` und Tenant-Status-Check im Login-Pfad; 7 neue Domain-Exception-Klassen; 10 neue Test-Dateien mit 153 neuen Tests bringen Backend von 286 auf 439 / 95.82 % Coverage gesamt, `backend/tenants` 95–100 %; alle Pflicht-Hooks pre-commit grün; `dev-smoke.sh` um Tenants-Block (10 Schritte) erweitert; Compose-Smoke + Alembic-Round-Trip live im Stack verifiziert; Detail-Plan mit 4 Detail-Entscheidungen Patrick am 2026-05-12 mit B/B/A/A freigegeben). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013 + redis-py-Sub-Wahl). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
+- **Erledigte Schritte Phase 2:** **2.5 [ERLEDIGT]** 2026-05-15 (`frontend-disponent` Login + Dashboard + Reset-Password-UI produktiv: Route-Gruppen `(public)/`/`(authed)/`, In-Memory-Session-Cache, API-Client-Wrapper mit Error-Mapping für 7 Statuscodes + Retry-After-Parsing, Login-Form mit Rate-Limit-Countdown, Dashboard mit Mandanten-Tabelle und Status-Badges, Carer-Hinweisseite, Operations-Platzhalter, Reset-Password-Form mit Client-Side-Validierung, Vite-Dev-Proxy, Browser-Globals in ESLint-Flat-Config, `.gitattributes` mit `eol=lf` als Plattform-Hygiene-Fix gegen CRLF-Drift unter Windows; 27 Vitest-Tests grün, Coverage ≥ 96 % auf den getesteten Auth-/API-Modulen; svelte-check + tsc + eslint + prettier + build + alle Pre-Commit-Hooks grün; `dev-smoke.sh` um Frontend-Smoke-Block erweitert; Backend-Suite weiterhin 439/1 grün mit 95.82 % Coverage). **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv: 6 neue Module unter `backend/eb_digital/tenants/{slug,username,repositories,use_cases,participation,api}.py` + `auth/reset_token.py`; Tenant-Modell um zwei Lookup-Indizes erweitert + Migration `a7c3b2d8e9f1` (S10-Pflicht-Indizes, in 2.1 versehentlich ausgelassen); Erweiterung `auth/api.py` um `register-tenant`, `reset-password` und Tenant-Status-Check im Login-Pfad; 7 neue Domain-Exception-Klassen; 10 neue Test-Dateien mit 153 neuen Tests bringen Backend von 286 auf 439 / 95.82 % Coverage gesamt, `backend/tenants` 95–100 %; alle Pflicht-Hooks pre-commit grün; `dev-smoke.sh` um Tenants-Block (10 Schritte) erweitert; Compose-Smoke + Alembic-Round-Trip live im Stack verifiziert; Detail-Plan mit 4 Detail-Entscheidungen Patrick am 2026-05-12 mit B/B/A/A freigegeben). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013 + redis-py-Sub-Wahl). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
 - **Aktiver Schritt:** keiner.
-- **Nächster Schritt:** **2.5** `frontend-disponent` Login-Flow + Dashboard-Skelett (zeigt Mandanten-Übersicht und „leere Operations" der eigenen Teilnahme über S10-Filter).
+- **Nächster Schritt:** **2.6** `frontend-einsatzkraft` AccessCode-Eingabe-UI (anonyme Session mit Code-Validierung gegen S2a).
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
 - **CI-Hygiene-Sonderfall in Phase 1 (2026-05-10):** ADR-012 — `actions/upload-artifact@v4` → `@v7` als Major-Update gegen Node-20-Deprecation, analog zu ADR-010 in 1.2. Reaktiv-Quote bleibt 0 / 10.
@@ -87,16 +87,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                                                                    |
-| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ----------------------------------------------------------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10)                                                    |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | IN ARBEIT (2.1+2.2 ERLEDIGT 2026-05-10, 2.3 ERLEDIGT 2026-05-11, 2.4 ERLEDIGT 2026-05-12) |
-| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                                                                     |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                                                                     |
-| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                                                                     |
-| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                                                                     |
-| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                                                                     |
-| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                                                                     |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                                                                                             |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10)                                                                             |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | IN ARBEIT (2.1+2.2 ERLEDIGT 2026-05-10, 2.3 ERLEDIGT 2026-05-11, 2.4 ERLEDIGT 2026-05-12, 2.5 ERLEDIGT 2026-05-15) |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                                                                                              |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                                                                                              |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                                                                                              |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                                                                                              |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                                                                                              |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                                                                                              |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -690,9 +690,74 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
   - **Username-Validierung**: analog zur Slug-Validierung, aber lockerer (3–32 Zeichen, `^[a-zA-Z0-9_.-]+$`, keine Reserved-Liste — Username ist Tenant-scoped, also kein globaler Konflikt-Vektor).
   - **Reset-Token-TTL 24 h**: Pragmatisch. Plattform-Admin oder Dispatcher hat einen Tag, den Token weiterzugeben. Bei Ablauf: Re-Invite (Endpoint nochmal aufrufen, neuer Token).
 
-#### 2.5–2.7: Folgeschritte (gröber)
+#### 2.5: frontend-disponent Login-Flow + Dashboard-Skelett
 
-- **2.5** `frontend-disponent`: Login-Flow + Dashboard-Skelett (zeigt Mandanten-Übersicht und „leere Operations" der eigenen Teilnahme).
+- **Status:** ERLEDIGT (2026-05-15; Detail-Plan-Freigabe Patrick 2026-05-14: alle fünf Detail-Fragen wie empfohlen).
+- **Phasentyp-Kontext:** UMSETZUNG (Phase-2-Sonderregel: berührte Module bleiben `[VORLÄUFIG]`, Reifegrad-Beförderung des Architektur-Patterns folgt in Phase 6 nach Last-Test — Detail-Frage 5-A).
+- **Abhängigkeiten:** 2.1, 2.2, 2.4 (alle ERLEDIGT).
+- **Freigabepflichtig:** ja (Detail-Plan + Architektur-Wirkung Frontend-Auth-Integration). Detail-Plan-Freigabe Patrick 2026-05-14: Frage 1-B / 2-A / 3-A / 4-B / 5-A.
+- **Eingangskriterien:**
+  - Schnittstelle S8a (`/api/auth/login`, `/api/auth/me`, `/api/auth/logout`) `[BELASTBAR]` seit 2026-05-10 ✓
+  - Schnittstelle S8b (`/api/tenants`, `/api/auth/register-tenant`, `/api/auth/reset-password`) `[BELASTBAR]` seit 2026-05-12 ✓
+  - `frontend-disponent`-Skelett aus Schritt 1.7 vorhanden (SvelteKit 2.59, Svelte 5.55, TypeScript 6.0.3, adapter-static, vitest 4.1) ✓
+- **Zu tun:**
+  - **Routing-Architektur:** Route-Gruppen `(public)/` und `(authed)/` in `apps/frontend-disponent/src/routes/`. `(public)/login/+page.svelte`, `(public)/reset-password/+page.svelte` ohne Auth-Guard; `(authed)/+layout.ts` als zentraler Guard via `fetch('/api/auth/me')`, redirect auf `/login?next=<aktueller-Pfad>` bei 401; `(authed)/dashboard/+page.svelte` als Tenant-Übersicht.
+  - **Session-Store** (`src/lib/stores/session.ts`): reine TS-Datei (kein `$state`-Rune, weil Reaktivität von außen via `LayoutData` bereits getragen wird und der Store dann ohne Svelte-Compiler im vitest-Setup testbar bleibt). Funktionen `setSession()`, `clearSession()`, `getSession()`, `isAuthenticated()`. In-Memory only (Detail-Frage 3-A): kein localStorage/sessionStorage. HttpOnly-Cookie ist die alleinige persistente Quelle der Wahrheit; Hard-Refresh re-hydriert über `/api/auth/me`.
+  - **API-Client** (`src/lib/api/client.ts`): Wrapper um `fetch()` mit `credentials: 'include'`-Default, einheitlichem Error-Mapping (`{ kind: 'auth' | 'rate-limit' | 'forbidden' | 'not-found' | 'gone' | 'validation' | 'network', message, retryAfter? }`). Baseurl `''` (relativer Pfad) — funktioniert mit Vite-Dev-Proxy und Caddy-Production gleichermaßen. Helpers: `apiGet`, `apiPost`.
+  - **Auth-API-Bindings** (`src/lib/api/auth.ts`): `login(username, password)`, `logout()`, `me()`, `resetPassword(token, newPassword)`. Typ-Definitionen für `SessionUserResponse` analog Backend.
+  - **Tenants-API-Bindings** (`src/lib/api/tenants.ts`): `listTenants(status?: 'applied' | 'active' | 'deactivated')` mit Response-Typ `TenantResponse`.
+  - **Login-Route** (`(public)/login/+page.svelte`): Formular mit Username + Password + Submit. Submit ruft `auth.login()`, bei Erfolg: Store setzen, redirect zum `next`-Query-Param oder `/dashboard`. Bei 401: generische Fehlermeldung „Ungültige Anmeldedaten oder Mandant nicht aktiv". Bei 429: Hinweis mit `Retry-After` (sofern Header verfügbar), Submit-Button disabled mit Countdown. Bei Network-Fehler: „Server nicht erreichbar".
+  - **Reset-Password-Route** (`(public)/reset-password/+page.svelte`): Token aus `?token=...`-Query-Param; Formular „Neues Passwort + Bestätigung". Mindest-Länge 12 Zeichen (clientseitig validiert, Backend ist die Autorität). Submit ruft `auth.resetPassword(token, newPassword)`. Bei 204: Erfolgs-Meldung + Link zu `/login`. Bei 410: „Token ungültig, abgelaufen oder bereits verwendet — bitte Plattform-Admin oder Dispatcher um neuen Token bitten".
+  - **Dashboard-Route** (`(authed)/dashboard/+page.svelte`): zwei Sektionen.
+    - **Mandanten-Übersicht:** Tabelle aus `listTenants()` (für PlatformAdmin: alle Tenants mit `?status=active` als Default; für Dispatcher: eigener Tenant). Spalten Name / Slug / Status-Badge / Aktivierungs-Datum. Status-Badge farblich codiert (applied=gelb, active=grün, deactivated=grau).
+    - **Aktive Einsätze:** Platzhalter-Text „Keine aktiven Einsätze" mit Sub-Hinweis „Operations-Funktionalität folgt in Phase 4" (Detail-Frage 2-A).
+    - **Carer-Sicht:** falls `session.kind === 'carer'`, statt Dashboard ein Hinweistext „Phase 2 stellt für die Carer-Rolle noch keinen Dashboard-Zugriff bereit" + Logout-Button.
+  - **`(authed)/+layout.svelte`:** Top-Bar mit Username + Rolle + Logout-Button. Logout ruft `auth.logout()` + `clearSession()` + redirect `/login`.
+  - **`(authed)/+layout.ts`:** ruft beim Mount `auth.me()`; bei Erfolg setzt Session-Store; bei 401 redirect `/login?next=<aktueller-Pfad>`. Bei Network-Fehler: Fehler-Seite mit Retry-Button (kein automatischer Redirect, weil Cookie eventuell gültig ist).
+  - **Vite-Dev-Proxy** in `apps/frontend-disponent/vite.config.ts`: `/api`-Pfade auf `http://localhost:8000` (Backend-Container im Compose-Stack) proxen, damit Cookies same-origin laufen. `changeOrigin: true`, `secure: false` (lokales Dev-Setup).
+  - **Tests** (vitest + @testing-library/svelte als Devdependency hinzufügen, falls noch nicht): Unit-Tests für `session.ts` Store (set/get/clear), `client.ts` Error-Mapping, `auth.ts`/`tenants.ts` mit gemocktem `fetch`. Route-Component-Tests sind in Phase 2 optional, weil Playwright-E2E in Phase 7 die Integration-Coverage erbringt.
+  - **Frontend-Smoke-Block** in `scripts/dev-smoke.sh`: nach Backend-Tenants-Block neue Sektion mit `pnpm --filter frontend-disponent build` (statischer Build muss durchlaufen) + curl-basiertem Cookie-Round-Trip (Login als Plattform-Admin → `/api/auth/me` → `/api/tenants` → Logout → erneuter `/api/auth/me` muss 401 liefern). Keine Browser-Automatisierung; reine Backend-API-Smoke aus Frontend-Sicht.
+- **Akzeptanzkriterien:**
+  - **AC-1 bis AC-6 (Login-Pfad):**
+    - AC-1: `GET /login` rendert Formular clientseitig, öffentliche Route.
+    - AC-2: Erfolgreicher `POST /api/auth/login` setzt Cookie, navigiert nach `/dashboard` (oder `next`-Query-Param).
+    - AC-3: Fehlgeschlagener Login (401) zeigt generische Fehlermeldung, keine Unterscheidung wrong-username/-password/disabled-tenant.
+    - AC-4: Rate-Limit-Erreichen (429) zeigt Hinweis mit `Retry-After`-Auswertung, Submit-Button disabled.
+    - AC-5: Bereits authentifizierter Aufruf von `/login` redirected nach `/dashboard`.
+    - AC-6: Hard-Refresh innerhalb der Session lädt User über `/api/auth/me`; bei 401 redirect `/login`.
+  - **AC-7 bis AC-12 (Dashboard / Mandanten-Übersicht):**
+    - AC-7: `GET /dashboard` Login-pflichtig; unauthentifiziert → redirect `/login?next=/dashboard`.
+    - AC-8: `GET /api/tenants` wird geladen; PlatformAdmin sieht alle, Dispatcher sieht eigenen Tenant.
+    - AC-9: Mandanten-Tabelle mit Name/Slug/Status-Badge/Aktivierungs-Datum gerendert.
+    - AC-10: Carer-Login auf `/dashboard` zeigt Hinweisseite ohne Tenant-Liste, mit Logout-Button.
+    - AC-11: Platzhalter „Keine aktiven Einsätze" + Phase-4-Sub-Hinweis sichtbar.
+    - AC-12: Logout-Button ruft `POST /api/auth/logout`, leert Store, redirect `/login`.
+  - **AC-13 bis AC-15 (Reset-Password-Flow):**
+    - AC-13: `/reset-password?token=...` rendert Formular; ohne Token-Query: Hinweistext „Token fehlt".
+    - AC-14: Submit mit gültigem Token + 12-Zeichen-Passwort → 204 → Erfolgsmeldung + Link `/login`.
+    - AC-15: Submit mit abgelaufenem/ungültigem/Replay-Token → 410 → einheitliche Fehlermeldung ohne Info-Leak.
+  - **AC-16 bis AC-17 (Architektur & Qualität):**
+    - AC-16: Route-Gruppen `(public)/`/`(authed)/` strukturieren Routing; `(authed)/+layout.ts` ist zentraler Auth-Guard.
+    - AC-17: Coverage `frontend-disponent` ≥ 80 % Lines/Branches (Standard); CI-Pipeline grün (lint + format-check + svelte-check + tsc + vitest + build); `scripts/dev-smoke.sh` Frontend-Block läuft erfolgreich gegen den Compose-Stack.
+- **Betroffene Module:** `frontend-disponent` (primär). Keine Backend-Änderung (Detail-Frage 2-A).
+- **Reifegrad-Wirkung:**
+  - `frontend-disponent` bleibt `[VORLÄUFIG]` (Skelett-Erweiterung; Funktions-Validierung erfolgt, Last-Validierung steht aus — Phase-2-Sonderregel).
+  - Architektur-Pattern „Modular Monolith + 3 SvelteKit-Frontends + 2 Proxies" bleibt `[VORLÄUFIG]` (Detail-Frage 5-A: Beförderung erst nach Phase-6-Last-Test).
+  - Keine neue Schnittstelle, keine neue Sub-Surface (Detail-Frage 2-A).
+- **Artefakte:**
+  - **Frontend:** `src/lib/stores/session.ts`, `src/lib/api/{client.ts, auth.ts, tenants.ts}`, `src/routes/(public)/login/+page.svelte`, `src/routes/(public)/reset-password/+page.svelte`, `src/routes/(authed)/+layout.{ts,svelte}`, `src/routes/(authed)/dashboard/+page.svelte`, ggf. `src/routes/+page.svelte`-Anpassung (Redirect von `/` nach `/login` oder `/dashboard`), `vite.config.ts`-Erweiterung mit Dev-Proxy.
+  - **Tests:** `tests/session.test.ts`, `tests/api-client.test.ts`, `tests/api-auth.test.ts`, `tests/api-tenants.test.ts`.
+  - **Smoke:** `scripts/dev-smoke.sh`-Erweiterung mit Frontend-Smoke-Block.
+  - **Doku-Updates zu Sessionende:** `architecture.md` Abschnitt 9 + ggf. Modul-Eintrag, `README.md` Status-Block + Nächste-Schritte, `logbuch.md` `[SESSIONENDE]`, `fahrplan.md` Aktueller-Stand + Schritt-Status.
+- **Notizen:**
+  - **`adapter-static`-Implikation:** Keine SvelteKit-Server-Routes, keine `+page.server.ts`, keine Form-Actions. Alle Auth-Operationen sind clientseitige `fetch()`-Aufrufe gegen `/api/...`. In Production proxen Caddy + nginx; in Dev kümmert sich der Vite-Proxy.
+  - **CSRF-Schutz:** Cookies sind `SameSite=Strict` + `HttpOnly` + `Secure` (aus 2.2 produktiv). Das reicht in Phase 2; Anti-CSRF-Token via Synchronizer-Pattern ist Phase-7-Stabilisierungs-Aufgabe (externe Security-Review).
+  - **Coverage-Pflicht-Schwelle Frontend:** Standard 80 % laut `project-context.md` Abschnitt 7. Keine speziellen Auth-Frontend-Schwellen (Backend-Auth ≥ 95 % bleibt eigene Sache des Backend-Modul). Selbst-Auferlegung von 95 % für `session.ts` und `client.ts` wäre verlockend, ist aber nicht Pflicht — angestrebt wird hohe Coverage durch klein gehaltene Module.
+  - **Operations-Platzhalter:** Detail-Frage 2-A → kein Backend-Call für Operations. Phase 4 erweitert `backend/operations` + Frontend-Verdrahtung gemeinsam.
+  - **Self-Service-Antrag + Admin-Approve-/Invite-UI:** bewusst draußen (Detail-Frage 1-B). Self-Service ist Public-Landing-Asset und gehört zu Roadmap-Meilenstein P (schriftliche Onboarding-Unterlagen, Phase 7); Admin-Approve-/Invite-UI folgt sobald `frontend-einsatzkraft` (2.6) den AccessCode-Eingabe-Flow trägt — vorher fehlt operative Notwendigkeit.
+
+#### 2.6–2.7: Folgeschritte (gröber)
+
 - **2.6** `frontend-einsatzkraft`: AccessCode-Eingabe-UI (anonyme Session mit Code-Validierung).
 - **2.7** Tests + Coverage; externe Security-Review als Issue erfasst (Phase 7).
 

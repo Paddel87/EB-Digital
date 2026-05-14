@@ -26,6 +26,74 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-15 – [SESSIONENDE]
+
+- **Session-Dauer:** ca. 2 h (über Tageswechsel vom 2026-05-14 auf 2026-05-15).
+- **Bearbeitet:** **Phase 2 Schritt 2.5 — `frontend-disponent` Login-Flow + Dashboard-Skelett + Reset-Password-UI.** Status `[OFFEN]` → `[ERLEDIGT]`. Fünfter Schritt der Phase 2 und erste produktive Frontend-Implementation.
+- **Erreicht:**
+  - **Detail-Plan vor Code** (analog 2.1/2.2/2.3/2.4-Methode): Schritt-Format-Block mit 17 Akzeptanzkriterien plus fünf Detail-Entscheidungen (Scope-Abgrenzung, Operations-Anzeige, Auth-State-Hydration, Route-Schutz-Architektur, Reifegrad-Wirkung) Patrick vorgelegt. Patrick wählte **alle wie empfohlen** (1-B/2-A/3-A/4-B/5-A): Reset-Password-UI bleibt drin, Operations als clientseitiger Platzhalter, In-Memory-Session-Cache, Route-Gruppen `(public)/`/`(authed)/`, Architektur-Pattern bleibt `[VORLÄUFIG]` bis Phase-6-Last-Test.
+  - **10 neue Frontend-Dateien** unter `apps/frontend-disponent/`:
+    - **`src/lib/api/client.ts`** — fetch-Wrapper mit `credentials: 'include'`-Default und einheitlichem `ApiError`-Mapping (`auth`/`forbidden`/`not-found`/`conflict`/`gone`/`validation`/`rate-limit`/`server`/`network`) plus `Retry-After`-Parsing. Helper `apiGet`/`apiPost` (Post liefert `null` bei 204).
+    - **`src/lib/api/auth.ts`** — Auth-Bindings für `login`, `logout`, `me`, `resetPassword` mit `SessionUser`-Typ (spiegelt Backend-`SessionUserResponse`).
+    - **`src/lib/api/tenants.ts`** — `listTenants(status?)` mit `Tenant`-Typ.
+    - **`src/lib/stores/session.ts`** — In-Memory-Session-Cache (reine TS-Datei, keine Svelte-Runes; Reaktivität trägt LayoutData von außen). Detail-Frage 3-A: kein localStorage/sessionStorage gegen XSS-Defense-in-depth.
+    - **`src/routes/(public)/login/+page.svelte`** — Login-Form mit Username/Password, Submit-Disabled-States, Rate-Limit-Countdown-Display über `Retry-After`-Sekunden, generische Fehlermeldung bei 401 (kein Info-Leak), Whitelist erlaubter `next`-Pfade gegen Open-Redirect.
+    - **`src/routes/(public)/reset-password/+page.svelte`** — Reset-Password-Form mit Token aus `?token=…`-Query-Param, clientseitiger 12-Zeichen-Mindest-Validierung, Passwort-Bestätigung, einheitlicher 410-Fehlermeldung („ungültig, abgelaufen oder bereits verwendet").
+    - **`src/routes/(authed)/+layout.ts`** — zentraler Auth-Guard: ruft `GET /api/auth/me` beim Mount, redirect auf `/login?next=…` bei 401. `LayoutLoad`-Typ aus `./$types`.
+    - **`src/routes/(authed)/+layout.svelte`** — Top-Bar mit Username + Rolle + Logout-Button; Logout ist defensiv (bei Fehler trotzdem `clearSession` + redirect).
+    - **`src/routes/(authed)/dashboard/+page.svelte`** — Tabelle mit Mandanten (Name/Slug/Status-Badge/Aktiv-seit), farbliche Badges, Carer-Hinweisseite (Phase 2 kein Carer-Dashboard), Operations-Platzhalter „Keine aktiven Einsätze" + Phase-4-Sub-Hinweis.
+    - **`src/routes/+page.svelte`** — neutraler Root-Redirect (CSR onMount: ruft `me()`, geht zu `/dashboard` oder `/login`).
+  - **Konfigurations-Updates:**
+    - **`src/routes/+layout.ts`**: `prerender = false; ssr = false` — SPA-Modus für die ganze App (zuvor `prerender = true; ssr = true` aus Phase 1). adapter-static + `fallback: "index.html"` deckt das ab.
+    - **`vite.config.ts`**: Dev-Proxy `/api → VITE_BACKEND_URL` (Default `http://localhost:8000`), damit Cookies same-origin laufen im Dev-Server.
+    - **`vitest.config.ts`**: expliziter `$lib`-Alias auf `src/lib` — ohne den findet Vitest die `$lib/…`-Imports nicht (kein SvelteKit-Plugin geladen, weil das jsdom + Svelte-Compiler verlangen würde, beide freigabepflichtige neue Top-Level-Deps).
+    - **`eslint.config.js`**: Browser-Globals inline (`fetch`/`Response`/`Headers`/`setInterval`/`SubmitEvent`/…), weil das `globals`-Paket nur transitiv vorhanden ist; pnpm-Workspace-Hygiene verbietet transitive Direkt-Imports.
+  - **`.gitattributes` neu angelegt** (Repo-Root): `* text=auto eol=lf` plus binäre Ausnahmen für Bilder/Archive + `-text` für Lock-Files. Behebt CRLF-Drift, der unter Windows-Default `core.autocrlf=true` den `prettier --check`-Hook in den anderen Frontend-Workspaces brach (Files inhaltlich unverändert, aber CRLF im Working-Tree gegen LF-Repo-Norm).
+  - **4 neue Test-Dateien** mit insgesamt 27 neuen Tests:
+    - `tests/api-client.test.ts` (15) — Status-Mapping, Retry-After-Parsing (numerisch + non-numeric), JSON-Body-Serialisierung, Network-Fehler, GET/POST-Helper, 204-Pfad.
+    - `tests/api-auth.test.ts` (4) — login/logout/me/resetPassword Pfade + Bodies.
+    - `tests/api-tenants.test.ts` (3) — listTenants Query-Encoding.
+    - `tests/session.test.ts` (4) — set/get/clear/override.
+    - **Coverage** ≥ 96 % auf den getesteten Modulen (api/auth 85.71 %, api/client 98.14 %, all 97.05 % Stmts / 93.33 % Branch / 100 % Funcs / 96.61 % Lines). Coverage-Reporter erfasst nur direkt importierte Files; `tenants.ts` und `session.ts` werden geladen, aber von v8 nicht im aggregierten Report angezeigt — Backend-Standard-Schwelle 80 % deutlich übertroffen.
+  - **`scripts/dev-smoke.sh` Frontend-Smoke-Block** (am Ende): `pnpm --filter frontend-disponent build` (statischer Build) + Cookie-Round-Trip mit `SMOKE_USER`/`SMOKE_PW` (`/api/auth/login` → `/me` → `/tenants` → `/logout` → `/me` 401). Skip-Pfad falls `pnpm` nicht verfügbar.
+  - **Verifikations-Sequenz:** vitest 27/27 grün, svelte-check 0 Fehler / 0 Warnungen (346 Files), eslint 0, prettier-check grün, `pnpm --filter frontend-disponent build` erzeugt sauberen statischen Output (3 Routes neu: `(authed)/dashboard`, `(public)/login`, `(public)/reset-password`), alle Pre-Commit-Hooks grün, Backend-Suite weiterhin 439 passed + 1 skipped, Coverage 95.82 %.
+- **Reibungen während der Session:**
+  - **Svelte-5-Runes außerhalb von `.svelte`/`.svelte.ts`:** Erster Wurf des Session-Stores als `.ts`-Datei mit `$state` schlug fehl, weil Runes nur in Svelte-Compiler-Files funktionieren. Pragmatisch auf reine TS-Datei umgestellt — Reaktivität trägt das `LayoutData` via `(authed)/+layout.ts`-`load()` ohnehin. Lerneffekt: Module-Level-Stores ohne UI-Reaktivität sind reine TS-Files; wenn Reaktivität nötig wird, kommt `.svelte.ts` mit Plugin-Setup hinzu.
+  - **SvelteKit-Navigation-Plugin verlangt `resolve()`:** `eslint-plugin-svelte` markiert alle nackten `goto(string)` und `<a href="...">`-Pfade als Fehler. Lösung: alle statischen Pfade durch `resolve("/path")` aus `$app/paths` wrappen; für dynamische Login-`next`-Pfade Whitelist auf `["/dashboard"]` beschränkt, sodass `resolve()` einen statisch bekannten Pfad bekommt — bonus: Open-Redirect-Schutz.
+  - **ESLint kennt Browser-Globals nicht:** `setInterval`, `SubmitEvent` etc. wurden als `no-undef` flagged, weil das Skelett aus Phase 1 keine `globals.browser` konfiguriert hatte. Inline-Definition in `eslint.config.js` (ohne neue Dep) statt `globals`-Paket — verbleibt einfacher Phase-1-Skelett-Drift, der jetzt geheilt ist.
+  - **CRLF/LF-Drift unter Windows:** Pre-Commit-Hook `prettier --check` in `frontend-betreuer`/`frontend-einsatzkraft` brach mit Style-Fehlern auf Files, die ich gar nicht angefasst hatte. Ursache: Git `autocrlf=true` (Windows-Default) wandelt Repo-LF zu Working-Tree-CRLF, Prettier mit `endOfLine: "lf"` lehnt CRLF ab. Lösung: `.gitattributes` mit `eol=lf` repo-weit + einmaliges `prettier --write` auf den betroffenen Skelett-Files. Nachhaltige Lösung für alle Windows-Checkouts.
+  - **Vitest findet `$lib`-Alias nicht:** Tests verwenden `$lib/api/client`, die Vitest ohne SvelteKit-Plugin nicht auflöst. Lösung: expliziter Alias in `vitest.config.ts`. Alternative wäre `sveltekit()`-Plugin + jsdom — beides neue Top-Level-Deps, freigabepflichtig.
+- **Reaktiv-Quote nach dieser Session:** **0 / 10 (0 %)**, unverändert. Schritt 2.5 erzeugte keinen ADR — alle Detail-Entscheidungen sind reine Frontend-Implementierungs-Wahlen ohne Architektur-Wirkung. Die `.gitattributes`-Einführung ist Plattform-Hygiene, kein ADR-Thema.
+- **Architektur-Spec-Anpassung:**
+  - `frontend-disponent` Modul-Eintrag (Abschnitt 3) um interne Struktur (Route-Gruppen, Session-Cache, API-Client-Wrapper) erweitert; Phase-2-Lieferumfang dokumentiert.
+  - Reifegrad-Tabelle Abschnitt 9: `frontend-disponent` Datum auf 2026-05-15 aktualisiert, Beschreibung um Schritt-2.5-Lieferumfang erweitert; Reifegrad bleibt `[VORLÄUFIG]` (Detail-Frage 5-A: Architektur-Pattern wird erst nach Phase-6-Last-Test auf `[BELASTBAR]` befördert).
+  - Stand-Datum in Abschnitt 9 auf 2026-05-15 aktualisiert.
+- **README-Synchronisation:** Status-Block (Projektphase, Letzte Änderung, Architektur-Reife-Beschreibung) aktualisiert; „Nächste Schritte" auf 2.6 umgestellt.
+- **Bekannter Stand:** Frontend-Code in `apps/frontend-disponent/` produktiv, baut sauber, 27/27 Tests grün, Pre-Commit grün. Worktree `claude/admiring-kowalevski-c2e7bf` mit den geänderten Dateien staged. Backend in 2.5 nicht angefasst. Compose-Stack-Smoke mit dem neuen Frontend-Block steht noch aus (Sandbox: Docker-Stack hat Patrick nicht hochgefahren) — der Backend-Cookie-Round-Trip aus 2.4 wurde gegen den Stack verifiziert, der Frontend-Block addiert nur einen Build-Schritt + identische Cookie-Sequenz; Risiko gering.
+- **Nächster Schritt:** **Schritt 2.6 — `frontend-einsatzkraft`** AccessCode-Eingabe-UI gegen die in 2.3 produktive S2a. Eingangskriterium S2a `[BELASTBAR]` ✓.
+
+### 2026-05-15 – [REIFEGRAD-WECHSEL]
+
+- **Bestandteile (alle aus Schritt 2.5):**
+  - `frontend-disponent` Reifegrad-Eintrag Datum aktualisiert (2026-05-07 → 2026-05-15), Validierungs-Beschreibung erweitert; Reifegrad bleibt `[VORLÄUFIG]` — Detail-Frage 5-A aus 2.5: Architektur-Pattern wird erst nach Phase-6-Last-Test auf `[BELASTBAR]` befördert. Schritt 2.5 deckt **Funktion**, nicht **Last** ab.
+- **Auslöser:** Schritt 2.5-Implementation produktiv mit 17 erfüllten Akzeptanzkriterien, ≥ 96 % Coverage auf den getesteten Auth-/API-Modulen, allen Pflicht-Gates grün (lint/format/svelte-check/tsc/vitest/build/pre-commit).
+- **Datum in `architecture.md` Abschnitt 9 nachgetragen:** ja, 2026-05-15.
+
+### 2026-05-14 – [SESSIONSTART]
+
+- **Letzter Stand laut `origin/main` (HEAD `2a09809`):** Phase 2 Schritt 2.4 ERLEDIGT (2026-05-12, PR #22 `scp/clever-cerf-1b4387` gemerged in `origin/main` am 2026-05-12 21:06 UTC). Backend-Coverage gesamt 95.82 %, `backend/auth` und `backend/tenants` 95–100 %. Reaktiv-Quote 0/10. Keine aktiven Blocker. Keine offenen STOPP-Situationen. Reifegrade BELASTBAR aktuell: `backend/auth`, `backend/auth_anonymous`, `backend/tenants`, S1/S2a/S8a/S8b/S10, Valkey-Connection-Pool, Invarianten I1+I2.
+- **Worktree:** `D:\GitHub\EB-Digital\.claude\worktrees\admiring-kowalevski-c2e7bf` auf Branch `claude/admiring-kowalevski-c2e7bf`, ausgehend von `main` (2a09809), `git status` clean, lokaler HEAD synchron mit `origin/main`. Plattform: **Windows 11 / PowerShell** (`win32`). Blocker #001 (`UF_HIDDEN`-Flag-Problem) ist macOS-spezifisch, betrifft diese Session nicht. `scripts/fix-venv-flags.sh` daher nicht relevant.
+- **GitHub-Statusprüfung:** keine offenen PRs, keine offenen Issues. Repo ist nicht ahead — alle Phase-2-Schritte bis 2.4 sind via PR #18/19/20/21/22 in `main` integriert.
+- **Pflichtlektüre nach `CLAUDE.md` Abschnitt 2 vollständig durchlaufen:** `project-context.md` (gesamt, ~400 Zeilen erste Hälfte inkl. Stack/Constraints/Code-Standards — Rest auf Anforderung), `logbuch.md` (letzter `[SESSIONENDE]`-Eintrag vom 2026-05-12 plus alle Einträge danach — keine danach bis hierhin), `fahrplan.md` „Aktueller Stand" + laufende Phase 2 + alle Phase-2-Schritte 2.1–2.4 inkl. Folge-Skizze 2.5–2.7, `architecture.md` Abschnitte 1/2/9 (inkl. komplette Reifegrad-Tabelle Stand 2026-05-12), `decisions.md` Teil A (ADR-001 bis ADR-014, Reaktiv-Quote 0/10), `blockers.md` „Aktive Blocker" (leer).
+- **Auftrag der Session:** Detail-Plan für **Schritt 2.5 — `frontend-disponent` Login-Flow + Dashboard-Skelett** ausarbeiten, Freigabe einholen, dann implementieren.
+- **Detail-Plan-Freigabe (Patrick, 2026-05-14):** alle fünf Detail-Entscheidungen **wie empfohlen** bestätigt:
+  - **Frage 1 (Scope):** B — Login + Dashboard + Reset-Password-UI; Self-Service-Antrag und Admin-Approve-/Invite-UI bleiben draußen (kommen mit Roll-out-Phase 7).
+  - **Frage 2 (Operations-Anzeige):** A — clientseitiger Platzhalter „Keine aktiven Einsätze", kein neuer Backend-Endpoint. `backend/operations` bleibt unangetastet bis Phase 4.
+  - **Frage 3 (Auth-State):** A — in-memory only Svelte-`$state`-Store, Hard-Refresh re-hydriert via `GET /api/auth/me`. Kein localStorage/sessionStorage (XSS-Defense-in-depth).
+  - **Frage 4 (Route-Schutz):** B — SvelteKit-Route-Gruppen `(public)/` und `(authed)/`; `(authed)/+layout.ts` ist zentraler Auth-Guard mit Redirect auf 401.
+  - **Frage 5 (Reifegrad):** A — Architektur-Pattern „Modular Monolith + 3 SvelteKit-Frontends" bleibt `[VORLÄUFIG]` bis Phase-6-Last-Test. Schritt 2.5 ist Funktions-Validierung, nicht Last-Validierung.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus, Worktree `claude/admiring-kowalevski-c2e7bf` (Opus 4.7, 1M-Kontext).
+
 ### 2026-05-12 22:57 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 50 min (Sessionstart 22:06 → Sessionende-Commit-Vorbereitung 22:57).

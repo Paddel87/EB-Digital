@@ -1,0 +1,27 @@
+# Plattform-übergreifende Zeilenendungs-Normalisierung.
+#
+# Hintergrund: Auf Windows wandelt Git mit `core.autocrlf=true` (Default)
+# Textdateien beim Checkout in CRLF um. Prettier (mit `endOfLine: "lf"`,
+# Default seit Prettier 2.0) lehnt CRLF dann ab. Ohne diese Datei brechen
+# `prettier --check`-Hooks auf Windows-Checkouts, auch wenn der Code
+# inhaltlich nicht angefasst wurde — siehe Schritt 2.5.
+#
+# `* text=auto eol=lf` lässt Git Text auto-erkennen und auf LF normieren,
+# unabhängig vom OS. Binärdateien (Bilder, Lock-Files) bleiben unverändert.
+
+* text=auto eol=lf
+
+# Explizit binär — keine Konversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+
+# Lock-Files sind Text, sollen aber nicht durch Editor-Tooling normalisiert
+# werden (sie werden ausschließlich vom Paketmanager generiert).
+pnpm-lock.yaml -text
+uv.lock -text
