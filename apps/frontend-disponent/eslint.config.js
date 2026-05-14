@@ -12,6 +12,29 @@ import sveltePlugin from "eslint-plugin-svelte";
 import securityPlugin from "eslint-plugin-security";
 import svelteParser from "svelte-eslint-parser";
 
+// Browser-Globals inline (statt `globals`-Paket, das transitiv vorhanden,
+// aber nicht direkt deklariert ist — pnpm-Workspace-Hygiene). Liste auf
+// die in Phase 2 tatsächlich genutzten APIs beschränkt.
+const browserGlobals = {
+  fetch: "readonly",
+  Response: "readonly",
+  Request: "readonly",
+  Headers: "readonly",
+  URL: "readonly",
+  URLSearchParams: "readonly",
+  setTimeout: "readonly",
+  clearTimeout: "readonly",
+  setInterval: "readonly",
+  clearInterval: "readonly",
+  console: "readonly",
+  document: "readonly",
+  window: "readonly",
+  SubmitEvent: "readonly",
+  Event: "readonly",
+  HTMLElement: "readonly",
+  TypeError: "readonly",
+};
+
 export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -21,6 +44,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
+      globals: browserGlobals,
     },
   },
   {

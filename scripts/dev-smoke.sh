@@ -510,5 +510,83 @@ else
 	exit 1
 fi
 
+step "Frontend-Disponent — statischer Build + Cookie-Round-Trip (Schritt 2.5)"
+
+# 1. Statischer Build der frontend-disponent-App via pnpm. Build-Fehler fallen
+#    hier auf (z. B. wenn adapter-static einen non-prerenderbaren Pfad findet).
+if ! command -v pnpm >/dev/null 2>&1; then
+	ok "pnpm nicht verfügbar — Frontend-Smoke übersprungen (akzeptiert: Backend-Smoke deckt die Pflicht-Pfade ab)"
+else
+	if pnpm --filter frontend-disponent build >/tmp/dev-smoke-frontend-build.log 2>&1; then
+		ok "pnpm --filter frontend-disponent build erfolgreich"
+	else
+		fail "pnpm --filter frontend-disponent build (log: /tmp/dev-smoke-frontend-build.log)"
+		exit 1
+	fi
+fi
+
+# 2. Cookie-Round-Trip aus Frontend-Sicht: Login → /me → /tenants → Logout →
+#    /me darf danach kein 200 mehr liefern. Wir nutzen Plattform-Admin aus
+#    den vorhergehenden Smoke-Schritten.
+FE_COOKIE_JAR=$(mktemp)
+trap 'rm -f "$FE_COOKIE_JAR"' EXIT
+
+fe_login_status=$(curl --silent --insecure --max-time 10 \
+	-c "$FE_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fe-login.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"username\":\"$SMOKE_USER\",\"password\":\"$SMOKE_PW\"}" \
+	https://localhost/api/auth/login)
+if [[ "$fe_login_status" == "200" ]]; then
+	ok "Frontend-Smoke Login 200 — kind=$(jq -r .kind /tmp/dev-smoke-fe-login.json)"
+else
+	fail "Frontend-Smoke Login Status $fe_login_status (body: $(cat /tmp/dev-smoke-fe-login.json))"
+	exit 1
+fi
+
+fe_me_status=$(curl --silent --insecure --max-time 10 \
+	-b "$FE_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fe-me.json \
+	https://localhost/api/auth/me)
+if [[ "$fe_me_status" == "200" ]]; then
+	ok "Frontend-Smoke /api/auth/me 200 — username=$(jq -r .username /tmp/dev-smoke-fe-me.json)"
+else
+	fail "Frontend-Smoke /api/auth/me Status $fe_me_status (body: $(cat /tmp/dev-smoke-fe-me.json))"
+	exit 1
+fi
+
+fe_tenants_status=$(curl --silent --insecure --max-time 10 \
+	-b "$FE_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fe-tenants.json \
+	https://localhost/api/tenants)
+if [[ "$fe_tenants_status" == "200" ]]; then
+	ok "Frontend-Smoke /api/tenants 200 — count=$(jq 'length' /tmp/dev-smoke-fe-tenants.json)"
+else
+	fail "Frontend-Smoke /api/tenants Status $fe_tenants_status (body: $(cat /tmp/dev-smoke-fe-tenants.json))"
+	exit 1
+fi
+
+fe_logout_status=$(curl --silent --insecure --max-time 10 \
+	-X POST -b "$FE_COOKIE_JAR" -c "$FE_COOKIE_JAR" \
+	-w '%{http_code}' -o /dev/null \
+	https://localhost/api/auth/logout)
+if [[ "$fe_logout_status" == "204" ]]; then
+	ok "Frontend-Smoke Logout 204"
+else
+	fail "Frontend-Smoke Logout Status $fe_logout_status (erwartet 204)"
+	exit 1
+fi
+
+fe_me_after_status=$(curl --silent --insecure --max-time 10 \
+	-b "$FE_COOKIE_JAR" \
+	-w '%{http_code}' -o /dev/null \
+	https://localhost/api/auth/me)
+if [[ "$fe_me_after_status" == "401" ]]; then
+	ok "Frontend-Smoke /api/auth/me nach Logout 401 — Cookie ungültig"
+else
+	fail "Frontend-Smoke /api/auth/me nach Logout Status $fe_me_after_status (erwartet 401)"
+	exit 1
+fi
+
 step "Smoke-Test komplett grün"
 exit 0
