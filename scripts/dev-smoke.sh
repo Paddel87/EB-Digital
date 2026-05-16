@@ -620,5 +620,24 @@ else
 	exit 1
 fi
 
+step "Frontend-Einsatzkraft — statischer Build (Schritt 2.6)"
+
+# Backend-API-Smoke der S2a-Endpunkte ist im 2.3-Anon-Block bereits abgedeckt
+# (Operation → /info → /session → 401/410-Pfade). Für 2.6 fügen wir nur den
+# Build-Smoke hinzu — adapter-static mit fallback="index.html" + SPA-Mode
+# (prerender=false, ssr=false) für die dynamische /[token]-Route. Build-
+# Fehler hier (z. B. bei einer in 2.6 versehentlich wieder prerenderbaren
+# Route) wären die einzige Klasse, die der vitest-Lauf nicht abdeckt.
+if ! command -v pnpm >/dev/null 2>&1; then
+	ok "pnpm nicht verfügbar — Einsatzkraft-Build-Smoke übersprungen (Backend-S2a-Smoke deckt die Pflicht-Pfade)"
+else
+	if pnpm --filter frontend-einsatzkraft build >/tmp/dev-smoke-einsatzkraft-build.log 2>&1; then
+		ok "pnpm --filter frontend-einsatzkraft build erfolgreich"
+	else
+		fail "pnpm --filter frontend-einsatzkraft build (log: /tmp/dev-smoke-einsatzkraft-build.log)"
+		exit 1
+	fi
+fi
+
 step "Smoke-Test komplett grün"
 exit 0

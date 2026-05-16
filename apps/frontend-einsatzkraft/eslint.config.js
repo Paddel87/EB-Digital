@@ -12,6 +12,31 @@ import sveltePlugin from "eslint-plugin-svelte";
 import securityPlugin from "eslint-plugin-security";
 import svelteParser from "svelte-eslint-parser";
 
+// Browser-Globals inline (Schritt 2.6 — analog frontend-disponent in 2.5,
+// weil mit der AccessCode-UI fetch/document/setInterval/SubmitEvent etc.
+// in den Routes-Pages verwendet werden). Liste auf die in Phase 2
+// tatsächlich genutzten APIs beschränkt.
+const browserGlobals = {
+  fetch: "readonly",
+  Response: "readonly",
+  Request: "readonly",
+  Headers: "readonly",
+  URL: "readonly",
+  URLSearchParams: "readonly",
+  setTimeout: "readonly",
+  clearTimeout: "readonly",
+  setInterval: "readonly",
+  clearInterval: "readonly",
+  console: "readonly",
+  document: "readonly",
+  window: "readonly",
+  SubmitEvent: "readonly",
+  Event: "readonly",
+  HTMLElement: "readonly",
+  HTMLInputElement: "readonly",
+  TypeError: "readonly",
+};
+
 export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -21,6 +46,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
+      globals: browserGlobals,
     },
   },
   {
