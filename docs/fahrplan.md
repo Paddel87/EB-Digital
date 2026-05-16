@@ -7,12 +7,13 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** 2026-05-15
+- **Stand vom:** 2026-05-16
 - **Laufende Phase:** Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2) (UMSETZUNG).
 - **Phasentyp:** UMSETZUNG (**Phase-2-Sonderregel:** Eingangsdisziplin analog Phase 1 abgemildert — alle berührten Module bleiben durch Skelett-Existenz `[VORLÄUFIG]`; Modul-Schnitt durch ADR-002/003/004/008/009 fixiert, Datenmodell-Grundzüge durch ADR-006/007 fixiert. Reifegrad-Beförderung `[VORLÄUFIG]` → `[BELASTBAR]` erfolgt mit dem jeweiligen funktionalen Schritt, nicht mit dem Datenmodell-Skelett. Patrick freigegeben 2026-05-10.).
 - **Erledigte Schritte Phase 2:** **2.5 [ERLEDIGT]** 2026-05-15 (`frontend-disponent` Login + Dashboard + Reset-Password-UI produktiv: Route-Gruppen `(public)/`/`(authed)/`, In-Memory-Session-Cache, API-Client-Wrapper mit Error-Mapping für 7 Statuscodes + Retry-After-Parsing, Login-Form mit Rate-Limit-Countdown, Dashboard mit Mandanten-Tabelle und Status-Badges, Carer-Hinweisseite, Operations-Platzhalter, Reset-Password-Form mit Client-Side-Validierung, Vite-Dev-Proxy, Browser-Globals in ESLint-Flat-Config, `.gitattributes` mit `eol=lf` als Plattform-Hygiene-Fix gegen CRLF-Drift unter Windows; 27 Vitest-Tests grün, Coverage ≥ 96 % auf den getesteten Auth-/API-Modulen; svelte-check + tsc + eslint + prettier + build + alle Pre-Commit-Hooks grün; `dev-smoke.sh` um Frontend-Smoke-Block erweitert; Backend-Suite weiterhin 439/1 grün mit 95.82 % Coverage). **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv: 6 neue Module unter `backend/eb_digital/tenants/{slug,username,repositories,use_cases,participation,api}.py` + `auth/reset_token.py`; Tenant-Modell um zwei Lookup-Indizes erweitert + Migration `a7c3b2d8e9f1` (S10-Pflicht-Indizes, in 2.1 versehentlich ausgelassen); Erweiterung `auth/api.py` um `register-tenant`, `reset-password` und Tenant-Status-Check im Login-Pfad; 7 neue Domain-Exception-Klassen; 10 neue Test-Dateien mit 153 neuen Tests bringen Backend von 286 auf 439 / 95.82 % Coverage gesamt, `backend/tenants` 95–100 %; alle Pflicht-Hooks pre-commit grün; `dev-smoke.sh` um Tenants-Block (10 Schritte) erweitert; Compose-Smoke + Alembic-Round-Trip live im Stack verifiziert; Detail-Plan mit 4 Detail-Entscheidungen Patrick am 2026-05-12 mit B/B/A/A freigegeben). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013 + redis-py-Sub-Wahl). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
 - **Aktiver Schritt:** keiner.
 - **Nächster Schritt:** **2.6** `frontend-einsatzkraft` AccessCode-Eingabe-UI (anonyme Session mit Code-Validierung gegen S2a).
+- **Hot-Stabilisierung 2.5b** am 2026-05-16 `[ERLEDIGT]`: `get_db_session()` von `return`-aus-`async with` auf yield-Dependency mit Rollback im Exception-Pfad umgestellt (ADR-015 `[REAKTIV] [STACK] [SECURITY] [METHODIK]`, Regel-018). Vollständige Backend-Suite 440/1 grün, Coverage 95.84 %, `backend/auth` 96 %, `backend/auth_anonymous` 100 %. Reaktiv-Quote 1/10 = 10 % (unter 20 %-Schwellenwert).
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
 - **CI-Hygiene-Sonderfall in Phase 1 (2026-05-10):** ADR-012 — `actions/upload-artifact@v4` → `@v7` als Major-Update gegen Node-20-Deprecation, analog zu ADR-010 in 1.2. Reaktiv-Quote bleibt 0 / 10.
@@ -755,6 +756,44 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
   - **Coverage-Pflicht-Schwelle Frontend:** Standard 80 % laut `project-context.md` Abschnitt 7. Keine speziellen Auth-Frontend-Schwellen (Backend-Auth ≥ 95 % bleibt eigene Sache des Backend-Modul). Selbst-Auferlegung von 95 % für `session.ts` und `client.ts` wäre verlockend, ist aber nicht Pflicht — angestrebt wird hohe Coverage durch klein gehaltene Module.
   - **Operations-Platzhalter:** Detail-Frage 2-A → kein Backend-Call für Operations. Phase 4 erweitert `backend/operations` + Frontend-Verdrahtung gemeinsam.
   - **Self-Service-Antrag + Admin-Approve-/Invite-UI:** bewusst draußen (Detail-Frage 1-B). Self-Service ist Public-Landing-Asset und gehört zu Roadmap-Meilenstein P (schriftliche Onboarding-Unterlagen, Phase 7); Admin-Approve-/Invite-UI folgt sobald `frontend-einsatzkraft` (2.6) den AccessCode-Eingabe-Flow trägt — vorher fehlt operative Notwendigkeit.
+
+#### 2.5b: Hot-Stabilisierung — `get_db_session()` Lifecycle-Bug (yield-Dependency + Rollback)
+
+- **Status:** ERLEDIGT (2026-05-16; Freigabe Patrick 2026-05-15: Option A; **kein** Unit-of-Work-Wechsel; Endpoint-Commits bleiben erhalten).
+- **Phasentyp-Kontext:** UMSETZUNG (außerplanmäßiger Hot-Stabilisierungs-Schritt zwischen 2.5 und 2.6, analog ADR-014-Einschub zwischen 2.1 und 2.2).
+- **Abhängigkeiten:** keine (behebt einen latenten Cross-Cutting-Bug in `backend/auth.api.get_db_session`, der von `backend/auth`, `backend/auth_anonymous` und `backend/tenants` konsumiert wird).
+- **Freigabepflichtig:** ja (Methodik-Regelergänzung Regel-018 + reaktiver ADR-015). Freigabe erfolgt 2026-05-15 mit dieser Session.
+- **Eingangskriterien:** Bug-Diagnose und Optionswahl Patrick freigegeben (Option A); aktive `[BELASTBAR]`-Module bleiben funktional unverändert (öffentliche API-Verträge unberührt; nur Lifecycle-Semantik der Dependency).
+- **Zu tun:**
+  - **Code-Fix** in [backend/eb_digital/auth/api.py](backend/eb_digital/auth/api.py): `get_db_session(request)` von `async def → AsyncSession` auf `async def → AsyncIterator[AsyncSession]` umstellen mit Muster `async with factory() as session: try: yield session except Exception: await session.rollback(); raise`. Keine Änderung an Endpoints; bestehende explizite `await db.commit()`-Aufrufe in Endpoints bleiben erhalten (Patrick-Direktive: kein Unit-of-Work in 2.5b).
+  - **Lifecycle-Tests** in [backend/tests/test_auth_login_api.py](backend/tests/test_auth_login_api.py):
+    - bestehenden `test_get_db_session_invokes_factory_and_returns_session` zu echtem Lifecycle-Test umschreiben (Stub mit Counter für `__aenter__`/`__aexit__`/`rollback`/`close`; Verifikation: Enter vor Yield, Exit nach Consumer-Abschluss);
+    - **neuer Exception-Pfad-Test:** Konsument wirft Exception nach Yield → Verifikation `rollback()` aufgerufen, `__aexit__` lief, Exception propagiert.
+  - **`scripts/dev-smoke.sh`** um Exception-Fall-Probe ergänzen: `register-tenant` mit kollidierender Slug (existiert nach erstem Aufruf) → 409 + Folge-Request `/api/health` muss innerhalb 1 s antworten (kein Pool-Stall durch Connection-Leak im Exception-Pfad).
+  - **ADR-015** `[REAKTIV] [STACK] [SECURITY]` in `decisions.md` Teil B + Eintrag in Teil A. **Reaktiv-Quote** auf 1/10 = 10 % aktualisieren (unter 20-%-Schwellenwert für Klasse G).
+  - **Regel-018** in `decisions.md` Teil C ergänzen: „FastAPI-Resource-Dependencies mit Context-Manager nutzen `yield`, nicht `return`".
+  - **`architecture.md`** Modul-Einträge `backend/auth`, `backend/auth_anonymous`, `backend/tenants` um Hinweis „Request-Scoped DB-Session (yield-Dependency, Rollback bei Exception)" als interne Garantie ergänzen; Reifegrade unverändert.
+  - **`logbuch.md`**: `[PROBLEM-GELÖST]`-Eintrag (Bug-Diagnose + Fix-Verifikation), `[ADR-ANGELEGT]` (ADR-015 + Regel-018), `[SESSIONENDE]`.
+- **Akzeptanzkriterien:**
+  - **AC-1:** `get_db_session` ist als async-Generator (yield) implementiert mit explizitem Rollback im Exception-Pfad; mypy --strict grün.
+  - **AC-2:** Lifecycle-Test verifiziert `__aenter__` vor Yield und `__aexit__` nach Consumer-Abschluss (nicht vorher).
+  - **AC-3:** Exception-Pfad-Test verifiziert `rollback()` wird vor `__aexit__` aufgerufen, Exception propagiert unverändert.
+  - **AC-4:** Bestehende Backend-Suite (439 + 1 skipped) bleibt grün; Coverage `backend/auth` ≥ 95 % Lines/Branches.
+  - **AC-5:** dev-smoke.sh Exception-Fall-Probe (Slug-Kollision → 409 → Folge-`/api/health`) grün.
+  - **AC-6:** ADR-015 + Regel-018 dokumentiert; Reaktiv-Quote auf 1/10 = 10 % aktualisiert (unter Schwellenwert).
+  - **AC-7:** Pflicht-Pre-Commit-Hooks grün (ruff lint+format, ruff format-check, mypy --strict, bandit, pytest).
+- **Betroffene Module:** `backend/auth` (Code-Fix in der Dependency-Definition); konsumierende Module `backend/auth_anonymous` und `backend/tenants` (keine Code-Änderung, aber Architektur-Spec-Hinweis).
+- **Reifegrad-Wirkung:**
+  - Modul-Reifegrade bleiben `[BELASTBAR]` (Lifecycle-Bug war bereits Bestandteil des Querschnitts — Fix bestätigt die request-scoped Architektur-Absicht, kippt sie nicht).
+  - Neuer architektur-belastbarer Eintrag „Request-Scoped DB-Session-Dependency" als Modul-übergreifendes Muster (BELASTBAR seit Fix-Datum).
+- **Artefakte:**
+  - **Code:** `backend/eb_digital/auth/api.py` (Funktion `get_db_session`).
+  - **Tests:** `backend/tests/test_auth_login_api.py` (umgeschriebener Lifecycle-Test + neuer Exception-Pfad-Test).
+  - **Smoke:** `scripts/dev-smoke.sh` Exception-Fall-Probe.
+  - **Doku:** `decisions.md` (ADR-015, Regel-018, Reaktiv-Quote in Teil A), `architecture.md` (drei Modul-Einträge), `fahrplan.md` (dieser Schritt), `logbuch.md`, `README.md` (nur falls Status-Block-Drift entsteht).
+- **Notizen:**
+  - **Keine Unit-of-Work-Umstellung** in diesem Schritt (Patrick-Direktive). Endpoint-`await db.commit()`-Calls bleiben unverändert. Eine spätere zentrale Commit-/Rollback-Strategie wäre eigener `[STRATEGISCH]`-ADR mit eigenem Schritt.
+  - **Real-DB-Integrationstest:** Eine neue Top-Level-Test-Dep wie `aiosqlite` oder `testcontainers` wäre freigabepflichtig (Regel-001 + Regel-016) und nicht durch Option A gedeckt. Stattdessen: **dev-smoke.sh** liefert die Real-DB-Validierung gegen echtes PostgreSQL im Compose-Stack; Lifecycle-Stubs decken die FastAPI-yield-Semantik unit-test-seitig.
 
 #### 2.6–2.7: Folgeschritte (gröber)
 

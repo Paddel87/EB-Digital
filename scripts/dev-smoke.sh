@@ -510,6 +510,38 @@ else
 	exit 1
 fi
 
+step "DB-Session-Lifecycle (Schritt 2.5b): Slug-Kollision → 409 → Folge-/health"
+
+# ADR-015: Exception-Pfad-Probe für get_db_session(). Die Slug-Kollision auf
+# /register-tenant löst eine HTTPException aus, *nachdem* die DB-Session
+# vergeben wurde — also genau der Pfad, in dem der ehemalige
+# `return session`-Bug eine geöffnete Connection im Pool hinterlassen hätte.
+# Der Folge-Aufruf auf /api/health muss ohne Stall innerhalb 1 s antworten;
+# bei einem Connection-Leak liefe der Pool unter wiederholten Aufrufen voll.
+collision_status=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /tmp/dev-smoke-collision.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"name\":\"$TENANT_NAME duplicate\",\"slug\":\"$TENANT_SLUG\"}" \
+	https://localhost/api/auth/register-tenant)
+if [[ "$collision_status" == "409" ]]; then
+	ok "/api/auth/register-tenant Slug-Kollision 409 — DB-Exception nach Session-Vergabe geprüft"
+else
+	fail "/api/auth/register-tenant Slug-Kollision Status $collision_status (erwartet 409, body: $(cat /tmp/dev-smoke-collision.json))"
+	exit 1
+fi
+
+# Folge-Request muss ohne Stall durchkommen — Connection wurde durch die
+# yield-Dependency korrekt zurückgegeben (und Rollback ausgeführt).
+followup_status=$(curl --silent --insecure --max-time 1 \
+	-w '%{http_code}' -o /dev/null \
+	https://localhost/api/health)
+if [[ "$followup_status" == "200" ]]; then
+	ok "/api/health nach Slug-Kollision 200 (innerhalb 1 s) — kein Connection-Stall"
+else
+	fail "/api/health nach Slug-Kollision Status $followup_status (erwartet 200 innerhalb 1 s — möglicher Connection-Leak)"
+	exit 1
+fi
+
 step "Frontend-Disponent — statischer Build + Cookie-Round-Trip (Schritt 2.5)"
 
 # 1. Statischer Build der frontend-disponent-App via pnpm. Build-Fehler fallen

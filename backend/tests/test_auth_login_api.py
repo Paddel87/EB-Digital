@@ -388,8 +388,12 @@ async def test_get_db_session_raises_without_app_state() -> None:
             "app": _AppNoState(),
         }
     )
+    # ADR-015: ``get_db_session`` ist eine yield-Dependency (async generator).
+    # Der RuntimeError fällt erst beim ersten ``__anext__()`` an, nicht beim
+    # blossen Aufruf der Funktion.
+    gen = auth_api.get_db_session(request)
     with pytest.raises(RuntimeError, match="DB-Session-Factory"):
-        await auth_api.get_db_session(request)
+        await gen.__anext__()
 
 
 @pytest.mark.asyncio
@@ -417,25 +421,51 @@ async def test_get_valkey_client_returns_state_value(
     assert client is fake_valkey
 
 
-@pytest.mark.asyncio
-async def test_get_db_session_invokes_factory_and_returns_session() -> None:
+# ─── Lifecycle-Tests für get_db_session (ADR-015 / Regel-018) ────────────────
+#
+# Vor 2.5b war ``get_db_session`` als ``async def ... -> AsyncSession`` mit
+# ``async with factory() as session: return session`` implementiert. Dadurch
+# feuerte ``__aexit__`` *vor* der Endpoint-Ausführung — die Session war
+# bereits geschlossen und Cleanup lag außerhalb des Request-Lifecycle.
+# Die folgenden Tests prüfen die korrigierte yield-Dependency-Semantik:
+#   • ``__aenter__`` läuft vor dem Yield (Consumer bekommt eine offene Session).
+#   • ``__aexit__`` läuft erst nach dem Yield-Konsum (Cleanup nach Endpoint).
+#   • Bei Exception im Konsumenten wird ``rollback()`` aufgerufen, bevor der
+#     Context-Manager exitet, und die Exception propagiert unverändert.
+
+
+class _StubSessionWithCounters:
+    """Stub-AsyncSession mit Lifecycle-Countern.
+
+    Bildet die SQLAlchemy-AsyncSession-Oberfläche so weit ab, wie sie von
+    ``get_db_session`` und Konsumenten benötigt wird. Die Counter erlauben
+    dem Test, die genaue Lifecycle-Reihenfolge zu verifizieren.
+    """
+
+    def __init__(self) -> None:
+        self.enter_count = 0
+        self.exit_count = 0
+        self.rollback_count = 0
+
+    async def __aenter__(self) -> _StubSessionWithCounters:
+        self.enter_count += 1
+        return self
+
+    async def __aexit__(self, *args: object) -> None:
+        self.exit_count += 1
+
+    async def rollback(self) -> None:
+        self.rollback_count += 1
+
+
+def _build_request_with_factory(factory: object) -> Any:
     from starlette.requests import Request
-
-    class _StubSession:
-        async def __aenter__(self) -> _StubSession:
-            return self
-
-        async def __aexit__(self, *args: object) -> None:
-            return None
-
-    def _factory() -> _StubSession:
-        return _StubSession()
 
     class _StateBag:
         pass
 
     state = _StateBag()
-    state.db_session_factory = _factory  # type: ignore[attr-defined]
+    state.db_session_factory = factory  # type: ignore[attr-defined]
 
     class _AppWithState:
         pass
@@ -443,7 +473,7 @@ async def test_get_db_session_invokes_factory_and_returns_session() -> None:
     app = _AppWithState()
     app.state = state  # type: ignore[attr-defined]
 
-    request = Request(
+    return Request(
         scope={
             "type": "http",
             "method": "GET",
@@ -452,5 +482,65 @@ async def test_get_db_session_invokes_factory_and_returns_session() -> None:
             "app": app,
         }
     )
-    session = await auth_api.get_db_session(request)
-    assert isinstance(session, _StubSession)
+
+
+@pytest.mark.asyncio
+async def test_get_db_session_yields_session_within_open_context() -> None:
+    """ADR-015 AC-2: __aenter__ läuft vor Yield, __aexit__ erst nach Konsum."""
+    session = _StubSessionWithCounters()
+
+    def _factory() -> _StubSessionWithCounters:
+        return session
+
+    request = _build_request_with_factory(_factory)
+    gen = auth_api.get_db_session(request)
+
+    # Erster __anext__-Aufruf: Generator betritt den async-with-Block und
+    # yieldet die Session. __aenter__ ist gelaufen, __aexit__ noch nicht.
+    yielded = await gen.__anext__()
+    assert yielded is session
+    assert session.enter_count == 1
+    assert session.exit_count == 0, (
+        "Bug-Regression: __aexit__ darf nicht vor Konsum laufen — sonst ist "
+        "die Session beim Endpoint-Aufruf bereits geschlossen."
+    )
+    assert session.rollback_count == 0
+
+    # Generator schließen (entspricht FastAPI-Cleanup nach Endpoint-Erfolg):
+    # async-with-Block exitet sauber, kein Rollback im Erfolgspfad.
+    await gen.aclose()
+    assert session.enter_count == 1
+    assert session.exit_count == 1
+    assert session.rollback_count == 0
+
+
+@pytest.mark.asyncio
+async def test_get_db_session_rollbacks_and_propagates_on_exception() -> None:
+    """ADR-015 AC-3: Exception im Konsumenten → rollback() vor __aexit__,
+    Exception propagiert unverändert."""
+    session = _StubSessionWithCounters()
+
+    def _factory() -> _StubSessionWithCounters:
+        return session
+
+    request = _build_request_with_factory(_factory)
+    gen = auth_api.get_db_session(request)
+
+    yielded = await gen.__anext__()
+    assert yielded is session
+
+    class _ConsumerError(RuntimeError):
+        pass
+
+    # Exception in den Generator werfen — entspricht einer Exception im
+    # FastAPI-Endpoint nach Dependency-Auflösung. Die yield-Dependency muss
+    # rollback() aufrufen, bevor der async-with-Block exitet, und die
+    # ursprüngliche Exception unverändert weitergeben.
+    with pytest.raises(_ConsumerError, match="boom"):
+        await gen.athrow(_ConsumerError("boom"))
+
+    assert session.rollback_count == 1, (
+        "Exception-Pfad ohne rollback() laesst Transaktion offen - Connection "
+        "kann 'idle in transaction' im Pool haengen bleiben."
+    )
+    assert session.exit_count == 1, "async-with-Block muss nach rollback() ordnungsgemäß exiten."
