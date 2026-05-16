@@ -53,6 +53,11 @@ fail() { printf '  \033[1;31m✗\033[0m %s\n' "$*" >&2; }
 
 cleanup() {
 	local exit_code=$?
+	# Tempfiles aufräumen, die im Frontend-Smoke-Block gesetzt werden. Dürfen
+	# NICHT über einen eigenen `trap … EXIT` gehen — das würde diesen globalen
+	# cleanup()-Trap überschreiben (bash hält nur einen EXIT-Trap pro Scope)
+	# und den Compose-Stack-Down-Schritt verschlucken.
+	rm -f "${FE_COOKIE_JAR:-}" 2>/dev/null || true
 	if [[ $KEEP_STACK -eq 0 || $exit_code -ne 0 ]]; then
 		step "Compose-Stack herunterfahren"
 		docker compose --profile dev --profile frontends down --remove-orphans >/dev/null 2>&1 || true
@@ -561,7 +566,9 @@ fi
 #    /me darf danach kein 200 mehr liefern. Wir nutzen Plattform-Admin aus
 #    den vorhergehenden Smoke-Schritten.
 FE_COOKIE_JAR=$(mktemp)
-trap 'rm -f "$FE_COOKIE_JAR"' EXIT
+# Kein eigener `trap … EXIT` hier — würde den globalen cleanup()-Trap (Zeile 68)
+# überschreiben und den Compose-Stack-Down-Schritt verschlucken.
+# FE_COOKIE_JAR wird in cleanup() aufgeräumt.
 
 fe_login_status=$(curl --silent --insecure --max-time 10 \
 	-c "$FE_COOKIE_JAR" \
