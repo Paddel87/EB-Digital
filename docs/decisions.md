@@ -13,28 +13,30 @@
 
 ## Teil A: ADR-Übersicht
 
-| ADR | Datum      | Status | Klassifikation | Themen          | Kategorie                  | Kurztitel                                                                  |
-| --- | ---------- | ------ | -------------- | --------------- | -------------------------- | -------------------------------------------------------------------------- |
-| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK        | Methodik                   | Projektgrößen-Klassifikation Klasse G                                      |
-| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK           | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate)     |
-| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK        | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends            |
-| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY        | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                        |
-| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY        | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                             |
-| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL     | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets                   |
-| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE   | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                         |
-| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL           | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                         |
-| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL     | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5                 |
-| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                         |
-| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime                   |
-| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.    | Externe Abhängigkeiten     | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)         |
-| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY | Externe Abhängigkeiten     | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                    |
-| 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL | Architekturänderungen      | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip |
+| ADR | Datum      | Status | Klassifikation | Themen                    | Kategorie                  | Kurztitel                                                                                     |
+| --- | ---------- | ------ | -------------- | ------------------------- | -------------------------- | --------------------------------------------------------------------------------------------- |
+| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Projektgrößen-Klassifikation Klasse G                                                         |
+| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK                     | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate)                        |
+| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends                               |
+| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                                           |
+| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                                                |
+| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets                                      |
+| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE             | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                                            |
+| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL                     | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                                            |
+| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5                                    |
+| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                                            |
+| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime                                      |
+| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten     | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)                            |
+| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY           | Externe Abhängigkeiten     | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                                       |
+| 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL           | Architekturänderungen      | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip                    |
+| 015 | 2026-05-15 | Aktiv  | REAKTIV        | STACK, SECURITY, METHODIK | Sicherheit und Datenschutz | `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b) |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 0 / 10 = 0 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-005 bis ADR-014).
+- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-006 bis ADR-015).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
+- **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz).
 
 ---
 
@@ -463,6 +465,52 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - **`project-context.md` Abschnitt 11 MapTiler-Eintrag** wird vollständig konsolidiert (Renderer/Provider-Trennung, AGB-Cache-Befund, Free-Tier-Restriktion, Sessions-vs-Requests-Detail, vier Migrationspfade A/B/C/D mit aktualisierter Trigger-Liste, Begriffsklärung MapTiler vs. MapLibre).
 - **Abgeleitete Regel:** Regel-017 (Anbieter-Austauschbarkeit für externe Services) – siehe Teil C.
 
+#### ADR-015: `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b)
+
+- **Datum:** 2026-05-15
+- **Status:** Aktiv
+- **Tags:** `[REAKTIV]` `[STACK]` `[SECURITY]` `[METHODIK]`
+- **Phasentyp-Kontext:** UMSETZUNG (Hot-Stabilisierungs-Schritt 2.5b zwischen 2.5 und 2.6).
+- **Reifegrad-Wirkung:** Modul-Reifegrade `backend/auth`, `backend/auth_anonymous`, `backend/tenants` bleiben `[BELASTBAR]` (Bug betraf den Querschnitts-Lifecycle, nicht die fachliche Funktionalität — der Fix bestätigt die request-scoped Architektur-Absicht). Die Dependency-Lifecycle-Garantie selbst wird im Architektur-Modul-Eintrag `backend/auth` als Modul-übergreifende Eigenschaft `[BELASTBAR]` aufgenommen.
+- **Kategorie:** Sicherheit und Datenschutz (CLAUDE.md Abschnitt 4 Punkt 6 — Auth-Endpunkte hängen an dieser Dependency) + Methodik (neue Regel für Resource-Dependencies).
+- **Kontext:** Externer Verdachtsbericht 2026-05-15 (Patrick) zu `backend/eb_digital/auth/api.py:103` `get_db_session()`. Implementierung war:
+
+  ```python
+  async def get_db_session(request: Request) -> AsyncSession:
+      ...
+      async with factory() as session:
+          return session  # ← __aexit__ feuert HIER
+  ```
+
+  Das `return` innerhalb des `async with` löst `AsyncSession.__aexit__()` **vor** der Endpoint-Ausführung aus → SQLAlchemy schließt die Session und rollbackt offene Transaktionen. SQLAlchemy 2.0 `AsyncSession` ist lazy bei Connection-Acquisition, daher funktionieren die Endpoints oberflächlich (erste Operation erwirbt eine neue Connection), aber:
+  1. **Die neue Connection liegt außerhalb des `async with`-Cleanup** — FastAPI hat keinen Finalizer für `return`-Dependencies. Cleanup hängt am unzuverlässigen `__del__` der Session.
+  2. **Bei Exception vor `await db.commit()`** wird kein Rollback ausgelöst — die Connection bleibt potenziell ‚idle in transaction‘ im Pool.
+  3. **Unter Last** (Vision-Annahme 50 Disponenten + 500 Einsatzkräfte, `project-context.md` Abschnitt 2) drohen Connection-Pool-Erschöpfung und steigende Latenzen.
+
+  Die Dependency wird von 9 Endpoints aller drei `[BELASTBAR]`-Module konsumiert (`backend/auth`, `backend/auth_anonymous`, `backend/tenants`). Bestehende API-Tests überschreiben sie per `dependency_overrides` mit Stubs und maskieren den Lifecycle-Bug; der einzige direkte Lifecycle-Test prüfte nur `isinstance(...)`.
+
+- **Optionen:**
+  - **A: Minimaler Code-Fix als Hot-Stabilisierungs-Schritt 2.5b** — `return` durch `yield` ersetzen, expliziter `await session.rollback()` im Exception-Pfad. Lifecycle-Tests umgeschrieben (Counter-Stub für Enter/Exit/Rollback). Real-DB-Validierung über bestehenden `dev-smoke.sh` mit Slug-Kollision als Exception-Pfad-Probe. Bestehende explizite Endpoint-`await db.commit()` bleiben unverändert. ADR + neue Regel-018 dokumentieren das Muster für künftige Resource-Dependencies. — Konsequenzen: 3-Zeilen-Code-Change, niedriges Risiko (offizielles FastAPI-Muster), Methodik-Lerneffekt für künftige Connection-/Pipeline-Dependencies.
+  - **B: Größere Unit-of-Work-Umstellung** — Dependency committet selbst bei Endpoint-Erfolg, rollbackt sonst. Endpoints verlieren ihre expliziten `await db.commit()`-Aufrufe. — Konsequenzen: Anpassung aller 9 Endpoints + Use-Cases, hoher Test-Refactor, eigener `[STRATEGISCH]`-ADR. Geht über das Bug-Fix-Bedürfnis hinaus, mischt zwei Themen.
+  - **C: Fix-only ohne Methodik-Regel** — wie A, aber ohne Regel-018 und ohne Architektur-Spec-Anpassung. — Konsequenzen: Wiederholungs-Risiko in künftigen Modulen mit Resource-Dependencies (Procrastinate-Connection, Valkey-Pipelines), Vision-Driven-Development verliert die Lerngelegenheit.
+- **Entscheidung:** **Option A**. Patrick-Freigabe 2026-05-15 nach Vorlage der drei Optionen mit Empfehlung A (Bug-Tiefe rechtfertigt Methodik-Regel; Unit-of-Work-Wechsel ist eigene Architekturfrage; Reaktiv-Quote bleibt mit 1/10 = 10 % unter Schwellenwert).
+- **Konsequenzen:**
+  - **Code:** [backend/eb_digital/auth/api.py](backend/eb_digital/auth/api.py) `get_db_session()` umgestellt auf `async def get_db_session(request) -> AsyncIterator[AsyncSession]` mit Muster `async with factory() as session: try: yield session except Exception: await session.rollback(); raise`. Type-Annotation auf `AsyncIterator[AsyncSession]` umgestellt; `# type: ignore[no-any-return]` nicht mehr nötig.
+  - **Tests:** [backend/tests/test_auth_login_api.py](backend/tests/test_auth_login_api.py) — bestehender `test_get_db_session_invokes_factory_and_returns_session` zu `test_get_db_session_yields_session_within_open_context` umgeschrieben (echter Lifecycle mit Counter); neuer `test_get_db_session_rollbacks_and_propagates_on_exception` ergänzt (Exception-Pfad mit Rollback-Verifikation); bestehender `test_get_db_session_raises_without_app_state` an async-Generator-Semantik angepasst (`gen.__anext__()` statt direkter Aufruf).
+  - **Smoke:** [scripts/dev-smoke.sh](scripts/dev-smoke.sh) erweitert um Exception-Fall-Probe (Slug-Kollision auf `/register-tenant` → 409 → Folge-`/api/health` muss innerhalb 1 s antworten — verifiziert Connection-Rückgabe im Exception-Pfad gegen echtes PostgreSQL im Compose-Stack).
+  - **Architektur-Spec:** [architecture.md](docs/architecture.md) Modul-Einträge `backend/auth`, `backend/auth_anonymous`, `backend/tenants` ergänzt um Hinweis „Request-Scoped DB-Session via FastAPI-yield-Dependency mit explizitem Rollback im Exception-Pfad" als modul-übergreifende Eigenschaft.
+  - **Reaktiv-Quote:** 0/10 → 1/10 = 10 % über die letzten 10 ADRs (ADR-006 bis ADR-015). Unter dem 20 %-Schwellenwert für Klasse G; keine Reflexion nötig, aber im nächsten Phasen-Anfang als Beobachtung führen.
+  - **Endpoint-`await db.commit()` bleiben erhalten** (Patrick-Direktive: kein Unit-of-Work in 2.5b). Eine spätere zentrale Commit-/Rollback-Strategie wäre eigener `[STRATEGISCH]`-ADR.
+  - **`auth_anonymous` und `tenants` benötigen keine Code-Änderung** — sie konsumieren `get_db_session` per `Depends(...)`, FastAPI erkennt automatisch yield-Generatoren. Auch die existierenden `dependency_overrides` in den Test-Suiten funktionieren unverändert (FastAPI erlaubt sowohl return- als auch yield-Override-Funktionen).
+- **Verworfene Alternativen:**
+  - **B (Unit-of-Work):** zu großer Scope, mischt zwei Architektur-Themen (Lifecycle-Bug + Commit-Strategie). Wird als spätere `[STRATEGISCH]`-Option offengehalten, falls Phase-7-Stabilisierung das Endpoint-Commit-Boilerplate als zu fehleranfällig markiert.
+  - **C (kein Methodik-Regel):** verliert den Querschnitts-Lerneffekt. Procrastinate (PsycopgConnector als eigener Pool) und Valkey-Pipelines werden in Phase 4 ähnliche Resource-Dependency-Muster verlangen — Regel-018 schützt vor Wiederholung.
+- **Wirkung auf bestehende ADRs:**
+  - ADR-002 (Stack-Wahl) bleibt gültig; FastAPI-yield-Dependency ist offizielles Stack-Muster.
+  - ADR-003 (Architektur-Pattern Modular Monolith) bleibt gültig; Request-Scoped-DB-Session ist Eigenschaft der Backend-Schicht, kein Modul-Schnitt.
+  - ADR-013 (Rate-Limit als Valkey-Counter) bleibt gültig; betroffene `incr_and_check`-Calls sind eigenständige `redis.asyncio`-Operationen ohne Lifecycle-Wechselwirkung mit der DB-Session.
+- **Abgeleitete Regel:** Regel-018 (FastAPI-Resource-Dependencies mit Context-Manager nutzen `yield`, nicht `return`) — siehe Teil C.
+
 ---
 
 ## Teil C: Entscheidungsregeln
@@ -627,3 +675,30 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - `from backend.geo.maptiler import geocode_address` direkt aus `backend/operations` aufgerufen (Provider-Identität sickert in den Aufrufer) — verboten. Stattdessen `backend.geo.geocode(address)` als provider-neutrale Schnittstelle.
   - `import maptilersdk` im Svelte-Frontend ohne separaten ADR — verboten. Stattdessen MapLibre GL JS, oder ADR mit Lock-in-Begründung.
   - Direkter provider-spezifischer Endpunkt-Aufruf in einem Backend-Modul außerhalb von `backend/geo` (z. B. `httpx.get("https://api.maptiler.com/...")` aus `backend/realtime`) — verboten. Stattdessen Adapter-Aufruf über `backend/geo`.
+
+#### Regel-018: FastAPI-Resource-Dependencies mit Context-Manager nutzen `yield`, nicht `return`
+
+- **Herkunft:** ADR-015
+- **Gilt für:** jede FastAPI-Dependency, die eine Ressource mit Lifecycle (Context-Manager, `with`/`async with`) erzeugt und an Endpoints durchreicht. Aktuelle Treffer: `get_db_session` (SQLAlchemy `AsyncSession`); künftige Treffer: Procrastinate-Connection-Wrapper, Valkey-Pipeline-Scopes, file-handle-haltende Helfer, externe HTTP-Client-Sessions mit dediziertem Connection-Pool, etc.
+- **Regel:** Eine Dependency, die intern `with` oder `async with` öffnet, gibt die geschützte Ressource ausschließlich per `yield` weiter — niemals per `return` aus dem `with`-Block heraus. Korrektes Muster:
+  ```python
+  async def get_resource(...) -> AsyncIterator[Resource]:
+      async with factory() as resource:
+          try:
+              yield resource
+          except Exception:
+              await resource.rollback()  # oder analoger Fehler-Cleanup
+              raise
+  ```
+  Die Type-Annotation lautet `AsyncIterator[Resource]` (oder `Iterator[Resource]` für sync). Der Exception-Pfad führt einen expliziten Fehler-Cleanup-Aufruf aus (z. B. `rollback()` für DB-Sessions, `discard()` für Pipelines), bevor die Exception propagiert. FastAPI erkennt yield-Generatoren automatisch und führt den Code nach `yield` als Cleanup-Phase aus, auch wenn der Endpoint eine Exception wirft. Der Code vor `yield` läuft vor dem Endpoint, der yield-Wert wird injiziert, der Code nach `yield` läuft nach dem Endpoint.
+- **Begründung:** `return resource` innerhalb eines `with`-Blocks löst sofort `__exit__` / `__aexit__` aus — die Ressource ist beim Endpoint-Aufruf bereits geschlossen oder im Cleanup-Modus. SQLAlchemy-`AsyncSession` ist lazy bei Connection-Acquisition, daher funktioniert der Code oberflächlich (neue Connection wird stillschweigend erworben), aber **diese Connection liegt außerhalb des `with`-Cleanup**, und Exceptions vor explizitem Commit lösen keinen Rollback aus. Symptome: Connection-Pool-Erschöpfung unter Last, ‚idle in transaction‘-Zustände, schwer reproduzierbare Fehler in Integrationstests.
+- **Tests:** Jede neue Resource-Dependency braucht einen Lifecycle-Test mit Counter-Stub (Verifikation: Enter vor Yield, Exit nach Konsum, Rollback bei Exception) sowie mindestens eine Smoke-/Integration-Probe gegen die echte Ressource (z. B. dev-smoke.sh-Eintrag mit Exception-Pfad → Folge-Request darf nicht stallen).
+- **Ausnahmen:** Dependencies, die keine Lifecycle-Ressource verwalten (reine Settings-Lookups, statische Header-Reader, in-memory-Object-Lookups), dürfen `return` verwenden — sie öffnen keinen `with`-Block und haben keinen Cleanup-Bedarf.
+- **Gegenbeispiel:**
+  ```python
+  # ❌ Verboten — return aus async with löst __aexit__ vor Endpoint aus:
+  async def get_db_session(request: Request) -> AsyncSession:
+      async with factory() as session:
+          return session  # ← Bug: Session ist beim Endpoint bereits geschlossen
+  ```
+  Genau diese Form war der Lifecycle-Bug aus Schritt 2.5b (ADR-015).

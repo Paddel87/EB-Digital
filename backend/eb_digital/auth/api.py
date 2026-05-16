@@ -27,6 +27,7 @@ Reset-Password-Pfad (2.4): Public, 5/15min/IP-Rate-Limit, Token-Validierung
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from typing import Annotated, Final
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -100,13 +101,21 @@ async def get_valkey_client(request: Request) -> Redis:
     return client  # type: ignore[no-any-return]
 
 
-async def get_db_session(request: Request) -> AsyncSession:
+async def get_db_session(request: Request) -> AsyncIterator[AsyncSession]:
+    # FastAPI yield-Dependency (ADR-015, Regel-018): das `yield` hält den
+    # Context-Manager über die Endpoint-Ausführung offen. `return session`
+    # innerhalb des `async with` würde `__aexit__` vor Endpoint-Nutzung
+    # auslösen und die Session bereits geschlossen ausliefern.
     factory = getattr(request.app.state, "db_session_factory", None)
     if factory is None:
         msg = "DB-Session-Factory wurde nicht im app.state initialisiert."
         raise RuntimeError(msg)
     async with factory() as session:
-        return session  # type: ignore[no-any-return]
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
 
 
 # ─── Pydantic-Modelle ────────────────────────────────────────────────────────
