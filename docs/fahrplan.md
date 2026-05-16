@@ -8,12 +8,12 @@
 ## Aktueller Stand
 
 - **Stand vom:** 2026-05-16
-- **Laufende Phase:** Phase 2 – Auth + Tenants + Verbund-Tauglichkeit (I1/I2) (UMSETZUNG).
-- **Phasentyp:** UMSETZUNG (**Phase-2-Sonderregel:** Eingangsdisziplin analog Phase 1 abgemildert — alle berührten Module bleiben durch Skelett-Existenz `[VORLÄUFIG]`; Modul-Schnitt durch ADR-002/003/004/008/009 fixiert, Datenmodell-Grundzüge durch ADR-006/007 fixiert. Reifegrad-Beförderung `[VORLÄUFIG]` → `[BELASTBAR]` erfolgt mit dem jeweiligen funktionalen Schritt, nicht mit dem Datenmodell-Skelett. Patrick freigegeben 2026-05-10.).
-- **Erledigte Schritte Phase 2:** **2.6 [ERLEDIGT]** 2026-05-16 (`frontend-einsatzkraft` AccessCode-Eingabe-UI produktiv gegen S2a: Landing ohne Token-Eingabe, dynamische Route `/[token]` mit `/info`-Load + Code-Form mit strikter Pattern-Validation und Auto-Uppercase, separate Erfolgs-Route `/[token]/dashboard` mit In-Memory-Session-Guard, SPA-Mode `prerender=false; ssr=false` global wegen dynamischer Token-Route, Vite-Dev-Proxy + Browser-Globals + `$lib`-Alias analog 2.5, 47 Vitest-Tests grün (Coverage 98.59 % Lines / 95.55 % Branches), svelte-check + tsc + eslint + prettier + adapter-static-Build + alle Pre-Commit-Hooks grün, `dev-smoke.sh` um Einsatzkraft-Build-Block erweitert, kein Backend-Eingriff, S2-Spec unverändert). **2.5 [ERLEDIGT]** 2026-05-15 (`frontend-disponent` Login + Dashboard + Reset-Password-UI produktiv: Route-Gruppen `(public)/`/`(authed)/`, In-Memory-Session-Cache, API-Client-Wrapper mit Error-Mapping für 7 Statuscodes + Retry-After-Parsing, Login-Form mit Rate-Limit-Countdown, Dashboard mit Mandanten-Tabelle und Status-Badges, Carer-Hinweisseite, Operations-Platzhalter, Reset-Password-Form mit Client-Side-Validierung, Vite-Dev-Proxy, Browser-Globals in ESLint-Flat-Config, `.gitattributes` mit `eol=lf` als Plattform-Hygiene-Fix gegen CRLF-Drift unter Windows; 27 Vitest-Tests grün, Coverage ≥ 96 % auf den getesteten Auth-/API-Modulen; svelte-check + tsc + eslint + prettier + build + alle Pre-Commit-Hooks grün; `dev-smoke.sh` um Frontend-Smoke-Block erweitert; Backend-Suite weiterhin 439/1 grün mit 95.82 % Coverage). **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv: 6 neue Module unter `backend/eb_digital/tenants/{slug,username,repositories,use_cases,participation,api}.py` + `auth/reset_token.py`; Tenant-Modell um zwei Lookup-Indizes erweitert + Migration `a7c3b2d8e9f1` (S10-Pflicht-Indizes, in 2.1 versehentlich ausgelassen); Erweiterung `auth/api.py` um `register-tenant`, `reset-password` und Tenant-Status-Check im Login-Pfad; 7 neue Domain-Exception-Klassen; 10 neue Test-Dateien mit 153 neuen Tests bringen Backend von 286 auf 439 / 95.82 % Coverage gesamt, `backend/tenants` 95–100 %; alle Pflicht-Hooks pre-commit grün; `dev-smoke.sh` um Tenants-Block (10 Schritte) erweitert; Compose-Smoke + Alembic-Round-Trip live im Stack verifiziert; Detail-Plan mit 4 Detail-Entscheidungen Patrick am 2026-05-12 mit B/B/A/A freigegeben). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013 + redis-py-Sub-Wahl). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
+- **Laufende Phase:** **Phase 2 abgeschlossen** (Schritt 2.7 ERLEDIGT 2026-05-16). Nächste laufende Phase: **Phase 3 – Spikes Wave 1 (Operations-Vorklärungen) (ERKUNDUNG).**
+- **Phasentyp:** **Phase 2** (UMSETZUNG, Phase-2-Sonderregel) **abgeschlossen.** **Phase 3** (ERKUNDUNG) ist als nächste laufende Phase nominiert: Klärung Spike I (Geo-Plausibilitäts-Algorithmus) und Spike J (Bündelungs-Trigger), beide blockieren die UMSETZUNG-Phase 4 `backend/operations`.
+- **Erledigte Schritte Phase 2 (alle ERLEDIGT):** **2.7 [ERLEDIGT]** 2026-05-16 (Phase-2-Abschluss: Coverage-Frischlauf verifiziert die Modul-Schwellen aller belastbaren Module — Backend 95.84 % gesamt, `backend/auth` 96 %, `backend/auth_anonymous` 100 %, `backend/tenants` 95–100 %; Frontend-Disponent 96.61 % Lines / 93.33 % Branches, Frontend-Einsatzkraft 98.38 % Lines / 95.55 % Branches; GitHub-Issue `Paddel87/EB-Digital#26` für externe Security-Review Phase 7.2 mit Briefing-Form angelegt; keine Code-Änderung, keine ADR-Pflicht; Detail-Plan A/A/A/A/A freigegeben). **2.6 [ERLEDIGT]** 2026-05-16 (`frontend-einsatzkraft` AccessCode-Eingabe-UI produktiv gegen S2a; 47 Vitest-Tests grün). **2.5 [ERLEDIGT]** 2026-05-15 (`frontend-disponent` Login + Dashboard + Reset-Password-UI produktiv; 27 Vitest-Tests grün). **2.5b [ERLEDIGT]** 2026-05-16 (Hot-Stabilisierung `get_db_session()` als yield-Dependency mit Rollback, ADR-015, Regel-018). **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv mit S10). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
 - **Aktiver Schritt:** keiner.
-- **Nächster Schritt:** **2.7** Tests + Coverage; externe Security-Review als Issue erfasst (Phase 7).
-- **Hot-Stabilisierung 2.5b** am 2026-05-16 `[ERLEDIGT]`: `get_db_session()` von `return`-aus-`async with` auf yield-Dependency mit Rollback im Exception-Pfad umgestellt (ADR-015 `[REAKTIV] [STACK] [SECURITY] [METHODIK]`, Regel-018). Vollständige Backend-Suite 440/1 grün, Coverage 95.84 %, `backend/auth` 96 %, `backend/auth_anonymous` 100 %. Reaktiv-Quote 1/10 = 10 % (unter 20 %-Schwellenwert).
+- **Nächster Schritt:** **3.1** Spike I (Geo-Plausibilitäts-Algorithmus, Zeitbox 4 h) — Schritt-Art Spike, blockt Phase 4-Schritt zu Einsatzkraft-Bestellpfad (Hard-Path F2). Direkt danach **3.2** Spike J (Bündelungs-Trigger, Zeitbox 4 h).
+- **Phase-2-Bilanz (Reifegrad-Beförderungen):** `backend/auth` → `[BELASTBAR]` (2.2), `backend/auth_anonymous` → `[BELASTBAR]` (2.3), `backend/tenants` → `[BELASTBAR]` (2.4), Request-Scoped DB-Session-Dependency → `[BELASTBAR]` (2.5b, cross-cutting). Schnittstellen: S2a, S8a, S8b → `[BELASTBAR]`; S10 → `[BELASTBAR]`. Datenmodelle: `anonymous_session` + `operation.url_token`-Widening → `[BELASTBAR]`. Invarianten I1, I2 → `[BELASTBAR]`. Frontends `frontend-disponent` und `frontend-einsatzkraft` funktional validiert (Reifegrad bleibt `[VORLÄUFIG]` bis Phase-6-Last-Test). Reaktiv-Quote 1 / 10 = 10 % (ADR-015 Hot-Stabilisierung 2.5b — unter 20 %-Schwellenwert Klasse G).
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
 - **CI-Hygiene-Sonderfall in Phase 1 (2026-05-10):** ADR-012 — `actions/upload-artifact@v4` → `@v7` als Major-Update gegen Node-20-Deprecation, analog zu ADR-010 in 1.2. Reaktiv-Quote bleibt 0 / 10.
@@ -88,16 +88,16 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 ## Phasen-Übersicht
 
-| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                                                                                                                                                |
-| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10)                                                                                                                                |
-| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | IN ARBEIT (2.1+2.2 ERLEDIGT 2026-05-10, 2.3 ERLEDIGT 2026-05-11, 2.4 ERLEDIGT 2026-05-12, 2.5 ERLEDIGT 2026-05-15, 2.5b ERLEDIGT 2026-05-16, 2.6 ERLEDIGT 2026-05-16) |
-| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | OFFEN                                                                                                                                                                 |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                                                                                                                                                 |
-| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                                                                                                                                                 |
-| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                                                                                                                                                 |
-| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                                                                                                                                                 |
-| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                                                                                                                                                 |
+| Phase | Titel                                                                   | Typ                   | Spikes / Roadmap  | Status                                                                                                                                                  |
+| ----- | ----------------------------------------------------------------------- | --------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10)                                                                                                                  |
+| 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | ERLEDIGT (2.1+2.2 ERLEDIGT 2026-05-10, 2.3 ERLEDIGT 2026-05-11, 2.4 ERLEDIGT 2026-05-12, 2.5 ERLEDIGT 2026-05-15, 2.5b + 2.6 + 2.7 ERLEDIGT 2026-05-16) |
+| 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | NÄCHSTE (Eingangsstart 2.7-Abschluss)                                                                                                                   |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | OFFEN                                                                                                                                                   |
+| 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                                                                                                                                   |
+| 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                                                                                                                                   |
+| 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                                                                                                                                   |
+| X     | Verbund-Modus für parallele Mandanten-Großlagen _(spätere Erweiterung)_ | ERKUNDUNG → UMSETZUNG | (eigener Spike)   | OFFEN                                                                                                                                                   |
 
 **Spikes-Zuordnung im Detail:**
 
@@ -872,9 +872,61 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
   - **`access_code_active=false` und 422-Defensive:** Backend liefert 422 nur bei Pattern-Verstoß mit Pflicht-Code. Bei `access_code_active=false` wird Body `{access_code: null}` gesendet — wenn der Backend-Status zwischen `/info`-Antwort und `/session`-Submit auf `access_code_active=true` wechselt (Disponent-Toggle), könnten wir theoretisch 422 sehen. UX-Defensive: 422-Meldung weist auf Toggle hin („Format des Codes ungültig — bitte Seite neu laden und Code eingeben").
   - **Build-Smoke vs. Backend-API-Smoke:** Detail-Plan-Entscheidung — der Backend-API-Smoke der S2a-Endpunkte ist im 2.3-Anon-Block bereits vollständig (200/401/410). Eine UI-basierte E2E-Probe wäre Browser-Automatisierung (Playwright) und gehört zu Phase 7 (`project-context.md` Abschnitt 7: Playwright als STABILISIERUNG-Coverage).
 
-#### 2.7: Tests + Coverage + Security-Review-Issue (Folgeschritt, gröber)
+#### 2.7: Tests + Coverage + Security-Review-Issue (Phase-2-Abschluss) — Typ: UMSETZUNG
 
-- **2.7** Tests + Coverage; externe Security-Review als Issue erfasst (Phase 7).
+- **Status:** ERLEDIGT (2026-05-16; Detail-Plan-Freigabe Patrick 2026-05-16: A/A/A/A/A für alle fünf Detail-Fragen).
+- **Phasentyp-Kontext:** UMSETZUNG (Phase-2-Abschluss-Schritt; keine Code-Änderungen, reine Verifikation + Dokumentation + Issue-Erfassung).
+- **Abhängigkeiten:** 2.1 + 2.2 + 2.3 + 2.4 + 2.5 + 2.5b + 2.6 ERLEDIGT; Phase-2-Coverage-Schwellen bereits durch die jeweiligen Schritte etabliert.
+- **Freigabepflichtig:** ja — der Schritt war im Fahrplan nur als „2.7 Tests + Coverage; externe Security-Review als Issue erfasst (Phase 7)" angerissen und musste in dieser Session in volles Schritt-Format überführt werden. Detail-Plan mit fünf Fragen (Form der Issue, Coverage-Scope, Verifikation des Operation-Eröffnungs-Kriteriums, PR-Strategie, ADR-Bedarf) Patrick 2026-05-16 vorgelegt — Freigabe „A/A/A/A/A" (alle Empfehlungen).
+- **Eingangskriterien:**
+  - 2.1–2.6 (inkl. 2.5b) ERLEDIGT ✓
+  - Backend-Suite 440 + 1 skipped grün (Stand 2.5b ✓, in 2.7 re-verifiziert)
+  - Frontend-Suites 27/27 (Disponent) + 47/47 (Einsatzkraft) grün (Stand 2.5/2.6 ✓, in 2.7 re-verifiziert)
+  - Detail-Plan-Freigabe Patrick 2026-05-16 ✓
+- **Zu tun:**
+  1. **Coverage-Frischlauf** gegen aktuelle `main` (HEAD `f7cd481`):
+     - Backend: `uv run pytest backend/tests --cov=backend/eb_digital --cov-report=term-missing -q`
+     - Frontend-Disponent: `pnpm --filter frontend-disponent exec vitest run --coverage`
+     - Frontend-Einsatzkraft: `pnpm --filter frontend-einsatzkraft exec vitest run --coverage`
+     - Snapshot der Ergebnisse in `logbuch.md` `[SESSIONENDE]`-Eintrag.
+  2. **GitHub-Issue für externe Security-Review (Phase 7.2)** anlegen mit Briefing-Form gemäß Detail-Plan-Frage-1-A:
+     - Scope: `backend/auth` + `backend/auth_anonymous` + `backend/tenants` + Rate-Limit-Schicht + Session-Handling + Regel-018-Pattern
+     - Artefakt-Verweise: relevante Module/Dateien, ADR-004/005/007/008/009/013/015, Regel-005/006/007/010/011/013/014/018
+     - Bedrohungsmodell-Anker zur Bestätigung oder Widerlegung
+     - Erfolgskriterien: Findings-Klassifikation (CVSS o. ä.), Auflösungs-Pfad pro Severity, Abschluss-ADR-Pflicht in Phase 7.2
+     - Out-of-Scope-Klärung (`backend/operations`, Frontends, Infra)
+  3. **Fahrplan-Updates:**
+     - Schritt 2.7 in volles Schritt-Format überführen (dieser Block).
+     - Aktueller Stand: Phase 2 ERLEDIGT; nächste Phase: Phase 3 (Spikes Wave 1).
+     - Phasen-Übersicht: Phase 2-Zeile auf ERLEDIGT.
+     - Phase-2-Reflexions-Eintrag im Abschnitt „Iterations-Reflexion" mit Beobachtungen zu Reaktiv-Quote, Coverage-Trajektorie, Phase-2-Sonderregel-Wirkung.
+  4. **README-Sync:**
+     - Status-Block: Letzte Änderung, Phase-Status, „Nächste Schritte" auf Phase 3 (Spike I + Spike J) umstellen.
+  5. **Logbuch-Sessionende-Eintrag** mit Coverage-Snapshot, Issue-Verweis, Phase-2-Abschluss-Beobachtung.
+  6. **Commit + PR** (Detail-Plan-Frage-4-A): eigene PR aus Worktree-Branch `claude/nice-neumann-35648e` gegen `main`.
+- **Akzeptanzkriterien (UMSETZUNG → funktionsbasiert, 7 Stück):**
+  - **AC-1:** Backend-Coverage-Frischlauf grün, 440 passed + 1 skipped, gesamt ≥ 95 %; Modul-Schwellen `backend/auth` ≥ 95 % Lines / ≥ 90 % Branches, `backend/auth_anonymous` ≥ 95 % / ≥ 90 %, `backend/tenants` ≥ 80 % erfüllt (jeweils gewichtet auf Modul-Aggregat).
+  - **AC-2:** Frontend-Disponent-Coverage-Frischlauf grün, 27/27 Tests, ≥ 80 % Lines auf getesteten Modulen.
+  - **AC-3:** Frontend-Einsatzkraft-Coverage-Frischlauf grün, 47/47 Tests, ≥ 80 % Lines auf getesteten Modulen.
+  - **AC-4:** GitHub-Issue „Phase 7.2 — Externe Security-Review Auth-Stack beauftragen" im Repo `Paddel87/EB-Digital` angelegt mit vollständigem Briefing (Scope, Artefakt-Verweise, Bedrohungsmodell-Anker, Erfolgskriterien, Out-of-Scope, Referenzen).
+  - **AC-5:** `docs/fahrplan.md` Schritt 2.7 in vollem Schritt-Format; „Aktueller Stand" auf Phase 2 ERLEDIGT, Phase 3 als nächste laufende Phase nominiert; Phasen-Übersicht entsprechend; Reflexions-Eintrag für Phase 2.
+  - **AC-6:** `README.md` Status-Block und „Nächste Schritte" synchronisiert (Phase 2 abgeschlossen, Phase 3 / Spike I + J als nächste Schritte).
+  - **AC-7:** `docs/logbuch.md` `[SESSIONENDE]`-Eintrag mit Coverage-Snapshot, Issue-Verweis, Phase-2-Abschluss-Beobachtung.
+- **Betroffene Module:** keine Code-Änderung. Reine Doku-Pflege in `docs/fahrplan.md`, `docs/logbuch.md`, `README.md`. Neuer GitHub-Issue.
+- **Reifegrad-Wirkung:**
+  - **Keine Beförderung in 2.7.** Modul-Reifegrade bleiben unverändert: `backend/auth`, `backend/auth_anonymous`, `backend/tenants` bleiben `[BELASTBAR]` (mit der Phase-2-Sonderregel-Einschränkung). Architektur-Pattern (Modular Monolith + 3 SvelteKit-Frontends) bleibt `[VORLÄUFIG]` bis Phase-6-Last-Test (analog Detail-Frage 5-A aus 2.5/2.6).
+  - **Phase-2-Reifegrad-Bilanz** (Beförderungen durch Phase 2 insgesamt): `backend/auth` → `[BELASTBAR]` (2.2), `backend/auth_anonymous` → `[BELASTBAR]` (2.3), `backend/tenants` → `[BELASTBAR]` (2.4), Request-Scoped DB-Session-Dependency → `[BELASTBAR]` (2.5b). Schnittstellen S1 (in 1.6 schon belastbar) + S2a, S8a, S8b, S10 zu `[BELASTBAR]`. Datenmodelle `anonymous_session`, `operation.url_token`-Widening zu `[BELASTBAR]`. Invarianten I1, I2 zu `[BELASTBAR]`. Frontends `frontend-disponent` und `frontend-einsatzkraft` funktional validiert, Reifegrad bleibt `[VORLÄUFIG]` bis Last-Test.
+- **Artefakte:**
+  - **Doku:** `docs/fahrplan.md` (dieser Schritt + Aktueller-Stand-Update + Phasen-Übersicht + Reflexion), `docs/logbuch.md` (`[SESSIONENDE]`-Eintrag), `README.md` (Status-Block + Nächste-Schritte).
+  - **GitHub-Issue:** `Paddel87/EB-Digital#26` (Phase 7.2 — Externe Security-Review Auth-Stack beauftragen).
+  - **Keine Code-Änderung.** Keine Tests neu, keine Migrations, keine Artefakte in `backend/` oder `apps/`.
+- **Notizen:**
+  - **Phase-2-Sonderregel** (Eingangsdisziplin abgemildert, alle berührten Module starten als `[VORLÄUFIG]` und werden mit dem jeweiligen funktionalen Schritt befördert) hat in der Praxis getragen: alle vier befördernden Schritte (2.2, 2.3, 2.4, 2.5b) lieferten den Reifegrad-Wechsel verifiziert über Coverage + dev-smoke.sh. Keine spätere `[REAKTIV]`-Korrektur aufgrund verfrühter Beförderung.
+  - **Operation-Eröffnung in Phase 2** (Detail-Plan-Frage-3-A): Phase-2-Abschluss-Kriterium fordert „Mandant-Disponent eröffnet eine leere Operation, die in `operation_tenant_participation` mit `role='owner'` verbunden ist". `backend/operations`-Use-Cases existieren in Phase 2 nicht (per Plan Phase 4). Der bestehende Direkt-INSERT-Pfad in `scripts/dev-smoke.sh` (seit 2.3 für Anon-Smoke aktiv, in 2.4 um `operation_tenant_participation`-Setup mit `role='owner'` erweitert) ist die korrekte Phase-2-API zur Operation-Anlage. Dev-smoke-Lauf gegen Compose-Stack (zuletzt 2.4-Sessionende) belegt die Kette End-to-End.
+  - **Issue als Briefing-Anker, nicht als Vergabe-Dokument:** Detail-Plan-Frage-1-A bewusst gewählt, weil eine externe Vergabe-Anbahnung erst sinnvoll ist, wenn der Status `Konzeption → Aufbau` gewechselt hat (Phase 7.7). Vergabe-Modalitäten (Pricing, Zeitrahmen, Vertrag) werden in Phase 7.2 bei Issue-Aktivierung ergänzt.
+  - **Coverage-Lücken-Behandlung** (Detail-Plan-Frage-2-A): keine aktive Suche nach uncovered Branches. Phase-Schwellen sind übererfüllt; externe Security-Review prüft Logik und Threat-Model, nicht Coverage-Branches. Eine spätere Coverage-Härtung (z. B. `backend/auth/reset_token.py` 80 % → 95 %, `backend/tenants/api.py` 89 % → 95 %) wäre Phase-7-Stabilisierungs-Pfad.
+  - **`HTTP_422_UNPROCESSABLE_ENTITY` Deprecation-Warning** im Backend-Coverage-Lauf: Starlette 1.0.0 / FastAPI 0.136.x liefert Backwards-compat-Alias für `HTTP_422_UNPROCESSABLE_CONTENT`. Kein Phase-2-Blocker; im `logbuch.md` als `[BEOBACHTUNG]` notiert, um in Phase 4 oder Phase 7 mit dem nächsten Stack-Refresh entschuldet zu werden.
+  - **Kein ADR in 2.7** (Detail-Plan-Frage-5-A): Phase-Abschluss ist Status-Update / Buchhaltung, keine Entscheidung. Reaktiv-Quote bleibt 1 / 10 = 10 %.
 
 ---
 
@@ -1005,6 +1057,30 @@ Verhindert, dass Erkenntnisse im Tagesgeschäft verloren gehen.]
 - **Reifegrad-Änderungen:** [Bestandteil X: VORLÄUFIG → BELASTBAR; Bestandteil Y: VORLÄUFIG → OFFEN]
 - **Neu erkannte Erkundungsbedarfe:** [neue Phasen oder Schritte, die hinzugefügt wurden]
 - **ADRs aus dieser Phase:** [Liste]
+
+### Reflexion nach Phase 2 (2026-05-16)
+
+- **Gelernt:**
+  - **Phase-2-Sonderregel** (Eingangsdisziplin abgemildert; alle berührten Module starten als `[VORLÄUFIG]` und werden mit dem funktionalen Schritt befördert, nicht mit dem Datenmodell-Skelett) **hat getragen**: alle vier befördernden Schritte (2.2, 2.3, 2.4, 2.5b) lieferten den Reifegrad-Wechsel verifiziert über Coverage + dev-smoke.sh gegen den echten Compose-Stack. Keine spätere `[REAKTIV]`-Korrektur aufgrund verfrühter Beförderung — die einzige `[REAKTIV]`-Adresse (ADR-015) betraf einen Cross-Cutting-Lifecycle-Bug, nicht das Modul-Schnitt-Modell.
+  - **Detail-Plan-vor-Code-Disziplin** (etabliert in 2.1, durchgehalten in 2.2/2.3/2.4/2.5/2.5b/2.6/2.7): jeder freigabepflichtige Schritt wurde mit einer Liste klar formulierter Detail-Fragen (3–7 Stück) vor dem Code-Eingriff vorgelegt; Patrick freigab jeweils mit Buchstaben-Kombination (B/B/A/A, A/B/B/A, B/B/A/A/A, A/A/A/A/A). Das verkürzt die Reibungs-Anteile in der Implementation deutlich gegenüber „erst implementieren, dann freigeben lassen".
+  - **Test-Maskierung als wiederkehrendes Risiko bei Dependency-Mocks** (ADR-015-Lehre): API-Tests, die `dependency_overrides` mit Stubs nutzen, prüfen die Dependency selbst nicht. Regel-018 fixiert die Lifecycle-Counter-Stub + Real-Smoke-Pflicht für künftige Resource-Dependencies — gilt antizipativ für Procrastinate-Connection-Wrapper (Phase 4), Valkey-Pipelines (Phase 4 Pub/Sub), externe HTTP-Client-Pools (Phase 6 `backend/geo`).
+  - **Frontend-Pattern aus 2.5 trug für 2.6** (1:1-Portierung des `api/client.ts`-Wrappers, Route-Gruppen-Idee, In-Memory-Session-Store): pnpm-Workspace ohne shared-Lib in Phase 2 ist akzeptable Duplikation. Ein gemeinsamer `@eb/api-client`-Workspace-Package wäre eigene Refactoring-Phase mit ADR (Architektur-Änderung).
+- **Kippende Annahmen:** keine. Annahmen aus ADR-002 bis ADR-014 (Stack, Modul-Schnitt, Auth-Strategie, Verbund-Invarianten) blieben in Phase 2 stabil. ADR-015 (`[REAKTIV]`) korrigierte ein Lifecycle-Detail, kippte aber nicht die strategische Linie.
+- **Reifegrad-Änderungen Phase 2 (Bilanz):**
+  - `backend/auth`: VORLÄUFIG → BELASTBAR (Schritt 2.2)
+  - `backend/auth_anonymous`: VORLÄUFIG → BELASTBAR (Schritt 2.3)
+  - `backend/tenants`: VORLÄUFIG → BELASTBAR (Schritt 2.4)
+  - Request-Scoped DB-Session-Dependency (cross-cutting): neu eingeführt als BELASTBAR (Schritt 2.5b, ADR-015)
+  - Schnittstelle S2a (Anonymous Session API Sub-Surface `/info` + `/session`): VORLÄUFIG → BELASTBAR (Schritt 2.3); S2 insgesamt bleibt VORLÄUFIG bis Order-Endpoints in Phase 4
+  - Schnittstellen S8a + S8b (Authentifizierte REST-API Sub-Surfaces für `/auth/login|logout|me` und `/auth/register-tenant|reset-password|/tenants/*`): VORLÄUFIG → BELASTBAR (Schritte 2.2 + 2.4); S8 insgesamt bleibt VORLÄUFIG
+  - Schnittstelle S10 (Tenant Participation Lookup): VORLÄUFIG → BELASTBAR (Schritt 2.4)
+  - Valkey-Connection-Pool für Backend: VORLÄUFIG → BELASTBAR (Schritt 2.2, ADR-013); Pub/Sub-Pfad bleibt VORLÄUFIG
+  - Datenmodell `anonymous_session` + `operation.url_token`-Spalten-Widening: neu eingeführt bzw. BELASTBAR (Schritt 2.3)
+  - Invarianten I1 (`operation_tenant_participation` als einzige Mandanten-Verknüpfung) + I2 (abstrakter Berechtigungs-Filter): VORLÄUFIG → BELASTBAR (Schritt 2.4)
+  - **Bleibend VORLÄUFIG:** `frontend-disponent` und `frontend-einsatzkraft` (funktional validiert, Last-Validierung steht bis Phase-6-Last-Test aus, analog Detail-Frage 5-A aus 2.5/2.6). Architektur-Pattern (Modular Monolith + 3 SvelteKit-Frontends + 2 Proxies) bleibt VORLÄUFIG bis Phase-6-Last-Test.
+- **Neu erkannte Erkundungsbedarfe:** keine zusätzlichen Spikes / Phasen außerhalb des bereits geplanten Fahrplans. Phase 3 (Spike I + Spike J) ist die unmittelbar nächste laufende Phase. Die in Phase 2 entstandenen Folge-Themen (CSRF-Synchronizer-Pattern, externe Security-Review, Coverage-Härtung in `backend/auth/reset_token.py` + `backend/tenants/api.py`, Stack-Refresh `HTTP_422_UNPROCESSABLE_ENTITY` → `_CONTENT`) sind alle Phase-7-Stabilisierungs-Themen und ohne eigene Spike-Phase adressierbar.
+- **ADRs aus dieser Phase:** ADR-013 (Rate-Limit als eigener Valkey-Counter, OPERATIV, vor 2.2), ADR-014 (Anbieter-Austauschbarkeit für externe Geo-Services, STRATEGISCH, zwischen 2.1 und 2.2; Doku-only), ADR-015 (yield-Dependency + Rollback, REAKTIV, Hot-Stab 2.5b). Reaktiv-Quote 1 / 10 = 10 %, deutlich unter 20 %-Schwellenwert Klasse G. Regel-017 (Anbieter-Austauschbarkeit) + Regel-018 (yield-Dependency-Pflicht) sind die Phase-2-Regelergänzungen.
+- **Issues:** [`Paddel87/EB-Digital#26`](https://github.com/Paddel87/EB-Digital/issues/26) — Phase 7.2 Externe Security-Review Auth-Stack beauftragen (Briefing-Anker, aktiv ab Phase 7.2).
 
 ---
 
