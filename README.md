@@ -64,7 +64,12 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
 - Docker Engine 29.4+ und Docker Compose v5.1+ (für Phase 1.4 ff. – PostgreSQL/Valkey-Container)
 - uv 0.11+ (Python-Package-Manager) und Python 3.13
 - pnpm 11+ und Node.js 24 LTS
+- **bash 4+** (für `scripts/`-Hilfsskripts) — auf Linux/macOS Standard; auf Windows: **Git Bash** (Teil von Git for Windows) oder **WSL2**
+- **jq 1.6+** (für `scripts/dev-smoke.sh`, JSON-Parsing der HTTP-Antworten) — Linux: `apt install jq` / `dnf install jq`; macOS: `brew install jq`; Windows: `winget install jqlang.jq` oder `choco install jq` (in Git Bash danach ggf. neue Shell-Session öffnen, damit der PATH die Installation sieht)
+- **curl 7+** (echter curl, nicht der PowerShell-`Invoke-WebRequest`-Alias) — in Git Bash und WSL2 vorhanden; in cmd/PowerShell `curl.exe` explizit aufrufen
 - Optional: GitHub-Account für CI-Auslösung; SSH-Zugriff auf Hetzner-VPS für Production-Deployment
+
+> **Plattform-Hinweis:** Phase 1+2 sind auf Linux, macOS und Windows (mit Git Bash oder WSL2) lauffähig. Eine ausführliche Plattform-Matrix steht in [`docs/project-context.md`](docs/project-context.md) Abschnitt 8.1; die strukturelle Hintergrund-Analyse zur Plattform-Pflege-Lücke in [`docs/methodik-feedback/`](docs/methodik-feedback/) (Issue + Regelwerks-Patches als Vorlage für künftige Projekte).
 
 ### Heute lauffähig
 
@@ -89,11 +94,26 @@ pnpm install                                         # Node-Dev-Tooling (commitl
 uv run pre-commit install \
   --hook-type pre-commit --hook-type commit-msg      # Hooks lokal aktivieren
 uv run pre-commit run --all-files                    # Alle Hooks einmalig durchlaufen
+# Hinweis: erster Lauf lädt 18 Hook-Repositories (mypy, ruff, prettier, bandit,
+# actionlint, eslint, svelte-check, …) — kann mehrere Minuten dauern und braucht
+# Internet. Folgeläufe nutzen lokale Caches und sind in Sekunden durch.
 
 # Backend-Skelett lokal starten (ab Schritt 1.3)
-cp .env.example .env                                 # Platzhalter ersetzen, .env ist gitignored
+cp .env.example .env
+# WICHTIG vor dem ersten Start: zwei Platzhalter in .env ersetzen, sonst schlägt der Boot fehl.
+#  1. SECRET_KEY=GENERATE_ME_64_CHAR_RANDOM_TOKEN  →  Token generieren mit:
+#       python -c "import secrets; print(secrets.token_urlsafe(64))"
+#  2. CHANGE_ME (Postgres-Passwort) durch ein echtes Passwort ersetzen — an den
+#     drei Stellen synchron: DATABASE_URL, POSTGRES_PASSWORD.
+# Wenn das Backend NICHT im Compose-Netz, sondern lokal als Uvicorn-Prozess gestartet
+# wird, zusätzlich DATABASE_URL von "...@db:5432/..." auf "...@localhost:5432/..."
+# umstellen — der Compose-Service-Name "db" ist nur innerhalb des Compose-Netzwerks
+# auflösbar. Für den vollständigen Compose-Stack-Lauf (siehe unten) bleibt "db".
 uv run python -m eb_digital serve                    # Uvicorn auf 0.0.0.0:8000
 curl http://localhost:8000/health                    # → {"status":"ok","version":"0.1.0"}
+# Hinweis: /health antwortet ohne DB-Zugriff. Sobald /api/*-Pfade aufgerufen werden,
+# muss eine Datenbank erreichbar sein — siehe nächsten Block oder den vollständigen
+# Compose-Stack-Lauf weiter unten.
 
 # Datenbank lokal hochziehen (ab Schritt 1.4)
 docker compose --profile dev up -d db                # PostgreSQL 17.9 mit Digest-Pin und Healthcheck
@@ -116,7 +136,12 @@ pnpm --filter frontend-einsatzkraft dev              # Einsatzkraft-Dev-Server a
 # Komplettes dev-Profil (Backend + Worker + DB + Cache + Tile-Proxy + Reverse-Proxy, ab Schritt 1.8)
 docker compose --profile dev up -d                   # 6 Services + db-init alle healthy
 curl -k https://localhost/api/health                 # → {"status":"ok","version":"0.1.0"} via Caddy
-bash scripts/dev-smoke.sh                            # End-to-End-Smoke (Caddy + Tile-Proxy + Healthchecks)
+bash scripts/dev-smoke.sh                            # 28-Checks-Smoke (Caddy + Tile-Proxy + Auth + Anon + Tenants + DB-Lifecycle + Frontend-Builds)
+# Re-Run innerhalb 15 min: vorher Volumes löschen, sonst greift der Valkey-Rate-
+# Limit-Counter aus dem vorherigen Lauf (Login → 429). Vollständiger Reset:
+#   docker volume rm $(docker volume ls -q --filter "name=eb-digital")
+# Alternativ nur den Login-Counter wegwerfen (Daten bleiben):
+#   docker compose --profile dev exec cache valkey-cli FLUSHALL
 
 # Optional: Frontends als zusätzliches Profil
 docker compose --profile dev --profile frontends up -d   # erster Start: pnpm install im Volume-Cache (mehrere Minuten)

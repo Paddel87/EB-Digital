@@ -357,6 +357,24 @@ Pflichtkategorien sind in `CLAUDE.md` Abschnitt 15 definiert. Tool-Wahl pro Spra
 - **Monitoring:** initial nur strukturierte JSON-Logs plus Caddy-Access-Logs; Erweiterung um Healthcheck-Dashboard und Verbrauchszähler externer Dienste in STABILISIERUNG-Phase.
 - **Logging-Level Default:** `INFO` in Prod, `DEBUG` nur lokal.
 
+### 8.1 Unterstützte Entwickler-Plattformen
+
+Diese Tabelle ist **explizit, nicht implizit**. Jede Plattform, die nicht hier steht, ist nicht unterstützt — auch wenn sie technisch funktionieren mag. Plattformen mit Einschränkungen tragen den Einschränkungs-Hinweis. Eine Erweiterung der Matrix ist freigabefrei, eine Streichung ist freigabepflichtig (CLAUDE.md Abschnitt 4 Kategorie 1, Architekturänderung).
+
+| Aspekt                        | Linux (Ubuntu 22.04+ / Debian 12+ / Fedora 40+) | macOS 14+ (Apple Silicon und Intel)                                                 | Windows 11 mit Git Bash                                                | Windows 11 mit WSL2                 |
+| ----------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------- |
+| **Backend-Entwicklung**       | ✓                                               | ✓                                                                                   | ✓                                                                      | ✓                                   |
+| **Frontend-Entwicklung**      | ✓                                               | ✓                                                                                   | ✓                                                                      | ✓                                   |
+| **Hilfsskripts (`scripts/`)** | ✓                                               | ✓ (mit `fix-venv-flags.sh` für `.claude/worktrees/`-Sonderfall, siehe Blocker #001) | ✓ (Git Bash + `jq` separat installieren, siehe README-Voraussetzungen) | ✓                                   |
+| **Docker Compose lokal**      | ✓ (Docker Engine direkt)                        | ✓ (Docker Desktop)                                                                  | ✓ (Docker Desktop)                                                     | ✓ (Docker Desktop mit WSL2-Backend) |
+| **CI-Pipeline**               | ✓ (GitHub-Hosted-Runner)                        | — (kein macOS-Runner in CI)                                                         | — (kein Windows-Runner in CI)                                          | — (wie Linux-Runner)                |
+
+**Pflicht-Voraussetzungen pro Plattform:** Siehe [`README.md`](../README.md) → „Voraussetzungen"-Block. Plattform-spezifische Zusatz-Voraussetzungen sind dort namentlich vermerkt (`bash`, `jq`, `curl`).
+
+**Pflege-Regel (Vorgriff auf Regelwerks-Patch P5):** Diese Tabelle ist bei jedem Touch an `scripts/`, `docker-compose.yml`, `pyproject.toml` (Top-Level-Dependencies) oder bei jeder neuen plattform-spezifischen Eskalation (z. B. neuer Blocker mit Plattform-Bezug, vgl. Blocker #001 für macOS) zu re-validieren. Verstöße sind im selben Commit zu korrigieren.
+
+**Hintergrund-Analyse:** Die strukturelle Begründung für die Pflege-Disziplin und ihre Verankerung im CLAUDE.md-Regelwerk steht in [`docs/methodik-feedback/`](methodik-feedback/) — Issue und Patch-Vorschläge entstanden aus dem Phase-2-Funktionstest am 2026-05-16.
+
 ## 9. Entscheidungsbefugnisse
 
 - **Freigabe-Entscheidungen trifft:** Patrick Schulz (Repo-Eigentümer und initialer Plattform-Betreiber).
