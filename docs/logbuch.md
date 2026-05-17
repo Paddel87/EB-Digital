@@ -28,8 +28,8 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ### 2026-05-17 – [SESSIONENDE]
 
-- **Session-Dauer:** ca. 1 h (Aufgabe: TomTom-Kartenmaterial-Recherche; Sessionende nach Commit der Befunde).
-- **Bearbeitet:** Exploratorische Recherche „Nutzungsmöglichkeiten von TomTom Kartenmaterial" — außerhalb der Schritt-Sequenz, Autonomiebereich CLAUDE.md §5. Neue Sektion in `project-context.md` Abschnitt 11 mit konsolidierten TomTom-Befunden (analog zur MapTiler-Provider-Strategie vom 2026-05-10).
+- **Session-Dauer:** ca. 2 h (Aufgabe: TomTom-Kartenmaterial-Recherche + Folge-Vorlagen nach Patrick-Direktiven; Sessionende nach Commit der Vorschlags-Vorlagen).
+- **Bearbeitet:** (1) Exploratorische Recherche „Nutzungsmöglichkeiten von TomTom Kartenmaterial" — außerhalb der Schritt-Sequenz, Autonomiebereich CLAUDE.md §5. Neue Sektion in `project-context.md` Abschnitt 11 mit konsolidierten TomTom-Befunden (analog zur MapTiler-Provider-Strategie vom 2026-05-10). (2) Folge-Auftrag nach Patrick-Direktiven (Cache-Verzicht-Bereitschaft + Sperrungs-Override-Anforderung): zwei Vorschlags-Vorlagen in `docs/proposals/2026-05-17-cache-verzicht-und-spike-g.md` ausgearbeitet — ADR-016-Entwurf (Cache-Verzicht) und Spike-G-Neuzuschnitt. Beide WARTEN AUF FREIGABE.
 - **Erreicht:**
   - **TomTom Map Display API (Orbis Tiles):** Vector Tiles über Orbis-Schema kompatibel mit MapLibre GL JS; Caching-Constraint ToS Clause 11.4 verbietet server-seitiges Multi-Client-Caching — identisch mit MapTiler-Constraint. Kein Vorteil bei Tile-Hosting gegenüber MapTiler in Bezug auf die AGB-Cache-Problematik.
   - **TomTom Maps SDK for Web JS:** Proprietär, auf MapLibre GL JS aufgebaut, Public Preview (0.x.y) — für Phase 6 nicht produktionsreif. MapLibre GL JS bleibt die richtige Wahl.
@@ -38,8 +38,14 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
   - **RouteOverride / Spike G (kritisch):** `avoidAreas` unterstützt nur Rechtecke, keine Polygone — für präzise Straßensperren unzureichend. `supportingPoints` (Wegpunkte entlang Ausweichroute) ist der vielversprechendere Ansatz. Beide Techniken im Spike G testen.
   - **Konsolidierungs-Szenario TomTom-only:** technisch möglich (TomTom hat Tiles + Geocoding + Routing), Caching-Constraint identisch; Kostenvergleich erst nach neuen Juli-2026-Preisen sinnvoll. Kein ADR jetzt.
   - **Routing-Caching-Graubereich:** Backend-Level-Route-Cache (60 s, identisches Paar) unter Clause 11.4 unklar. Konservativ: kein cross-vehicle Routing-Cache bis TomTom-Support-Auslegung eingeholt.
+  - **Patrick-Direktiven nach Recherche-Auslieferung:**
+    1. „ich wäre bereit, auf Caching zu verzichten" — löst ADR-016-Entwurf aus.
+    2. „Wichtig wäre es auch gesperrte Straßen trotzdem befahrbar zu machen" — Anforderungs-Klarstellung für Spike G. Bisheriger Spike-G-Zuschnitt war auf „Strecke als gesperrt **markieren**" geframet; neu ist „vom Provider als gesperrt geführte Strecke trotzdem **befahren**". Zwei Sperrungsarten unterschieden: (a) Traffic-basiert, von TomTom über `considerTraffic=false` umgehbar; (b) permanent im Kartenmaterial (Fußgängerzone), in TomTom **nicht** überschreibbar laut Recherche.
+  - **Folge-Vorlagen ausgearbeitet:** `docs/proposals/2026-05-17-cache-verzicht-und-spike-g.md`:
+    - **Vorlage 1 (ADR-016-Entwurf):** Verzicht auf serverseitiges Caching vor externen Geo-Services. `infra/tile-proxy` wird zum reinen API-Key-Inject/Rate-Limit-Proxy; Browser- und Service-Worker-Cache als alleinige Cache-Schicht. Drei Optionen A/B/C, Empfehlung A. Diff-Skizze für `decisions.md`, `architecture.md`, `project-context.md`, `fahrplan.md` ausformuliert. Reaktiv-Quote bleibt 1/10 (ADR `[STRATEGISCH]`).
+    - **Vorlage 2 (Spike-G-Neuzuschnitt):** Schritt 5.1 in `fahrplan.md` neu zugeschnitten. Zeitbox 8–12 h (gegenüber 4–8 h), drei Test-Szenarien T1/T2/T3 (Traffic-Stau, Fußgängerzone, Einbahnstraße entgegen), Valhalla als OSS-Alternative als Vergleichs-Provider mit aufgenommen, ADR-Empfehlung umfasst ggf. Provider-Wechsel-Empfehlung. Datenmodell `route_override` als Spike-Output. Kein eigener ADR jetzt — Fahrplan-Pflege.
 - **Reibungen:** TomTom Developer Portal gibt für direkte URL-Abrufe HTTP 403 zurück — Recherche über strukturierte Websuche durchgeführt. Angaben als ungeprüft markiert; offizielle Verifikation vor Phase-6-Implementierung Pflicht.
-- **Artefakte:** `docs/project-context.md` Abschnitt 11 (neue Sektion „TomTom-Provider-Strategie: konsolidierte Befunde (Recherche 2026-05-17)").
+- **Artefakte:** `docs/project-context.md` Abschnitt 11 (neue Sektion „TomTom-Provider-Strategie: konsolidierte Befunde (Recherche 2026-05-17)"); `docs/proposals/2026-05-17-cache-verzicht-und-spike-g.md` (neue Datei mit zwei Vorschlags-Vorlagen).
 - **Reaktiv-Quote:** 1/10 = 10 %. Keine neuen ADRs (Recherche-Session, kein Architektur-Beschluss).
 - **README-Sync-Check (CLAUDE.md §16 Trigger 2):** keine nutzersichtbaren Änderungen; README unverändert. Kein Drift.
 - **Nächster Schritt (laut fahrplan.md):** **3.1** Spike I (Geo-Plausibilitäts-Algorithmus, Zeitbox 4 h).
