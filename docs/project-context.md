@@ -482,6 +482,82 @@ Punkte, die zu Projektstart bewusst offen sind. Claude arbeitet nicht an Bereich
 
 - **MapTiler vs. MapLibre — Begriffsklärung (Hintergrund 2026-05-10):** MapTiler ist ein **kommerzielles Schweizer Unternehmen** (Klokan Technologies) mit Produktportfolio (MapTiler Cloud SaaS, MapTiler Server kommerziell selbst gehostet, MapTiler SDK JS, Karten-Daten als Produkt). MapLibre ist ein **Open-Source-Projekt** mit Foundation (MapLibre GL JS, MapLibre Native, MapLibre Style Spec; alle BSD-3); reiner Renderer/Spec, keine Tiles, keine Daten, keinen Service. MapTiler ist Foundation-Mitglied bei MapLibre. MapTiler SDK JS ist eine _Erweiterung_ von MapLibre GL JS, kein Fork. **Architektonisch sind „Renderer im Frontend" (Entscheidung A) und „Tile-Provider" (Entscheidung B) zwei unabhängige Wahl-Achsen** — siehe Entscheidung A/B oben. Diese Klarstellung verhindert Begriffs-Vermischung in künftigen ADRs.
 
+**Während Session 2026-05-17 identifiziert:**
+
+- **TomTom-Provider-Strategie: konsolidierte Befunde (Recherche 2026-05-17)** — exploratorische Prüfung der vollständigen TomTom-Nutzungsmöglichkeiten über Routing hinaus (Auftrag: „Nutzungsmöglichkeiten von TomTom Kartenmaterial"). Geprüft: Map Display API (Tiles), Routing API, Geocoding/Search API, Maps SDK for Web JS, Pricing-Modell, ToS-Caching-Regeln, RouteOverride-Techniken für Spike G. Quellen: developer.tomtom.com (direkte Fetch-Abrufe ggf. 403 blockiert, daher primär über strukturierte Websuche; Angaben sind Stand 2026-05-17 und als **ungeprüft** zu behandeln, bis zur tatsächlichen Implementierung zu verifizieren).
+
+  **A. TomTom Map Display API (Orbis — Kartenmaterial-Tiles)**
+
+  TomTom bietet unter der Marke **Orbis Maps** eine vollständige Vektor-Tile-API an, die konzeptionell identisch mit MapTiler Cloud ist: GET-Requests gegen ein XYZ-Tile-Schema, MVT-Format (Mapbox Vector Tiles), kompatibel mit MapLibre GL JS als Renderer.
+
+  - **Aktuelle API-Version:** Orbis Map Display API (apiVersion=1 als URL-Parameter). Orbis Maps v1 (früheres Produkt) wurde 2025-02-19 dekommissioniert — bereits in Abschnitt 5 „Bekannte Migrations-Hinweise TomTom" dokumentiert.
+  - **Tile-URL-Format:** `https://{baseURL}/maps/orbis/map-display/tile/{zoom}/{X}/{Y}.{format}?apiVersion=1&key={API_Key}`
+  - **Zoom-Level:** 0–22. Tile-Inhalt: Straßen, Gebäude, Gewässer, POIs — automotive-grade Datenqualität (TomTom-Eigenproduktion, nicht OSM-basiert).
+  - **Traffic-Tiles:** eigene Traffic-API mit Orbis-kompatiblen Vector-Flow-Tiles und Incident-Tiles — für Echtzeit-Verkehrslage im Disponenten-UI theoretisch nutzbar.
+  - **Maps SDK for Web JS:** TomTom bietet ein eigenes JS-SDK (GitHub: `tomtom-international/maps-sdk-js`), das auf MapLibre GL JS aufbaut. **Lizenz proprietär** (API-Key-Pflicht, kein OSS-Einsatz ohne TomTom-Vertrag). Aktuell in **Public Preview (0.x.y)** — noch nicht produktionsreif, Breaking Changes explizit angekündigt. Für Phase 6 nicht als stabile Basis geeignet; MapLibre GL JS bleibt die richtige Wahl (ADR-014/Regel-017 konform).
+
+  **B. ToS-Caching-Regeln TomTom — kritischer Befund**
+
+  TomTom ToS Clause 11.4 (Quelle: Websuche, TomTom Developer Portal Terms): **server-seitiges Caching zum Servieren mehrerer Clients ist explizit verboten**. Wörtlich (aus Sekundärquellen): „Nothing under Clause 11.4 entitles any form of caching for the purpose of scaling results to serve multiple clients or users." Browser-seitiges Caching anhand von HTTP-Cache-Control-Headern ist erlaubt, mit Cache-Dauer-Limit gemäß den im Response enthaltenen `max-age`-Werten.
+
+  **Konsequenz:** Dieselbe AGB-Constraint wie bei MapTiler (siehe Befund 2026-05-10) gilt analog für TomTom-Tiles und TomTom-Routing-Responses. Ein `infra/tile-proxy`-nginx-Cache vor TomTom-Tiles wäre **ohne Sales-Approval AGB-widrig** — exakt dieselbe Klärungspflicht wie für MapTiler. Da EB Digital TomTom heute nur für Routing einsetzt (nicht für Tiles), betrifft dies aktuell nur die Routing-Responses, die im Adapter gecacht werden — das Routing-Cache ist request-scoped (60 s für identische Start/Ziel-Paare, Abschnitt 6 Performance) und fällt typischerweise unter Performance-Caching auf Anwendungsebene, nicht unter Multi-Client-Scaling. **Dies ist ein Graubereich**: bei erster Routing-Implementierung in Phase 6 die ToS-Auslegung klären, ob Request-Level-Caching im Backend als „Scaling to serve multiple clients" gewertet wird.
+
+  **C. TomTom Pricing-Modell (Stand 2026-05-17, als ungeprüft markieren)**
+
+  Aktuelles Modell (Freemium + Pay-as-you-grow):
+
+  | Ressource       | Freie Tageskontingente | Overage-Preis         |
+  | --------------- | ---------------------- | --------------------- |
+  | Tile-Requests   | 50.000/Tag             | $0,08 / 1.000 Req     |
+  | Nicht-Tile-Req. | 2.500/Tag (inkl. Routing, Geocoding) | nicht öffentlich klar |
+
+  **Wichtig: Preisänderung zum 1. Juli 2026 angekündigt** (Quelle: developer.tomtom.com/api-pricing-change-announcement). Details der neuen Tarife sind öffentlich noch nicht vollständig dokumentiert. **Pflicht: vor Phase-6-Implementierung von backend/geo die neuen Tarife auf developer.tomtom.com verifizieren** — bis dahin obige Zahlen als Planungsbasis verwenden, aber nicht als verbindlich einrechnen.
+
+  Vergleich zur MapTiler-Kostenlage: TomTom's 50.000 Tile-Requests/Tag free entsprechen ~1,5 Mio./Monat. Bei MapLibre GL JS ohne Server-Cache und einer Großlage mit 500 Einsatzkräften, die je ~50–100 Tile-Requests/Session erzeugen: 500 × 75 = 37.500 Requests/Session → mehrere Sessions/Tag → Free-Tier-Limit ist bei Großlage durchaus erreichbar. Budget-Disziplin analog zu MapTiler bleibt nötig.
+
+  **D. TomTom Routing API — aktueller Stand und Spike-G-Relevanz**
+
+  - **Aktive Version:** Orbis Routing API, mit v2 unter `/routing-api/documentation/tomtom-orbis-maps/v2/`. Wechsel von der älteren Routing API auf Orbis v2 empfohlen. Orbis v1-Routing wurde 2025-02-19 dekommissioniert — bereits als Migrations-Hinweis in Abschnitt 5 dokumentiert.
+  - **tollRoad-Entfernung:** `sectionType=tollRoad` entfernt 2025-03-15 — bereits in Abschnitt 5 dokumentiert; stattdessen `toll` und `tollVignette` verwenden.
+  - **Orbis v2-Einschränkungen gegenüber v1 (kritisch für `backend/geo`-Implementierung):**
+    - `travelMode`: nur `car` in Orbis v2 (v1 unterstützte weitere Modi). Für EB Digital kein Problem — alle Betreuerfahrzeuge sind PKW/Transporter.
+    - Response-Format: nur JSON in Orbis v2 (kein XML). Kein Problem, da Backend-Adapter ohnehin JSON verarbeitet.
+    - Keine Circle-Waypoints in Orbis v2. Kein bekannter Einfluss auf EB Digital Use Case.
+
+  **E. RouteOverride / Sperrungs-Override — kritischer Befund für Spike G**
+
+  Spike G (Phase 5) klärt, wie vom Disponenten freigeschaltete Strecken in TomTom-Routing-Anfragen einfließen. Befund aus der heutigen Recherche:
+
+  - **`avoidAreas`:** unterstützt nur **Rechtecke** (Bounding Boxes mit `southWestCorner`/`northEastCorner`). **Keine Polygone.** Für beliebige Straßenabschnitte unzureichend, weil ein Rechteck immer auch angrenzende Bereiche ausschließt.
+  - **`supportingPoints`:** Route-Rekonstruktion entlang einer Polyline. Workaround: wenn eine Strecke als gesperrt gilt, kann der Disponent Wegpunkte setzen, die das Fahrzeug durch einen Alternativ-Weg navigieren; die Route wird dann durch `supportingPoints` entlang dieser Wegpunkte rekonstruiert. Dieser Ansatz erfordert, dass der Disponent aktiv Ausweich-Wegpunkte definiert, nicht nur „Sperren" klickt.
+  - **Multiple Rechtecke als Polygon-Approximation:** avoidAreas erlaubt mehrere Rechtecke in einer Anfrage. Für linienförmige Straßensperren könnten mehrere schmale Rechtecke entlang des Straßenverlaufs den Abschnitt abdecken. **Problem:** Rechtecke können diagonal verlaufende Straßen nicht präzise ausschließen, Routing umgeht ggf. nur partiell.
+  - **Empfehlung für Spike G:** beide Techniken (`avoidAreas` mit multiplen Rechtecken, `supportingPoints` mit Disponent-gesetzten Wegpunkten) in einer 4h-Zeitbox prototypisch testen. Hypothese: `supportingPoints` ist für Einsatz-Routing geeigneter, da Disponenten ohnehin Ziel-Koordinaten eingeben; `avoidAreas` eignet sich für großflächige Ausschlüsse (z. B. Stadtbereich). Budget-Relevanz: jeder Override löst ggf. Re-Routing und damit einen API-Call aus — das Budget-Constraint aus Abschnitt 6 bleibt bindend.
+
+  **F. Konsolidierungs-Szenario: TomTom als Alleinprovider (Tiles + Geocoding + Routing)**
+
+  TomTom bietet neben Routing und Map Display auch eine **Search/Geocoding API** an. Theoretisch wäre eine Konsolidierung auf TomTom als einzigen externen Geo-Provider möglich (MapTiler ersetzen):
+
+  | Kriterium                   | Aktuell (MapTiler Tiles + TomTom Routing) | TomTom-only (Tiles + Geocoding + Routing) |
+  | --------------------------- | ----------------------------------------- | ----------------------------------------- |
+  | Anzahl externe Verträge     | 2                                         | 1                                         |
+  | Tile-Qualität               | MapTiler (OSM-basiert + Eigenanreicherung) | TomTom (automotive-grade, Eigenproduktion) |
+  | Geocoding-Qualität          | MapTiler (OSM-basiert)                    | TomTom (automotive-grade, sehr präzise)   |
+  | Caching-Constraint Tiles    | MapTiler: server-side verboten (Sales-Approval) | TomTom: server-side verboten (Clause 11.4) |
+  | Caching-Constraint Routing  | –                                         | Graubereich (s. Abschnitt B)              |
+  | Free-Tier Tiles (Recherche) | MapTiler: R&D ok, kommerziell Flex-Tier   | TomTom: 50k/Tag (Preis Juli 2026 unklar)  |
+  | SDK Lock-in                 | MapLibre GL JS (neutral)                  | MapLibre GL JS (neutral, TomTom SDK proprietär) |
+
+  **Befund:** Caching-Constraint ist identisch. Tile-Qualität ist bei TomTom automotive-grade (für Einsatz-Routing-Overlay ggf. vorteilhaft, da Straßendaten präziser). Geocoding bei TomTom ist stärker auf Adressdaten ausgerichtet, was für den Disponent-Anwendungsfall (Ziel-Adresse eingeben) gut passt. **Die Preisänderung zum 1. Juli 2026 macht einen endgültigen Kostenvergleich heute unmöglich.** Ein Konsolidierungs-ADR ist möglich, aber erst nach Verifikation der neuen Preise sinnvoll — frühestens nach Juli 2026 oder auf Basis einer Sales-Anfrage bei TomTom.
+
+  **G. Empfohlener Fortgang**
+
+  - **Keine Architektur-Änderung jetzt.** ADR-014/Regel-017 erzwingt Provider-Neutralität; die aktuelle Planung (MapTiler Tiles + TomTom Routing) bleibt durch Adapter-Tausch jederzeit reversibel.
+  - **Spike G (Phase 5):** mit Erkenntnissen aus Abschnitt E starten — `avoidAreas` vs. `supportingPoints` testen, Budget-Impact je Technik messen.
+  - **Phase-6-Eingangsbedingung (Routing):** TomTom Orbis v2-Einschränkungen (`car`-only, JSON-only) sind für EB Digital unkritisch, aber explizit in den `backend/geo`-Adapter einpinnen (kein implizites `latest`, ADR notwendig).
+  - **Phase-6-Eingangsbedingung (Tiles):** MapTiler-Sales-Anfrage (AGB-Cache) bleibt Phase-7-Roadmap-Meilenstein — Nutzung von TomTom-Tiles wäre keine Lösung, da dieselbe Caching-Constraint gilt.
+  - **Preisänderung 1. Juli 2026:** TomTom-Pricing auf developer.tomtom.com verifizieren, sobald neue Tarife veröffentlicht sind. Ggf. Konsolidierungs-ADR vorbereiten, falls TomTom-Tarife attraktiver als MapTiler + TomTom kombiniert.
+  - **Routing-Caching-Graubereich:** bei erster `backend/geo`-Implementierung in Phase 6 TomTom-Support zu Clause-11.4-Auslegung für Backend-Level-Routing-Cache (60 s für identische Paare) anfragen. Bis zur Klärung: konservative Interpretation = kein serverseitiger Routing-Cache, stattdessen nur client-affin gehandhabter Cache (Ergebnis an denselben anfragenden Betreuer zurückgeben, nicht cross-vehicle teilen).
+
 ### Triage-Stand 2026-05-07 (Klärungs-Session vor Modus-2-Schritt 4)
 
 Die obigen sechs „GEKLÄRT 2026-05-07"-Einträge bilden Schublade 1 der Triage. Die übrigen Punkte werden in Modus-2-Schritt 6 (Fahrplan-Befüllung) wie folgt eingearbeitet:
