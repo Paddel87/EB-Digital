@@ -30,10 +30,11 @@
 | 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY           | Externe Abhängigkeiten     | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                                       |
 | 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL           | Architekturänderungen      | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip                    |
 | 015 | 2026-05-15 | Aktiv  | REAKTIV        | STACK, SECURITY, METHODIK | Sicherheit und Datenschutz | `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b) |
+| 016 | 2026-05-17 | Aktiv  | STRATEGISCH    | MODUL, STACK, PERFORMANCE | Architekturänderungen      | Verzicht auf serverseitiges Caching vor externen Geo-Services                                 |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-006 bis ADR-015).
+- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-007 bis ADR-016).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 - **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz).
@@ -510,6 +511,48 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - ADR-003 (Architektur-Pattern Modular Monolith) bleibt gültig; Request-Scoped-DB-Session ist Eigenschaft der Backend-Schicht, kein Modul-Schnitt.
   - ADR-013 (Rate-Limit als Valkey-Counter) bleibt gültig; betroffene `incr_and_check`-Calls sind eigenständige `redis.asyncio`-Operationen ohne Lifecycle-Wechselwirkung mit der DB-Session.
 - **Abgeleitete Regel:** Regel-018 (FastAPI-Resource-Dependencies mit Context-Manager nutzen `yield`, nicht `return`) — siehe Teil C.
+
+---
+
+#### ADR-016: Verzicht auf serverseitiges Caching vor externen Geo-Services
+
+- **Datum:** 2026-05-17
+- **Status:** Aktiv
+- **Tags:** `[STRATEGISCH]` `[MODUL]` `[STACK]` `[PERFORMANCE]`
+- **Phasentyp-Kontext:** UMSETZUNG (zwischen Schritt 2.7 ERLEDIGT und 3.1 OFFEN; strategische Klarstellung außerhalb der Schritt-Sequenz, ausgelöst durch Patrick-Direktive 2026-05-17).
+- **Reifegrad-Wirkung:** Modul `infra/tile-proxy` Verantwortung ändert sich strukturell (Cache entfällt); Schnittstelle S7 (Geo → Tile-Proxy) bleibt `[VORLÄUFIG]` — wird in Phase 6 unter neuer Cache-freier Annahme zu `[BELASTBAR]` befördert. NFR-Eintrag „Tile-Caching ≥ 7 Tage TTL" wird ersetzt durch „Browser-/Service-Worker-Cache als alleinige Cache-Schicht". Eintrag „NFR Cache-Strategie für externe Geo-Services" in `architecture.md` Abschnitt 9 wird auf `[BELASTBAR]` (durch diesen ADR fixiert).
+- **Kategorie:** Architekturänderung (CLAUDE.md §4 Punkt 1) — strukturelle Aufgabe-Änderung des Moduls `infra/tile-proxy` plus Anpassung NFR Performance.
+- **Kontext:**
+  - **2026-05-10 (BEOBACHTUNG):** MapTiler Cloud Terms verbieten serverseitiges Caching ohne Sales-Approval. Geplanter 7-Tage-nginx-Cache wäre AGB-widrig. Triage damals: Sales-Anfrage als Phase-7-Roadmap-Meilenstein.
+  - **2026-05-17 (Recherche):** TomTom ToS Clause 11.4 verbietet ebenfalls serverseitiges Multi-Client-Caching. Ein Provider-Wechsel löst das Cache-Problem **nicht** — beide Branchenführer haben dieselbe Constraint. Detail in `project-context.md` Abschnitt 11 (Eintrag „TomTom-Provider-Strategie: konsolidierte Befunde (Recherche 2026-05-17)").
+  - **2026-05-17 (Patrick-Direktive):** „ich wäre bereit, auf Caching zu verzichten." Damit ist eine architektur-saubere Lösung statt Sales-Verhandlungen wählbar.
+  - Konsequenz: `infra/tile-proxy` muss neu definiert werden — entweder Cache mit Sales-Approval, oder kein Cache und vereinfachte Verantwortung.
+- **Optionen:**
+  - **A:** Vollständiger Verzicht auf serverseitiges Caching. `infra/tile-proxy` wird zum reinen Reverse-Proxy mit API-Key-Inject und Rate-Limit-Schutz; kein `proxy_cache_path`-Block. Browser-Cache (Default-TTL je Provider) und PWA-Service-Worker-Cache (Spike L) bleiben einzige Cache-Schichten. — Konsequenzen: AGB-konform für MapTiler und TomTom; keine Sales-Verhandlung nötig; Architektur vereinfacht; weniger Operations-Aufwand; Phase-7-Roadmap-Meilenstein „MapTiler-Sales-Anfrage" entfällt. API-Budget-Druck steigt deutlich — bei Großlage 500 Einsatzkräfte ohne Server-Cache vermutlich jenseits MapTiler-Flex-Tier ($25), realistisch Unlimited-Tier ($295/Monat) oder TomTom-Pay-as-you-grow mit Overage. Constraint „~50 €/Monat" aus `project-context.md` Abschnitt 6 ist dann nicht haltbar — Anpassung Pflicht. Spike L (Phase 5) wird kritischer Hebel: Service-Worker-Pre-Cache des Operations-Raums vor Schichtbeginn reduziert API-Hit-Rate erheblich. PWA-Offline-Tauglichkeit profitiert. Risiko: keine Glättung von Tile-Request-Spitzen, jeder Cold-Cache-Browser triggert vollen Tile-Request-Schwall.
+  - **B:** Sales-Approval-Pfad weiter verfolgen (Status quo aus BEOBACHTUNG 2026-05-10). MapTiler-Sales-Anfrage als Phase-7-Meilenstein behalten, mit Zusatz-Fee verhandeln; TomTom-Routing-Cache als Backend-Performance-Cache argumentieren (Graubereich). — Konsequenzen: Cache erlaubt, ~50 €/Monat-Budget hält mit Flex-Tier + Cache-Hit-Rate; aber Sales-Aufwand, mögliche Zusatz-Fees (Höhe unbekannt), erhöhte Provider-Bindung; TomTom-Cache-Graubereich bleibt — separate Klärung mit TomTom-Support nötig; Phase 6 ist eingangsblockiert, bis Sales-Antworten vorliegen; Architektur bleibt komplex.
+  - **C:** Self-Hosting-Schwenk (Pfad-C aus ADR-014). Tiles selbst hosten (OpenMapTiles + tileserver-gl auf OSM-Extracts); Geocoding und Routing extern lassen. — Konsequenzen: keine API-Constraints mehr für Tiles; Tile-Volumen ist der Hauptbudget-Hebel; hoher operativer Aufwand (10–30 GB Storage, Update-Pipeline, Style-Pflege); Daten-Qualität merklich unter MapTiler Cloud; Adapter-Tausch ist nach ADR-014/Regel-017 strukturell möglich; Modulgrößen-Schub für `infra/tile-proxy`.
+- **Entscheidung:** **Option A** — Verzicht auf serverseitiges Caching. Patrick-Freigabe 2026-05-17 nach Vorlage der drei Optionen in `docs/proposals/2026-05-17-cache-verzicht-und-spike-g.md` und Empfehlung A (Patrick-Bereitschaft, Budget-Constraint anzupassen statt Architektur-/Vertrags-Komplexität aufzubauen).
+- **Konsequenzen:**
+  - **Geltungsbereich:** alle externen Geo-Service-Aufrufe (heute MapTiler-Tiles, MapTiler-Geocoding, TomTom-Routing). Implizit auch alle künftigen externen Geo-Service-Integrationen, sofern die Provider-ToS Multi-Client-Caching verbieten — was als Default angenommen wird, bis eine konkrete Lizenz Cache ausdrücklich erlaubt.
+  - **`infra/tile-proxy` neue Verantwortung:** API-Key-Inject (Backend-seitige Geheimhaltung der Provider-Keys), Rate-Limit-Schutz (vor versehentlichem Budget-Verbrauch durch Programmfehler), Reverse-Proxy-Routing (Pfade `/tiles/maptiler/*`, `/geocoding/maptiler/*`, `/routing/tomtom/*`). **Kein** `proxy_cache_path`-Block, **kein** Tile-Cache-Volume.
+  - **Cache-Control-Header-Pass-Through:** `infra/tile-proxy` reicht die `Cache-Control`-Header der Upstream-Provider 1:1 an den Client weiter. Browser-Cache greift damit gemäß Provider-Default (MapTiler 4 h dokumentiert; TomTom gemäß Tile-Response-Header).
+  - **PWA-Service-Worker-Cache (Spike L) bleibt unverändert geplant** und wird kritischer Hebel zur Glättung der Last. Vor Schichtbeginn lädt der Service Worker den Operations-Raum proaktiv — das ist Client-Cache pro End-User, ToS-konform bei beiden Providern.
+  - **Endpoint-Routing-Cache im `backend/geo`-Adapter (60 s für identische Start/Ziel-Paare) entfällt** — gleicher AGB-Konflikt bei TomTom Clause 11.4. Wiederholungs-Schutz ausschließlich über das 30-s-Fahrzeug-Throttle im Adapter (`project-context.md` Abschnitt 6 Performance).
+  - **API-Budget-Constraint:** initiale ~50 €/Monat-Annahme bleibt vorerst stehen, ist aber **vor Phase-7-Lasttest neu zu validieren** unter neuer Cache-freier Annahme. Budget-Anhebung wird ADR-pflichtige Entscheidung nach der Messung (Schritt 7.1).
+  - **Phase-7-Roadmap-Meilenstein „MapTiler-Sales-Anfrage" entfällt** durch diesen ADR. Pfad bleibt als Eskalations-Option offen (über ADR-014/Regel-017), falls die Phase-7-Messung das Budget reißt.
+  - **Verworfene Alternativen** (siehe Optionen B und C oben; werden in `architecture.md` Abschnitt 8 aufgenommen):
+    - **B: Sales-Approval-Pfad** – verworfen, weil Patrick architektur-saubere Lösung der Vertragslösung vorzieht; Sales-Zusatz-Fee unbekannt; Phase-6-Eingangsblockade durch externe Antwortzeiten unerwünscht.
+    - **C: Self-Hosting tileserver-gl in Phase 1** – verworfen wegen Operations-Aufwand und Daten-Qualitäts-Verlust gegenüber MapTiler Cloud; bleibt als Eskalations-Pfad offen, falls Phase-7-Lasttest zeigt, dass Budget nicht tragbar ist.
+  - **Klassifikation `[STRATEGISCH]`, nicht `[REAKTIV]`:** strategische Architektur-Entscheidung aus Patrick-Direktive, kein nachgezogener Pivot. Reaktiv-Quote bleibt 1/10 = 10 % (zählt jetzt ADR-007 bis ADR-016).
+- **Wirkung auf bestehende ADRs:**
+  - **ADR-002 (Stack-Wahl)** bleibt gültig; nginx als `infra/tile-proxy`-Basis bleibt unverändert, nur die Cache-Konfiguration entfällt.
+  - **ADR-003 (Architektur-Pattern)** bleibt gültig; Modul-Schnitt unverändert.
+  - **ADR-014 (Anbieter-Austauschbarkeit)** bleibt gültig; Cache-Verzicht ist orthogonal zur Provider-Wechselbarkeit. Pfade B/C/D aus ADR-014-Kontext bleiben als spätere Eskalations-Optionen offen.
+- **Folge-Edits in diesem Commit:**
+  - `architecture.md` Abschnitt 1 (Kommunikations-Grundmodi), Abschnitt 3 (Modul `infra/tile-proxy`), Abschnitt 4 (Schnittstelle S7), Abschnitt 6 (NFR Performance), Abschnitt 8 (Verworfene Alternativen), Abschnitt 9 (Reifegrad-Übersicht).
+  - `project-context.md` Abschnitt 6 (Performance-Bullets Tile-Caching, Routing-Aufrufe, API-Budget), Abschnitt 11 (Hinweis ADR-016 → MapTiler-AGB-Cache-Konflikt obsolet, Routing-Caching-Graubereich obsolet).
+  - `fahrplan.md` Zeile 20 (Hinweis zu Phase-7-Sales-Anfrage gestrichen), Schritt 5.4 (Spike L erhöhter Stellenwert), Schritt 6.1 (Tile-Cache-Steuerung gestrichen, Cache-Control-Pass-Through ergänzt), Schritt 7.1 (Lasttest erweitert um Budget-Validierung).
+- **Abgeleitete Regel:** keine neue allgemeine Regel — ADR-014/Regel-017 deckt die übergeordnete Wechselbarkeit ab; ADR-016 ist eine konkrete Cache-Architektur-Entscheidung mit Geltungsbereich „externe Geo-Services unter Provider-ToS mit Cache-Restriktion".
 
 ---
 
