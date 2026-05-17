@@ -26,6 +26,39 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-17 – [SESSIONENDE]
+
+- **Session-Dauer:** ca. 1 h (Aufgabe: TomTom-Kartenmaterial-Recherche; Sessionende nach Commit der Befunde).
+- **Bearbeitet:** Exploratorische Recherche „Nutzungsmöglichkeiten von TomTom Kartenmaterial" — außerhalb der Schritt-Sequenz, Autonomiebereich CLAUDE.md §5. Neue Sektion in `project-context.md` Abschnitt 11 mit konsolidierten TomTom-Befunden (analog zur MapTiler-Provider-Strategie vom 2026-05-10).
+- **Erreicht:**
+  - **TomTom Map Display API (Orbis Tiles):** Vector Tiles über Orbis-Schema kompatibel mit MapLibre GL JS; Caching-Constraint ToS Clause 11.4 verbietet server-seitiges Multi-Client-Caching — identisch mit MapTiler-Constraint. Kein Vorteil bei Tile-Hosting gegenüber MapTiler in Bezug auf die AGB-Cache-Problematik.
+  - **TomTom Maps SDK for Web JS:** Proprietär, auf MapLibre GL JS aufgebaut, Public Preview (0.x.y) — für Phase 6 nicht produktionsreif. MapLibre GL JS bleibt die richtige Wahl.
+  - **TomTom Pricing-Änderung:** Neue Tarife angekündigt ab 1. Juli 2026; aktuelle Free-Tier-Grenze 50k Tile-Requests/Tag, Overage $0,08/1.000. Verifizierung vor Phase-6-Implementierung einplanen.
+  - **TomTom Orbis Routing API v2:** Einschränkungen bekannt (`car`-only, JSON-only, keine Circle-Waypoints) — für EB Digital unkritisch, aber beim `backend/geo`-Adapter explizit pinnen.
+  - **RouteOverride / Spike G (kritisch):** `avoidAreas` unterstützt nur Rechtecke, keine Polygone — für präzise Straßensperren unzureichend. `supportingPoints` (Wegpunkte entlang Ausweichroute) ist der vielversprechendere Ansatz. Beide Techniken im Spike G testen.
+  - **Konsolidierungs-Szenario TomTom-only:** technisch möglich (TomTom hat Tiles + Geocoding + Routing), Caching-Constraint identisch; Kostenvergleich erst nach neuen Juli-2026-Preisen sinnvoll. Kein ADR jetzt.
+  - **Routing-Caching-Graubereich:** Backend-Level-Route-Cache (60 s, identisches Paar) unter Clause 11.4 unklar. Konservativ: kein cross-vehicle Routing-Cache bis TomTom-Support-Auslegung eingeholt.
+- **Reibungen:** TomTom Developer Portal gibt für direkte URL-Abrufe HTTP 403 zurück — Recherche über strukturierte Websuche durchgeführt. Angaben als ungeprüft markiert; offizielle Verifikation vor Phase-6-Implementierung Pflicht.
+- **Artefakte:** `docs/project-context.md` Abschnitt 11 (neue Sektion „TomTom-Provider-Strategie: konsolidierte Befunde (Recherche 2026-05-17)").
+- **Reaktiv-Quote:** 1/10 = 10 %. Keine neuen ADRs (Recherche-Session, kein Architektur-Beschluss).
+- **README-Sync-Check (CLAUDE.md §16 Trigger 2):** keine nutzersichtbaren Änderungen; README unverändert. Kein Drift.
+- **Nächster Schritt (laut fahrplan.md):** **3.1** Spike I (Geo-Plausibilitäts-Algorithmus, Zeitbox 4 h).
+
+### 2026-05-17 – [BEOBACHTUNG]
+
+- **TomTom-Recherche-Kernbefunde (Zusammenfassung für Folge-Sessions):**
+  - **Gleiche Caching-AGB-Constraint wie MapTiler**: TomTom ToS Clause 11.4 verbietet server-seitiges Caching zum Servieren mehrerer Clients. Wechsel auf TomTom-Tiles löst das Phase-6-Cache-Problem nicht — es verschiebt es nur zu einem anderen Anbieter.
+  - **Spike G `avoidAreas` = Rechtecke only, kein Polygon**: Das ist die wichtigste technische Einschränkung für die Sperrungs-Override-Implementierung. `supportingPoints` (Wegpunkte entlang Ausweichroute) als Hauptkandidaten für Spike G mitnehmen.
+  - **Preisänderung TomTom ab 1. Juli 2026**: Aktuelle Zahlen (50k Tile-Req./Tag free, $0,08/1k Overage) dürfen nicht als Planungsgrundlage für Phase 6+ eingefroren werden — müssen vor Phase-6-Budget-Kalkulation neu verifiziert werden.
+  - **TomTom Maps SDK for Web JS ist proprietär und in Public Preview**: Kein Ersatz für MapLibre GL JS in Phase 6. ADR-014/Regel-017 bleibt unberührt.
+
+### 2026-05-17 – [SESSIONSTART]
+
+- **Letzter Stand:** Sessionende 2026-05-16 nach Methodik-Verbesserungs-Session (Commit `ee1ba24` auf `main`). Reaktiv-Quote 1/10 = 10 %. Keine aktiven Blocker. Nächster Fahrplan-Schritt: 3.1 Spike I (Geo-Plausibilitäts-Algorithmus).
+- **Auftrag dieser Session:** Exploratorische Recherche „Nutzungsmöglichkeiten von TomTom Kartenmaterial" — außerhalb der Schritt-Sequenz, Autonomiebereich CLAUDE.md §5 (Dokumentationspflege + Erkundung).
+- **Branch:** `claude/explore-tomtom-maps-eNn7G` (neu, spezifisch für diese Session).
+- **Befund-Ziel:** TomTom-Provider-Strategie analog zur MapTiler-Provider-Strategie (project-context.md Abschnitt 11) — konkrete Nutzungsoptionen, ToS-Constraints, Pricing-Stand, Relevanz für Phase 6 und Spike G dokumentieren.
+
 ### 2026-05-16 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 2 h (Sessionstart direkt nach dem Funktionstest-Sessionende, Patrick-Auftrag „drei Maßnahmen: Behebung aktueller Probleme, Veränderung des Regelwerks, umfangreiche Erklärung als Issue"; Sessionende nach Commit der Symptom-Fixes).
