@@ -26,6 +26,14 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-17 – [BEOBACHTUNG] Spike-G-Neuzuschnitt übernommen
+
+- Vorlage 2 aus `docs/proposals/2026-05-17-cache-verzicht-und-spike-g.md` freigegeben durch Patrick und in `fahrplan.md` Schritt 5.1 übernommen.
+- Bisherige Ein-Zeilen-Fassung von Spike G durch vollen Schritt-Block ersetzt (Schema gemäß fahrplan.md Zeilen 71–87).
+- Anforderungs-Erweiterung: Spike testet jetzt drei Szenarien T1 (Traffic-Stau), T2 (Fußgängerzone), T3 (Einbahnstraße entgegen). Valhalla als OSS-Alternative als Vergleichs-Provider mitgenommen. Zeitbox 8–12 h.
+- Bezug zu ADR-016 (Cache-Verzicht): Spike-G-Eingangskriterium nimmt Cache-Verzicht-Effekt auf API-Budget mit auf.
+- Kein neuer ADR, keine Reaktiv-Quoten-Änderung. Fahrplan-Pflege.
+
 ### 2026-05-17 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 2 h (Aufgabe: TomTom-Kartenmaterial-Recherche + Folge-Vorlagen nach Patrick-Direktiven; Sessionende nach Commit der Vorschlags-Vorlagen).

@@ -974,7 +974,57 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 **Schritte:**
 
-- **5.1** Spike G (Sperrungs-Override-Technik) – Schritt-Art Spike, Zeitbox 4–8 h. Klärt TomTom-Custom-Areas vs. Route-Bias vs. Penalty-Map, Datenbedarf bei Override-Pflege, API-Budget-Folgen. Ergebnis: ADR `[ERKENNTNIS] [MODUL] [PERFORMANCE]` mit Technikwahl.
+#### 5.1: Spike G — Sperrungs-Override-Technik (Override + Reverse-Override)
+
+- **Status:** OFFEN
+- **Phasentyp-Kontext:** ERKUNDUNG
+- **Schritt-Art:** Spike + Vergleichsstudie
+- **Zeitbox:** 8–12 h (erweitert gegenüber bisherigen 4–8 h wegen Reverse-Override-Anforderung und Provider-Vergleich)
+- **Abhängigkeiten:** Phase 2 ERLEDIGT (Auth-Stack zur Adapter-Authentifizierung); ADR-014/Regel-017 (Provider-Neutralität).
+- **Freigabepflichtig:** nein (Spike-Schritt). ADR im Anschluss freigabepflichtig.
+- **Eingangskriterien:** TomTom-Recherche-Befunde aus `project-context.md` Abschnitt 11 (Eintrag 2026-05-17) gelesen; `avoidAreas`-Rechteck-Limit und `supportingPoints`-Mechanik verstanden; ADR-016 (Cache-Verzicht) berücksichtigt — beeinflusst die API-Budget-Folgen pro Override-Technik, weil ohne Server-Cache jeder Override-Versuch direkt aufs Provider-Budget durchschlägt.
+- **Zu klärende Fragen:**
+  1. **Anforderungs-Präzisierung „Override":** Patrick-Direktive 2026-05-17 verlangt _Befahrbarkeit_ vom Routing-Provider als gesperrt geführter Straßen, nicht nur _Markierung_ als gesperrt. Spike trennt zwei Sperrungsarten:
+     - **(a) Traffic-basierte temporäre Sperrungen** (Echtzeit-Verkehrslage, Baustellen, Polizei-Absperrungen) — über TomTom Traffic API als `ROAD_CLOSURE`-Incidents gemeldet.
+     - **(b) Permanente Sperrungen im Kartenmaterial** (Fußgängerzonen, Einbahnstraßen entgegen Fahrtrichtung, bauliche Sperren) — fest im Routing-Graph des Providers.
+  2. **TomTom-Techniken im konkreten Test (Provider-Eignung):**
+     - `traffic=false` / `considerTraffic=false` für (a) — Traffic-Incidents ignorieren.
+     - `avoidAreas` mit Rechteck-Liste für „großflächige Sperre" (z. B. Innenstadtblock) — Eignung für (a) und (b) prüfen. Achtung: TomTom unterstützt nur Rechtecke, keine Polygone.
+     - `supportingPoints` mit Disponent-gesetzten Wegpunkten direkt auf der gesperrten Straße — Route-Rekonstruktion erzwingt Befahrung. Funktioniert nur, wenn die Straße im Routing-Graph als befahrbar existiert (mit oder ohne Restriktion).
+     - **Empirischer Test:** drei Test-Szenarien gegen TomTom mit den drei Techniken kombinieren:
+       - **Szenario T1:** Echtzeit-Stau / Traffic-Incident auf Hauptstraße → Befahrung erzwingen.
+       - **Szenario T2:** Fußgängerzone Bremen-Innenstadt (Beispiel) → Befahrung erzwingen.
+       - **Szenario T3:** Einbahnstraße entgegen Fahrtrichtung → Befahrung erzwingen.
+  3. **Alternative Routing-Engines als Vergleichs-Kandidaten:**
+     - **Valhalla** (OSS, MIT/BSD-lizenziert, OSM-basiert): `exclude_polygons`, dynamische Edge-Penalties, Costing-Funktionen mit Konfiguration zur Befahrung restriktiver Wege. Erwarteter Vorteil bei (b).
+     - **OSRM** (OSS, OSM-basiert): weniger flexibel als Valhalla, aber bewährt — als sekundäre Vergleichsoption.
+     - **Test der gleichen drei Szenarien T1/T2/T3** gegen Valhalla (lokales Demo-Setup mit OSM-Extract Bremen oder Bayern).
+  4. **API-Budget-Folgen pro Technik:** jeder Override-Versuch ist ggf. ein zusätzlicher API-Call (Re-Routing). Mit ADR-016 (Cache-Verzicht) wird das budget-relevanter. Messung pro Szenario.
+  5. **Datenbedarf bei Override-Pflege:** wie speichert das System eine „trotzdem befahrbare Strecke"? Polylinie, Wegpunkt-Liste, Edge-Identifier? Wie ist die Disponent-UX (Klick auf Karte vs. Strecken-Editor)?
+  6. **Persistenz des Datenmodells `route_override`:** Felder, Lebensdauer (einsatzgebunden), Audit-Log-Eintrag-Pflicht (Regel-012 — destruktive bzw. routing-beeinflussende Disponenten-Aktion).
+- **Akzeptanzkriterien (wissensbasiert, ERKUNDUNG):**
+  - Für jedes der drei Szenarien T1/T2/T3 ist dokumentiert, welche TomTom-Technik welches Ergebnis liefert (Erfolg/Misserfolg, mit gemessener API-Aufruf-Zahl).
+  - Für (mindestens) Szenario T2 (permanente Sperrung) ist dokumentiert, ob TomTom hinreichend ist; falls nein, ist eine Alternative (Valhalla mit OSM-Extract) prototypisch getestet.
+  - ADR-Entwurf liegt vor mit:
+    - gewählter Override-Technik je Sperrungsart (a)/(b);
+    - falls TomTom nicht hinreichend für (b): Empfehlung „Routing-Provider wechseln zu Valhalla" oder „Anforderung (b) als nicht erfüllbar streichen mit Vision-Klarstellung";
+    - Datenmodell-Skizze `route_override`;
+    - geschätzte API-Budget-Folgen.
+- **Betroffene Module:** `backend/geo` (Adapter; im Spike-Stadium als Wegwerf-Code), keine produktive Implementierung. Bei provider-relevanter Empfehlung sind außerdem `infra/tile-proxy` (Routing-Endpunkt-Pfad) und ADR-002 (Stack-Wahl) berührt — dann eigener Folge-ADR.
+- **Reifegrad-Wirkung am Schritt-Ende:**
+  - `[OFFEN]`-Bereich „Sperrungs-Override-Technik" in `architecture.md` Modul `backend/geo` → `[VORLÄUFIG]` mit ADR-Verweis.
+  - Schnittstelle S7 (Geo → Tile-Proxy) `[OFFEN]`-Anteil „Sperrungs-Override-Aufrufschema" → `[VORLÄUFIG]`.
+  - Falls Provider-Wechsel als ADR-Konsequenz: Modul `backend/geo` Adapter-Spec aktualisiert; ADR-014/Regel-017 trägt die Wechselbarkeit.
+- **Artefakte:**
+  - `docs/decisions.md` neuer ADR `[ERKENNTNIS] [MODUL] [PERFORMANCE]` (ggf. zusätzlich `[STACK]`, falls Provider-Wechsel empfohlen).
+  - `docs/architecture.md` Update Modul `backend/geo` und ggf. `infra/tile-proxy`.
+  - `docs/spikes/spike-g-results.md` (optional, falls Detail-Messprotokoll nicht in den ADR passt) — Test-Szenarien T1/T2/T3 mit Antworten/Routen/Counts.
+- **Notizen:**
+  - Test gegen TomTom kann mit dem entwickler-eigenen API-Key des Plattform-Betreibers laufen (kein produktiver Mandanten-Bezug nötig).
+  - Valhalla-Test kann mit Docker (`valhalla/valhalla:latest` plus DE-OSM-Extract) lokal aufgesetzt werden — Datenmenge für nur Bremen oder Bayern ist <2 GB.
+  - Bei Wahl Valhalla als produktive Routing-Engine: Folge-ADR zu Daten-Update-Pipeline (Geofabrik-Extracts, monatliche Frequenz) — nicht Teil von Spike G.
+  - Bisheriger Spike-G-Zuschnitt („TomTom-Custom-Areas vs. Route-Bias vs. Penalty-Map") ist in dieser Fassung in den Techniken-Punkten 2 und 3 enthalten und um die Reverse-Override-Anforderung sowie den Valhalla-Vergleich erweitert.
+
 - **5.2** Spike H (Resilience-Granularität) – Schritt-Art Vergleichsstudie + Prototyp, Zeitbox 6–8 h. Klärt Backup-Strategie (logical/physical, RTO/RPO), Recovery-Reihenfolge (Procrastinate-Job-State + Detail-Daten), Verhalten bei Crash mitten im Auftragsstatus-Wechsel, Erfahrung Reconnect WebSocket nach State-Reload. Ergebnis: ADR `[ERKENNTNIS] [MODUL] [DEPLOYMENT]` mit Backup-Frequenz, Recovery-Reihenfolge, getesteter RTO.
 - **5.3** Spike K (Hilfe-Knopf-Semantik) – Schritt-Art Spike, Zeitbox 2–3 h. Klärt Pflichtfeld-Beschreibung, Disponenten-Eskalations-Sichtbarkeit, Quittungspfad zum Betreuer, kein PII-Speicher. Ergebnis: UX-Konzept + Datenmodell-Skizze.
 - **5.4** Spike L (Tile-Caching-Strategie Frontend) – Schritt-Art Prototyp, Zeitbox 6–8 h. Klärt Workbox-Strategie für Tile-Cache, Pre-Cache des Operations-Raums beim Schichtbeginn, Tile-Lebensdauer (≥ 7 Tage konsistent mit nginx-Cache), Speicher-Quota mobiler Browser. Ergebnis: Prototyp + ADR `[ERKENNTNIS] [MODUL] [PERFORMANCE]`.
