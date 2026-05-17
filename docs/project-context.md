@@ -252,9 +252,9 @@ API-Verträge werden in `architecture.md` Abschnitt 4 detailliert. Hier nur Kate
 
 ### Performance
 
-- **Tile-Caching:** statische Tiles ≥ 7 Tage TTL, mandanten-/einsatz-übergreifend (Tiles sind nicht personenbezogen).
-- **Routing-Aufrufe:** maximal 1 pro Auftrag, frühestens 30 s erneut für dasselbe Fahrzeug; Cache von Routen für identische (Start, Ziel)-Paare im 60-s-Fenster.
-- **API-Budget Externdienste:** ~50 €/Monat über alle aktiven Einsatztage – Verbrauchszähler im `backend/geo`-Modul Pflicht; Überschreitung erzeugt Disponenten-Warnung und ggf. automatischen Fallback auf rein lokale Tile-Wiedergabe.
+- **Tile-Caching:** **kein serverseitiges Caching im Backend** (ADR-016, 2026-05-17 — MapTiler Cloud Terms und TomTom ToS Clause 11.4 verbieten beide Multi-Client-Server-Cache). Alleinige Cache-Schichten: Browser-Cache gemäß Provider-`Cache-Control`-Header (MapTiler default 4 h) plus PWA-Service-Worker-Pre-Cache des Operations-Raums vor Schichtbeginn (Spike L, Phase 5).
+- **Routing-Aufrufe:** maximal 1 pro Auftrag, frühestens 30 s erneut für dasselbe Fahrzeug. **Kein 60-s-Backend-Cache** für identische (Start, Ziel)-Paare (ADR-016, TomTom Clause 11.4) — Wiederholungs-Schutz ausschließlich über das 30-s-Fahrzeug-Throttle im `backend/geo`-Adapter.
+- **API-Budget Externdienste:** initial ~50 €/Monat über alle aktiven Einsatztage – Verbrauchszähler im `backend/geo`-Modul Pflicht; Überschreitung erzeugt Disponenten-Warnung und ggf. automatischen Fallback auf rein lokale Tile-Wiedergabe. **Vor Phase-7-Lasttest neu zu validieren** unter Cache-freier Annahme (ADR-016); Budget-Anhebung ist ADR-pflichtige Entscheidung nach der Messung (Schritt 7.1).
 - **p95-Antwortzeit Backend-API:** < 300 ms bei der unter Abschnitt 2 angenommenen Last (Annahme, in STABILISIERUNG zu validieren).
 - **Datenbankabfragen:** keine N+1-Muster, kein `SELECT *`; Linter-/Review-Regel.
 
@@ -557,6 +557,8 @@ Punkte, die zu Projektstart bewusst offen sind. Claude arbeitet nicht an Bereich
   - **Phase-6-Eingangsbedingung (Tiles):** MapTiler-Sales-Anfrage (AGB-Cache) bleibt Phase-7-Roadmap-Meilenstein — Nutzung von TomTom-Tiles wäre keine Lösung, da dieselbe Caching-Constraint gilt.
   - **Preisänderung 1. Juli 2026:** TomTom-Pricing auf developer.tomtom.com verifizieren, sobald neue Tarife veröffentlicht sind. Ggf. Konsolidierungs-ADR vorbereiten, falls TomTom-Tarife attraktiver als MapTiler + TomTom kombiniert.
   - **Routing-Caching-Graubereich:** bei erster `backend/geo`-Implementierung in Phase 6 TomTom-Support zu Clause-11.4-Auslegung für Backend-Level-Routing-Cache (60 s für identische Paare) anfragen. Bis zur Klärung: konservative Interpretation = kein serverseitiger Routing-Cache, stattdessen nur client-affin gehandhabter Cache (Ergebnis an denselben anfragenden Betreuer zurückgeben, nicht cross-vehicle teilen).
+
+  **Update 2026-05-17 (ADR-016):** Cache-Frage abschließend geklärt — Patrick-Direktive 2026-05-17 zugunsten Verzicht auf serverseitiges Caching. **MapTiler-AGB-Cache-Konflikt durch ADR-016 obsolet** (Phase-7-Roadmap-Meilenstein „MapTiler-Sales-Anfrage" entfällt). **Routing-Caching-Graubereich durch ADR-016 obsolet** (60-s-Backend-Routing-Cache entfällt). `infra/tile-proxy` agiert ab Phase 6 als reiner API-Key-Inject-/Rate-Limit-Proxy mit `Cache-Control`-Pass-Through. Browser-Cache + PWA-Service-Worker (Spike L) bleiben einzige Cache-Schichten.
 
 ### Triage-Stand 2026-05-07 (Klärungs-Session vor Modus-2-Schritt 4)
 

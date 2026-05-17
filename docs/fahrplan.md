@@ -7,8 +7,8 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** 2026-05-16
-- **Laufende Phase:** **Phase 2 abgeschlossen** (Schritt 2.7 ERLEDIGT 2026-05-16). Nächste laufende Phase: **Phase 3 – Spikes Wave 1 (Operations-Vorklärungen) (ERKUNDUNG).**
+- **Stand vom:** 2026-05-17
+- **Laufende Phase:** **Phase 2 abgeschlossen** (Schritt 2.7 ERLEDIGT 2026-05-16). Nächste laufende Phase: **Phase 3 – Spikes Wave 1 (Operations-Vorklärungen) (ERKUNDUNG).** Zwischen 2.7 und 3.1: Strategische Klarstellung **ADR-016 (Verzicht auf serverseitiges Caching)** + Spike-G-Neuzuschnitt (2026-05-17, außerhalb der Schritt-Sequenz).
 - **Phasentyp:** **Phase 2** (UMSETZUNG, Phase-2-Sonderregel) **abgeschlossen.** **Phase 3** (ERKUNDUNG) ist als nächste laufende Phase nominiert: Klärung Spike I (Geo-Plausibilitäts-Algorithmus) und Spike J (Bündelungs-Trigger), beide blockieren die UMSETZUNG-Phase 4 `backend/operations`.
 - **Erledigte Schritte Phase 2 (alle ERLEDIGT):** **2.7 [ERLEDIGT]** 2026-05-16 (Phase-2-Abschluss: Coverage-Frischlauf verifiziert die Modul-Schwellen aller belastbaren Module — Backend 95.84 % gesamt, `backend/auth` 96 %, `backend/auth_anonymous` 100 %, `backend/tenants` 95–100 %; Frontend-Disponent 96.61 % Lines / 93.33 % Branches, Frontend-Einsatzkraft 98.38 % Lines / 95.55 % Branches; GitHub-Issue `Paddel87/EB-Digital#26` für externe Security-Review Phase 7.2 mit Briefing-Form angelegt; keine Code-Änderung, keine ADR-Pflicht; Detail-Plan A/A/A/A/A freigegeben). **2.6 [ERLEDIGT]** 2026-05-16 (`frontend-einsatzkraft` AccessCode-Eingabe-UI produktiv gegen S2a; 47 Vitest-Tests grün). **2.5 [ERLEDIGT]** 2026-05-15 (`frontend-disponent` Login + Dashboard + Reset-Password-UI produktiv; 27 Vitest-Tests grün). **2.5b [ERLEDIGT]** 2026-05-16 (Hot-Stabilisierung `get_db_session()` als yield-Dependency mit Rollback, ADR-015, Regel-018). **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv mit S10). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
 - **Aktiver Schritt:** keiner.
@@ -17,7 +17,7 @@
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
 - **CI-Hygiene-Sonderfall in Phase 1 (2026-05-10):** ADR-012 — `actions/upload-artifact@v4` → `@v7` als Major-Update gegen Node-20-Deprecation, analog zu ADR-010 in 1.2. Reaktiv-Quote bleibt 0 / 10.
-- **Strategische Klarstellung zwischen 2.1 und 2.2 (2026-05-10):** ADR-014 — Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip + Regel-017. Außerhalb der Schritt-Sequenz, dokumentations-only (kein Code-Eingriff). Reaktiv-Quote bleibt 0 / 10. Keine Auswirkung auf Schritt-2.2-Plan; jedoch erweiterte Eingangsbedingung für Phase 6 (`backend/geo` + `infra/tile-proxy`-Implementierung): MapTiler-Sales-Approval für serverseitigen Cache vor erster Tile-Proxy-Implementierung zu klären, oder Pfad-B/C/D-Wechsel — siehe `project-context.md` Abschnitt 11. Wird in Phase-7-Roadmap-Meilenstein „MapTiler-Sales-Anfrage" gespiegelt.
+- **Strategische Klarstellung zwischen 2.1 und 2.2 (2026-05-10):** ADR-014 — Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip + Regel-017. Außerhalb der Schritt-Sequenz, dokumentations-only (kein Code-Eingriff). Reaktiv-Quote bleibt 0 / 10. Keine Auswirkung auf Schritt-2.2-Plan; jedoch ursprünglich erweiterte Eingangsbedingung für Phase 6 (MapTiler-Sales-Approval für serverseitigen Cache). **Update 2026-05-17:** Eingangsbedingung obsolet durch **ADR-016 (Verzicht auf serverseitiges Caching)** — Patrick-Direktive 2026-05-17 zugunsten architektur-sauberer Lösung. Phase-7-Roadmap-Meilenstein „MapTiler-Sales-Anfrage" entfällt; Pfad bleibt nach ADR-014/Regel-017 als Eskalations-Option offen, falls Phase-7-Lasttest (7.1) das Budget reißt.
 
 ## Phasen-Typen
 
@@ -1027,7 +1027,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 - **5.2** Spike H (Resilience-Granularität) – Schritt-Art Vergleichsstudie + Prototyp, Zeitbox 6–8 h. Klärt Backup-Strategie (logical/physical, RTO/RPO), Recovery-Reihenfolge (Procrastinate-Job-State + Detail-Daten), Verhalten bei Crash mitten im Auftragsstatus-Wechsel, Erfahrung Reconnect WebSocket nach State-Reload. Ergebnis: ADR `[ERKENNTNIS] [MODUL] [DEPLOYMENT]` mit Backup-Frequenz, Recovery-Reihenfolge, getesteter RTO.
 - **5.3** Spike K (Hilfe-Knopf-Semantik) – Schritt-Art Spike, Zeitbox 2–3 h. Klärt Pflichtfeld-Beschreibung, Disponenten-Eskalations-Sichtbarkeit, Quittungspfad zum Betreuer, kein PII-Speicher. Ergebnis: UX-Konzept + Datenmodell-Skizze.
-- **5.4** Spike L (Tile-Caching-Strategie Frontend) – Schritt-Art Prototyp, Zeitbox 6–8 h. Klärt Workbox-Strategie für Tile-Cache, Pre-Cache des Operations-Raums beim Schichtbeginn, Tile-Lebensdauer (≥ 7 Tage konsistent mit nginx-Cache), Speicher-Quota mobiler Browser. Ergebnis: Prototyp + ADR `[ERKENNTNIS] [MODUL] [PERFORMANCE]`.
+- **5.4** Spike L (Tile-Caching-Strategie Frontend) – Schritt-Art Prototyp, Zeitbox **8–10 h** (erhöht gegenüber bisher 6–8 h durch ADR-016: PWA-Service-Worker ist jetzt **alleinige Cache-Schicht für Tile-Last-Glättung** neben Browser-Default-Cache, kein nginx-Cache mehr im Backend). Klärt Workbox-Strategie für Tile-Cache, Pre-Cache des Operations-Raums beim Schichtbeginn (kritischer Hebel), Tile-Lebensdauer (gemäß Provider-`Cache-Control`, MapTiler default 4 h), Speicher-Quota mobiler Browser, Hit-Rate-Schätzung gegen realistische Großlagen-Last. Ergebnis: Prototyp + ADR `[ERKENNTNIS] [MODUL] [PERFORMANCE]`.
 - **5.5** Spike M (Fahrzeugbezeichnungs-Schema) – Schritt-Art Vergleichsstudie + Stakeholder-Rückfrage DPolG, Zeitbox 2 h netto. Klärt Naming-Konvention (z. B. „EB-Bremen-01" oder verbandseigene Funkrufnamen), Eindeutigkeit pro Mandant vs. global, Längen-Constraints. Ergebnis: ADR `[ERKENNTNIS] [DATENMODELL]` „Fahrzeug-Naming".
 
 ---
@@ -1042,7 +1042,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 **Schritte (gröber):**
 
-- **6.1** `backend/geo`: Routing-Adapter (TomTom mit aktiver API-Version pinned, Migrations-Hinweise aus `project-context.md` Abschnitt 5 berücksichtigen), Tile-Cache-Steuerung, Sperrungs-Override (Spike-G-Technik), Geofencing.
+- **6.1** `backend/geo`: Routing-Adapter (TomTom mit aktiver API-Version pinned, Migrations-Hinweise aus `project-context.md` Abschnitt 5 berücksichtigen), **`Cache-Control`-Header-Pass-Through** an `infra/tile-proxy` (ADR-016 — kein serverseitiges Caching), Sperrungs-Override (Spike-G-Technik), Geofencing, Verbrauchszähler `geo_usage_daily`.
 - **6.2** `frontend-disponent`: produktives Lagezentrum mit MapLibre-Karte, Operation-Eröffnung, Multi-Disponenten-Confirmation-Dialog für destruktive Aktionen (Regel-012), Audit-Log-Anzeige.
 - **6.3** `frontend-betreuer`: produktive Mobile-PWA mit Turn-by-Turn (TomTom-Routing über `backend/geo`), Hilfe-Knopf-UX (Spike-K-Konzept), Offline-Tile-Cache (Spike-L-Strategie).
 - **6.4** `backend/resilience`: Backup-Strategie (Spike-H-Wahl), Recovery-Verfahren, Backup-Recovery-Test als Stabilisierungs-Anker.
@@ -1062,7 +1062,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 **Schritte (gröber):**
 
-- **7.1** Lasttest gegen 50/500 (k6 oder Locust), Messung p95 Backend-API < 300 ms, Auswertung als ADR `[ERKENNTNIS] [PERFORMANCE]`.
+- **7.1** Lasttest gegen 50/500 (k6 oder Locust), Messung p95 Backend-API < 300 ms, **plus API-Budget-Validierung externer Geo-Services unter Cache-freier Annahme (ADR-016)**: simulierte Großlage misst Verbrauchszähler `geo_usage_daily` über alle drei Provider-Pfade (MapTiler-Tiles, MapTiler-Geocoding, TomTom-Routing). Bei Budget-Überschreitung der ~50 €/Monat-Annahme aus `project-context.md` Abschnitt 6: Folge-ADR mit Optionen (Budget-Anhebung / Eskalation auf Self-Hosting Pfad-C aus ADR-014 / Mandanten-Vertragsdetail). Auswertung als ADR `[ERKENNTNIS] [PERFORMANCE]`.
 - **7.2** Externe Security-Review Auth-Stack (`project-context.md` Abschnitt 3): Beauftragung, Durchführung, Findings-Auflösung, Bestätigung. Ergebnis als ADR `[ERKENNTNIS] [SECURITY]` plus geschlossene Findings im Logbuch.
 - **7.3** Roadmap-Meilenstein O (Test-Termin reale Großlage) festsetzen mit DPolG-Bremen.
 - **7.4** Roadmap-Meilenstein P (Onboarding-Unterlagen): DSGVO-Datenverarbeitungs-Vereinbarung, Nutzungsbedingungen, Haftungsklarheit als externe Dokumente erstellen (kein Code, nicht-technische Voraussetzung).
