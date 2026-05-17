@@ -26,6 +26,35 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-18 – [PROBLEM-GELÖST] Spike I abgeschlossen — ADR-017 angelegt
+
+- **Schritt 3.1 ERLEDIGT** durch ADR-017 `[ERKENNTNIS] [PERFORMANCE] [MODUL]` „Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)". Spike-Messprotokoll in [docs/spikes/spike-i-results.md](spikes/spike-i-results.md).
+- **Klärung der sechs Detail-Fragen** (alle in der ADR-017-Entscheidungstabelle festgehalten):
+  - **Distanz-Metrik:** Hülle (begründet am länglichen P6-Polygon Osterdeich: bei engem Schwellenwert 500 m würde Centroid eine Einsatzkraft am Sielwall fälschlich moderieren, obwohl sie 0 m von der Hülle entfernt ist).
+  - **GPS-Toleranz:** Variante B (dynamisch `2·accuracy_m`, 95-%-Konfidenz) — passt sich der realen GPS-Qualität an (T7 zeigt: bei accuracy 80 m im Stadtkern moderiert B richtigerweise, A nicht).
+  - **Moderations-Filter:** `accuracy > 500 m` → automatische Moderation, plattformweite Konstante.
+  - **Text-Standort:** Moderation, nicht Ablehnung — legitime Gründe (Funkloch, Permission verweigert, Fahrzeug-Metalldach).
+  - **Konfigurations-Hierarchie:** Plattform-Konstante → Mandanten-Default (`tenant.plausibility_default_threshold_m`, Default 5 000 m) → Einsatz-Override (`operation.plausibility_threshold_m`, optional). CHECK-Constraint 50–50 000 m. Schema-Migration additiv in Phase 4.
+  - **Performance:** synchron im Order-Endpunkt, kein Bounding-Box-Pre-Filter, <1 ms bei realistischen N und K.
+- **Reifegrad-Wirkung:** zwei `[OFFEN]`-Bereiche („Geo-Plausibilitäts-Algorithmus" in `backend/operations` und Komponente `PlausibilityChecker` in `backend/geo`) auf `[VORLÄUFIG]` befördert. Modul-Reifegrade selbst bleiben `[VORLÄUFIG]` — produktive `[BELASTBAR]`-Beförderung folgt mit Phase 4. `architecture.md` Abschnitt 3, 5 (Datenfluss F2 Schritt 6) und 9 entsprechend gepflegt.
+- **Reaktiv-Quote:** 1/10 = 10 % unverändert. ADR-017 ist `[ERKENNTNIS]`, kein Pivot. Fenster wandert auf ADR-008 bis ADR-017 (Reaktiv-Eintrag bleibt ADR-015).
+- **Folge-Verpflichtungen für Phase 4:**
+  - Schema-Migration `tenant.plausibility_default_threshold_m INTEGER NOT NULL DEFAULT 5000` plus `operation.plausibility_threshold_m INTEGER NULL` mit jeweiligem CHECK-Constraint.
+  - Shapely 2.0+ als Backend-Dependency aufnehmen (BSD-3, GEOS dyn. MIT) — Sub-Dependency-Lizenz-Prüfung Regel-016.
+  - Audit-Log-Erweiterung mit Plausibility-Outcome plus `distance_m`, `accuracy_m`, `threshold_m`, `variant`.
+  - Disponenten-UI Moderations-Ansicht mit Outcome-Code (NO_GPS / ACCURACY_UNKNOWN / ACCURACY_TOO_LOW / OUT_OF_RANGE).
+  - Threat-Model-Notiz für Phase 7.2: Plausibilitäts-Check ist Filter, kein Sicherheitsmechanismus.
+- **Bekannter Stand:** Worktree `clever-goodall-9ceb1a` mit neuen / geänderten Dateien — `docs/spikes/spike-i-results.md` (neu), `docs/decisions.md` (ADR-017 + Reaktiv-Quoten-Fenster), `docs/architecture.md` (Module backend/operations, backend/geo, F2 Schritt 6, Abschnitt 9 Header + drei Zeilen), `docs/fahrplan.md` (3.1 ERLEDIGT mit Voll-Format + Verifikations-Block, Aktueller-Stand-Block), `docs/logbuch.md` (SESSIONSTART + dieser PROBLEM-GELÖST-Eintrag). Keine Code-Änderung am Produktivpfad. Backend/Frontend/Tests unverändert.
+
+### 2026-05-18 – [SESSIONSTART]
+
+- **Letzter Stand:** Sessionende 2026-05-17 nach Übernahme von ADR-016 (Verzicht auf serverseitiges Caching) und Spike-G-Neuzuschnitt aus den Vorschlags-Vorlagen in `docs/proposals/2026-05-17-cache-verzicht-und-spike-g.md`. Reaktiv-Quote 1/10 = 10 %. Keine aktiven Blocker. Phase 2 abgeschlossen.
+- **Auftrag dieser Session:** **Schritt 3.1 — Spike I (Geo-Plausibilitäts-Algorithmus, Zeitbox 4 h)** in Phase 3 (ERKUNDUNG). Klärt Distanz-Metrik (Hülle vs. Centroid), GPS-Ungenauigkeit (Variante A pauschal vs. B `2·accuracy`-dynamisch), Text-Standort-Behandlung, mandanten-konfigurierbarer Schwellenwert (Default 5 km), 500-m-Moderationsfilter für accuracy-Ausreißer. Patrick-Freigabe für (A vs. B)-Vergleich + 500-m-Moderationsfilter; Kalman-Filter bewusst nicht im Scope.
+- **Test-Datensatz von Patrick freigegeben:** Bremen Innenstadt (mehrere Örtlichkeiten) + Osterdeich/Weserstadion-Bereich (Werder-Heimspiel-Szenario). Längliches Polygon am Osterdeich macht den Hülle-vs-Centroid-Effekt sichtbar.
+- **Branch:** `scp/clever-goodall-9ceb1a` (Worktree).
+- **Eingangskriterien erfüllt:** Phase 2 ERLEDIGT ✓; Reaktiv-Quote 10 % unter Schwellenwert ✓; keine Blocker ✓; ADR-014/Regel-017 (Provider-Neutralität) und ADR-016 (Cache-Verzicht) berücksichtigt — beide haben keinen direkten Einfluss auf den Plausibilitäts-Algorithmus, weil er rein backend-intern arbeitet, ohne externen API-Call.
+- **Erwartete Artefakte:** Schritt 3.1 als Voll-Schritt-Format in `fahrplan.md`; `docs/spikes/spike-i-results.md` mit Messprotokoll; ADR-017 `[ERKENNTNIS] [PERFORMANCE]` in `decisions.md`; `architecture.md` Updates in Modulen `backend/operations` und `backend/geo` plus Abschnitt 9.
+
 ### 2026-05-17 – [BEOBACHTUNG] ADR-016 angelegt: Verzicht auf serverseitiges Caching
 
 - Vorlage 1 aus `docs/proposals/2026-05-17-cache-verzicht-und-spike-g.md` freigegeben durch Patrick und als **ADR-016** in `decisions.md` angelegt.

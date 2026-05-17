@@ -31,10 +31,11 @@
 | 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL           | Architekturänderungen      | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip                    |
 | 015 | 2026-05-15 | Aktiv  | REAKTIV        | STACK, SECURITY, METHODIK | Sicherheit und Datenschutz | `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b) |
 | 016 | 2026-05-17 | Aktiv  | STRATEGISCH    | MODUL, STACK, PERFORMANCE | Architekturänderungen      | Verzicht auf serverseitiges Caching vor externen Geo-Services                                 |
+| 017 | 2026-05-18 | Aktiv  | ERKENNTNIS     | PERFORMANCE, MODUL        | Architekturänderungen      | Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)          |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-007 bis ADR-016).
+- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-008 bis ADR-017).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 - **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz).
@@ -553,6 +554,45 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - `project-context.md` Abschnitt 6 (Performance-Bullets Tile-Caching, Routing-Aufrufe, API-Budget), Abschnitt 11 (Hinweis ADR-016 → MapTiler-AGB-Cache-Konflikt obsolet, Routing-Caching-Graubereich obsolet).
   - `fahrplan.md` Zeile 20 (Hinweis zu Phase-7-Sales-Anfrage gestrichen), Schritt 5.4 (Spike L erhöhter Stellenwert), Schritt 6.1 (Tile-Cache-Steuerung gestrichen, Cache-Control-Pass-Through ergänzt), Schritt 7.1 (Lasttest erweitert um Budget-Validierung).
 - **Abgeleitete Regel:** keine neue allgemeine Regel — ADR-014/Regel-017 deckt die übergeordnete Wechselbarkeit ab; ADR-016 ist eine konkrete Cache-Architektur-Entscheidung mit Geltungsbereich „externe Geo-Services unter Provider-ToS mit Cache-Restriktion".
+
+---
+
+#### ADR-017: Geo-Plausibilitäts-Algorithmus — Hülle-Distanz plus dynamische GPS-Toleranz
+
+- **Datum:** 2026-05-18
+- **Status:** Aktiv
+- **Tags:** `[ERKENNTNIS]` `[PERFORMANCE]` `[MODUL]`
+- **Phasentyp-Kontext:** ERKUNDUNG (Schritt 3.1 Spike I).
+- **Reifegrad-Wirkung:** `[OFFEN]`-Bereich „Geo-Plausibilitäts-Algorithmus" in den Modulen `backend/operations` und `backend/geo` → `[VORLÄUFIG]`. Modul-Reifegrade selbst bleiben `[VORLÄUFIG]`.
+- **Kategorie:** Architekturänderung — konkretisiert den `PlausibilityChecker` als `[VORLÄUFIG]`-Komponente in `backend/geo` und seine Aufruf-Schnittstelle zu `backend/operations`. Nicht produktiv-Code-veränderlich (Phase 4 implementiert).
+- **Kontext:**
+  - `project-context.md` Abschnitt 6 (Sicherheit) verlangt eine Plausibilitätsprüfung von Einsatzkraft-Bestellungen mit Disponenten-Moderation bei Schwellenwert-Überschreitung (Default 5 km, pro Einsatz anpassbar). Bisher waren Distanz-Metrik, GPS-Ungenauigkeits-Modellierung, Behandlung fehlender oder unsicherer GPS-Werte und Konfigurations-Verankerung als `[OFFEN]` markiert in `architecture.md` Modulen `backend/operations` und `backend/geo`.
+  - Spike I (Zeitbox 4 h) sollte diese Lücken über einen Reißbrett-Vergleich zweier GPS-Toleranz-Varianten an einem synthetischen Test-Datensatz (Bremen Innenstadt + Osterdeich-/Weserstadion-Bereich) klären.
+  - Patrick-Direktive vor Spike-Start: (1) Hülle-vs-Centroid-Frage am länglichen Osterdeich-Polygon klären; (2) zwei Varianten vergleichen — A pauschal vs. B dynamisch `2·accuracy`; (3) 500-m-Moderationsfilter für GPS-Ausreißer aufnehmen; (4) keine Kalman-Filter-Modellierung (Overkill für Einzelbestellungen ohne Zeitserie).
+- **Optionen:**
+  - **A — Centroid-Distanz + pauschaler 30-m-Aufschlag:** Distanz misst vom GPS-Punkt zum Polygon-Centroid (Mittelpunkt). GPS-Ungenauigkeit als feste Konstante. — Konsequenzen: Algorithmisch einfacher, aber bricht bei länglichen Polygonen (P6 Osterdeich, 1500 m × 200 m): eine Einsatzkraft am Rand ist 0 m von der Hülle entfernt, aber bis zu 750 m vom Centroid. Bei engen Einsatz-Schwellenwerten (z. B. 500 m für punktuelle Lagen) führt Centroid zu False-Moderation legitimer Bestellungen. **Nicht zutreffend** für unsere Polygon-Klassen.
+  - **B — Hülle-Distanz + pauschaler 30-m-Aufschlag (Variante A im Spike):** Distanz misst zum nächsten Punkt auf der Polygon-Hülle. GPS-Ungenauigkeit als feste Konstante 30 m. — Konsequenzen: Distanz-Metrik korrekt; aber Tolerance-Modell ignoriert die vom Client gemeldete `accuracy`. Konkret problematisch bei T7 (50 m außen, accuracy 80 m im Stadtkern): Variante A akzeptiert (50+30=80<100), obwohl die Person realistisch bis zu 210 m außen stehen könnte. Auch problematisch bei T8 (80 m außen, accuracy 5 m gutes GPS): Variante A moderiert unnötig.
+  - **C — Hülle-Distanz + dynamische GPS-Toleranz `2·accuracy` (Variante B im Spike):** Distanz zur Hülle; Tolerance ist `2·accuracy_m` (95-%-Konfidenz unter Annahme `accuracy` = 1-Sigma-Radius). Plus 500-m-Moderationsfilter für `accuracy_m > 500`, plus Text-Standort-Behandlung als `MODERATION_NO_GPS`. — Konsequenzen: Tolerance passt sich der realen GPS-Qualität an: konservativ in Funklöchern (T7), präziser bei gutem Fix (T8). Distanz-Metrik geometrisch korrekt für alle Polygon-Formen. Algorithmus weiterhin synchron in O(N·K) (<1 ms typisch), kein Bounding-Box-Pre-Filter nötig. Min/Max-Untergrenze auf accuracy (5 m) schützt vor unrealistischen 0-Werten. Audit-Log persistiert Distanz und accuracy, aber keine Roh-Koordinaten (DSGVO-konform, `project-context.md` Abschnitt 6 Datenschutz).
+- **Entscheidung:** **Option C** — Hülle-Distanz plus dynamische GPS-Toleranz `2·accuracy_m`. Plus dreistufige Konfigurations-Hierarchie: Plattform-Konstante (Moderations-Schwelle, Min/Max-Grenzen) → Mandant-Default (`tenant.plausibility_default_threshold_m`, Default 5 000 m) → optionaler Einsatz-Override (`operation.plausibility_threshold_m`).
+- **Konsequenzen:**
+  - **Algorithmus-Spezifikation** liegt im Spike-Ergebnis-Dokument `docs/spikes/spike-i-results.md` mit Test-Datensatz, Pseudocode und Durchrechnen aller Test-Punkte. Phase-4-Implementation übernimmt diese Spezifikation 1:1.
+  - **Reaktion auf GPS-Qualität:** Bestellungen mit `accuracy > 500 m` (Cell-Tower-only-Locating) landen automatisch in Moderation. Schwellenwert ist in Phase 1 Plattform-Konstante, nicht mandanten-konfigurierbar.
+  - **Text-Standort / fehlendes GPS** wird **moderiert, nicht abgelehnt**: legitime Gründe für GPS-Fehlen sind Funklöcher, Permission-Verweigerung, Metalldach-Fahrzeuge. Disponent ist im Loop und entscheidet.
+  - **Konfigurations-Hierarchie** mit additivem Schema-Migrations-Bedarf in Phase 4: zwei neue Felder mit CHECK-Constraints (50 ≤ Schwellenwert ≤ 50 000).
+  - **Performance:** synchroner Aufruf im Order-Endpunkt, kein Procrastinate-Job. Bounding-Box-Pre-Filter nicht in Phase 4 nötig.
+  - **Datenschutz / Logging:** Audit-Log speichert Plausibility-Outcome plus `distance_m`, `accuracy_m`, `threshold_m`, `variant`. Roh-Koordinaten gehen nicht ins Log; falls Standort-Bezug operativ nötig, nur als gehashter Tile-Identifier (Web-Mercator). Persistenz der Roh-Koordinaten in der Order-Tabelle unterliegt der 30-Tage-Anonymisierung.
+  - **Sicherheits-Einordnung:** Der Plausibilitäts-Check ist **nicht** als Sicherheitsmechanismus zu verstehen. Client-gemeldete GPS-Punkte können manipuliert sein. Filter reduziert Disponenten-Last bei gutwilligen, aber fehl-positionierten Bestellern. Threat-Model-Notiz in der späteren Auth-Stack-Security-Review (Phase 7.2) aufnehmen.
+  - **Geometrie-Bibliothek:** Phase 4 nimmt Shapely 2.0+ als Backend-Dependency auf (BSD-3, ADR-002-kompatibel; GEOS dynamisch geladen, MIT). Sub-Dependency-Lizenz-Prüfung gemäß Regel-016 in Phase 4 dokumentieren.
+  - **Klassifikation `[ERKENNTNIS]`, nicht `[REAKTIV]`:** Ergebnis eines geplanten Spike-Schritts (3.1). Reaktiv-Quote bleibt 1/10 = 10 % (zählt jetzt ADR-008 bis ADR-017).
+- **Wirkung auf bestehende ADRs:**
+  - **ADR-006 (Aggregations-Schema):** Erweiterung um `count_orders_moderated*` Felder wäre nutzbringend, aber nicht zwingend für Phase 4. Bewertung beim Phase-4-Implementation des Aggregats; falls Stakeholder-Nutzen bestätigt, additive Erweiterung von ADR-006 oder Folge-ADR.
+  - **ADR-008 (Audit-Log):** Plausibility-Outcome plus Distanz und accuracy wird Audit-Log-Bestandteil bei jeder Order-Anlage.
+  - **ADR-002, ADR-003** bleiben unverändert.
+- **Folge-Edits in diesem Commit:**
+  - `architecture.md` Modul `backend/operations` (Plausibility-Check als `[VORLÄUFIG]` benennen, ADR-017-Verweis); Modul `backend/geo` (Komponente `PlausibilityChecker` als `[VORLÄUFIG]`); Abschnitt 9 Reifegrad-Übersicht (zwei `[OFFEN]`-Einträge → `[VORLÄUFIG]`).
+  - `fahrplan.md` Schritt 3.1 auf `[ERLEDIGT]` plus Aktueller-Stand-Block.
+  - `docs/spikes/spike-i-results.md` als Spike-Messprotokoll (neue Datei).
+- **Abgeleitete Regel:** keine neue allgemeine Regel. ADR-017 ist eine konkrete Algorithmus-Entscheidung mit Geltungsbereich „Plausibilitätsprüfung Einsatzkraft-Bestellungen in `backend/operations`/`backend/geo`".
 
 ---
 
