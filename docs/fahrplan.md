@@ -7,12 +7,12 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** 2026-05-17
-- **Laufende Phase:** **Phase 2 abgeschlossen** (Schritt 2.7 ERLEDIGT 2026-05-16). Nächste laufende Phase: **Phase 3 – Spikes Wave 1 (Operations-Vorklärungen) (ERKUNDUNG).** Zwischen 2.7 und 3.1: Strategische Klarstellung **ADR-016 (Verzicht auf serverseitiges Caching)** + Spike-G-Neuzuschnitt (2026-05-17, außerhalb der Schritt-Sequenz).
-- **Phasentyp:** **Phase 2** (UMSETZUNG, Phase-2-Sonderregel) **abgeschlossen.** **Phase 3** (ERKUNDUNG) ist als nächste laufende Phase nominiert: Klärung Spike I (Geo-Plausibilitäts-Algorithmus) und Spike J (Bündelungs-Trigger), beide blockieren die UMSETZUNG-Phase 4 `backend/operations`.
+- **Stand vom:** 2026-05-18
+- **Laufende Phase:** **Phase 3 – Spikes Wave 1 (Operations-Vorklärungen) (ERKUNDUNG)** seit 2026-05-18. Phase 2 abgeschlossen (Schritt 2.7 ERLEDIGT 2026-05-16). Zwischen 2.7 und 3.1: Strategische Klarstellung **ADR-016 (Verzicht auf serverseitiges Caching)** + Spike-G-Neuzuschnitt (2026-05-17, außerhalb der Schritt-Sequenz).
+- **Phasentyp:** **Phase 3** (ERKUNDUNG) **laufend** seit 2026-05-18: Schritt 3.1 (Spike I Geo-Plausibilitäts-Algorithmus) **ERLEDIGT 2026-05-18** durch ADR-017. Nächster Schritt 3.2 (Spike J Bündelungs-Trigger).
 - **Erledigte Schritte Phase 2 (alle ERLEDIGT):** **2.7 [ERLEDIGT]** 2026-05-16 (Phase-2-Abschluss: Coverage-Frischlauf verifiziert die Modul-Schwellen aller belastbaren Module — Backend 95.84 % gesamt, `backend/auth` 96 %, `backend/auth_anonymous` 100 %, `backend/tenants` 95–100 %; Frontend-Disponent 96.61 % Lines / 93.33 % Branches, Frontend-Einsatzkraft 98.38 % Lines / 95.55 % Branches; GitHub-Issue `Paddel87/EB-Digital#26` für externe Security-Review Phase 7.2 mit Briefing-Form angelegt; keine Code-Änderung, keine ADR-Pflicht; Detail-Plan A/A/A/A/A freigegeben). **2.6 [ERLEDIGT]** 2026-05-16 (`frontend-einsatzkraft` AccessCode-Eingabe-UI produktiv gegen S2a; 47 Vitest-Tests grün). **2.5 [ERLEDIGT]** 2026-05-15 (`frontend-disponent` Login + Dashboard + Reset-Password-UI produktiv; 27 Vitest-Tests grün). **2.5b [ERLEDIGT]** 2026-05-16 (Hot-Stabilisierung `get_db_session()` als yield-Dependency mit Rollback, ADR-015, Regel-018). **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv mit S10). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
-- **Aktiver Schritt:** keiner.
-- **Nächster Schritt:** **3.1** Spike I (Geo-Plausibilitäts-Algorithmus, Zeitbox 4 h) — Schritt-Art Spike, blockt Phase 4-Schritt zu Einsatzkraft-Bestellpfad (Hard-Path F2). Direkt danach **3.2** Spike J (Bündelungs-Trigger, Zeitbox 4 h).
+- **Aktiver Schritt:** keiner. **3.1 [ERLEDIGT]** 2026-05-18 — Spike I durch ADR-017 (Hülle-Distanz + dynamische GPS-Toleranz `2·accuracy_m`, 500-m-Moderationsfilter, Text-Standort als Moderation, dreistufige Konfigurations-Hierarchie). Reifegrad-Wirkung: zwei `[OFFEN]`-Bereiche (`backend/operations` und `backend/geo`-Komponente `PlausibilityChecker`) auf `[VORLÄUFIG]` befördert. Reaktiv-Quote 1/10 = 10 % (ADR-008 bis ADR-017).
+- **Nächster Schritt:** **3.2** Spike J (Bündelungs-Trigger, Zeitbox 4 h).
 - **Phase-2-Bilanz (Reifegrad-Beförderungen):** `backend/auth` → `[BELASTBAR]` (2.2), `backend/auth_anonymous` → `[BELASTBAR]` (2.3), `backend/tenants` → `[BELASTBAR]` (2.4), Request-Scoped DB-Session-Dependency → `[BELASTBAR]` (2.5b, cross-cutting). Schnittstellen: S2a, S8a, S8b → `[BELASTBAR]`; S10 → `[BELASTBAR]`. Datenmodelle: `anonymous_session` + `operation.url_token`-Widening → `[BELASTBAR]`. Invarianten I1, I2 → `[BELASTBAR]`. Frontends `frontend-disponent` und `frontend-einsatzkraft` funktional validiert (Reifegrad bleibt `[VORLÄUFIG]` bis Phase-6-Last-Test). Reaktiv-Quote 1 / 10 = 10 % (ADR-015 Hot-Stabilisierung 2.5b — unter 20 %-Schwellenwert Klasse G).
 - **Offene STOPP-Situationen:** keine.
 - **Aktive Blocker:** **0** (Blocker #001 am 2026-05-10 ursächlich aufgeklärt — siehe [`docs/blockers.md`](blockers.md) und [`scripts/fix-venv-flags.sh`](../scripts/fix-venv-flags.sh)).
@@ -940,7 +940,52 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 **Schritte:**
 
-- **3.1** Spike I (Geo-Plausibilitäts-Algorithmus) – Schritt-Art Spike, Zeitbox 4 h. Klärt Distanz-Metrik (Hülle/Mittelpunkt), GPS-Ungenauigkeit, Text-Standort-Behandlung, mandanten-konfigurierbarer Schwellenwert (Default 5 km). Ergebnis: ADR `[ERKENNTNIS] [PERFORMANCE]` plus Pseudocode plus Test-Datensatz.
+#### 3.1: Spike I — Geo-Plausibilitäts-Algorithmus
+
+- **Status:** ERLEDIGT (2026-05-18)
+- **Phasentyp-Kontext:** ERKUNDUNG
+- **Schritt-Art:** Spike + Vergleichsstudie (zwei Algorithmus-Varianten)
+- **Zeitbox:** 4 h
+- **Abhängigkeiten:** Phase 2 ERLEDIGT (Operations-Hülle steht noch nicht produktiv, aber `backend/auth_anonymous` produktiv — der Algorithmus wird beim Anonymen-Bestell-Pfad gegriffen).
+- **Freigabepflichtig:** nein (Spike-Schritt). Resultierender ADR-017 ist freigabepflichtig.
+- **Eingangskriterien:** Patrick-Direktive 2026-05-18 zum Spike-Inhalt liegt vor (A vs. B-Vergleich, 500-m-Moderationsfilter, kein Kalman-Filter, Test-Datensatz Bremen Innenstadt + Osterdeich-/Weserstadion-Bereich). Constraint aus `project-context.md` Abschnitt 6 Sicherheit ist die Wurzel: „Distanz vom GPS-Standort zum nächstgelegenen aktiven Einsatzraum > Schwellenwert (initial 5 km, anpassbar pro Einsatz) wirft Bestellung in Disponenten-Moderation, nicht in Auto-Verteilung."
+- **Zu klärende Fragen:**
+  1. **Distanz-Metrik:** Hülle (nächster Punkt auf Polygon-Rand) vs. Centroid (Mittelpunkt). Welche ist für längliche Einsatzräume wie Osterdeich/Fanmeile angemessen?
+  2. **GPS-Ungenauigkeit:**
+     - **Variante A (pauschal):** fester Aufschlag (z. B. +30 m), unabhängig vom client-gemeldeten `accuracy`-Wert.
+     - **Variante B (dynamisch):** `2·accuracy`-Aufschlag (95-%-Konfidenz, aus `position.coords.accuracy` der Geolocation API).
+       Vergleich an Test-Punkten mit unterschiedlicher GPS-Qualität.
+  3. **Moderations-Filter:** `accuracy > 500 m` (deutliches Indiz für reines WLAN-/Cell-Tower-Locating) → automatisch in Disponenten-Moderation. Schwellenwert variieren?
+  4. **Text-Standort-Behandlung:** Bestellungen ohne GPS-Standort (Permission verweigert, kein GPS-Fix) — Moderation, hart ablehnen oder auto-akzeptieren?
+  5. **Mandanten-konfigurierbarer Schwellenwert:** wie ist die Konfiguration verankert — pro Mandant, pro Einsatz, oder beides? Default 5 km. Min/Max-Grenzen?
+  6. **Algorithmus-Performance:** bei mehreren parallelen Einsatzräumen pro Mandant — Bounding-Box-Vorsortierung notwendig für p95 < 300 ms?
+- **Akzeptanzkriterien (wissensbasiert, ERKUNDUNG):**
+  - Test-Datensatz konstruiert: GeoJSON-Polygone Bremen Innenstadt (mehrere) + Osterdeich/Fanmeile; GPS-Testpunkte mit variabler accuracy (klar drinnen, am Rand, drinnen mit großer Streuung, klar draußen, Mobilfunk-only).
+  - Pseudocode der Algorithmus-Varianten A und B liegt vor, formal nachvollziehbar.
+  - Entscheidungs-Tabelle pro Testpunkt mit Ergebnis aus Variante A und B vorhanden (akzeptieren / moderieren / ablehnen).
+  - ADR-017 mit klarer Entscheidung Distanz-Metrik, A vs. B, Moderations-Schwelle, Text-Standort-Behandlung, Konfigurations-Verankerung.
+  - `architecture.md` Modul `backend/operations` und `backend/geo` aktualisiert; Reifegrad-Übersicht (Abschnitt 9) zeigt den `[OFFEN]`-Bereich „Geo-Plausibilitäts-Algorithmus" als `[VORLÄUFIG]`.
+- **Betroffene Module:** `backend/operations` (ruft den Plausibility-Check beim Anlegen einer Order auf), `backend/geo` (Heimat der `PlausibilityChecker`-Logik, siehe `architecture.md` Zeile 185). Keine produktive Implementation in diesem Schritt — Spike ist „Wegwerf"-Algorithmus auf dem Reißbrett, ohne Code-Änderung am Produktivpfad.
+- **Reifegrad-Wirkung am Schritt-Ende:**
+  - `[OFFEN]`-Bereich „Geo-Plausibilitäts-Algorithmus" in `backend/operations` → `[VORLÄUFIG]`.
+  - `[OFFEN]`-Bereich „Geo-Plausibilitäts-Algorithmus" in `backend/geo` (Komponente `PlausibilityChecker`) → `[VORLÄUFIG]`.
+  - Modul-Reifegrade selbst bleiben `[VORLÄUFIG]` (volle Beförderung erst nach Phase 4 Implementation).
+- **Artefakte:**
+  - `docs/spikes/spike-i-results.md` — Test-Datensatz, Pseudocode, Durchrechnen, Diskussion.
+  - `docs/decisions.md` — neuer ADR-017 `[ERKENNTNIS] [PERFORMANCE]` plus Reaktiv-Quoten-Update in Teil A.
+  - `docs/architecture.md` — Updates in Modulen `backend/operations`, `backend/geo`, Abschnitt 9 Reifegrad-Übersicht.
+- **Notizen:**
+  - Spike ist Schreibtisch-Übung — keine reale GPS-Messung im Feld. Test-Punkte sind synthetisch, aber mit realistischen accuracy-Werten aus der Geolocation-API-Praxis (Smartphone-GPS draußen: 5–20 m, Stadtkanyon: 20–80 m, indoor/WLAN: 30–200 m, Cell-Tower-only: 500–3000 m).
+  - Algorithmus berechnet **immer** auf dem Server, nie auf dem Client (manipulationsgeschützt).
+  - Konsistenz mit Vision-Constraint „keine PII in Logs": GPS-Roh-Koordinaten dürfen nur als gehashter Tile-Identifier ins Log, nicht als Klartext (`project-context.md` Abschnitt 6 Datenschutz).
+- **Verifikation am 2026-05-18 (alle Akzeptanzkriterien erfüllt):**
+  1. ✅ Test-Datensatz konstruiert: 6 Polygone (Bremen Innenstadt P1–P5 + Osterdeich/Weserstadion P6) plus 14 GPS-Testpunkte über fünf Szenarien S1–S5 (Hülle-vs-Centroid, A-vs-B-GPS-Toleranz, 500-m-Moderationsfilter, Text-Standort, Mandanten-/Einsatz-Schwellenwert). Siehe `docs/spikes/spike-i-results.md` Abschnitt 2.
+  2. ✅ Pseudocode der Algorithmus-Varianten A (pauschal +30 m) und B (`2·accuracy`-dynamisch) liegt vor, plus Moderations-Filter, plus dreistufige Konfigurations-Hierarchie. `docs/spikes/spike-i-results.md` Abschnitt 3.
+  3. ✅ Entscheidungs-Tabellen pro Testpunkt: S1 zeigt Hülle ≫ Centroid bei länglichen Polygonen; S2 zeigt B reagiert auf GPS-Qualität (T7 konservativ bei accuracy 80 m, T8 präziser bei accuracy 5 m); S3 Moderations-Filter greift ohne Distanz-Berechnung; S4 Text-Standort → Moderation; S5 Konfigurations-Notwendigkeit am Werder-Heimspiel demonstriert. `docs/spikes/spike-i-results.md` Abschnitt 4.
+  4. ✅ ADR-017 in [docs/decisions.md](decisions.md) `[ERKENNTNIS] [PERFORMANCE] [MODUL]` mit klarer Entscheidung Option C (Hülle + dynamische Toleranz), Konsequenzen, Wirkung auf bestehende ADRs, Folge-Edits.
+  5. ✅ `architecture.md` Module `backend/operations` und `backend/geo` aktualisiert (Spike-I-Bereiche von `[OFFEN]` auf `[VORLÄUFIG]` mit ADR-017-Verweis); Abschnitt 9 Reifegrad-Übersicht entsprechend; Datenfluss F2 Schritt 6 mit konkreten Outcome-Werten ersetzt.
+- **Zeitbox-Bilanz:** Spike ist Reißbrett-Übung, kein Feld-Test. Effektiver Aufwand: Algorithmus-Definition + Test-Datensatz-Konstruktion + Durchrechnen + ADR + architecture/fahrplan-Sync deutlich innerhalb 4-h-Zeitbox.
+
 - **3.2** Spike J (Bündelungs-Trigger) – Schritt-Art Vergleichsstudie, Zeitbox 4 h. Klärt Auslöser (System-Heuristik vs. Disponenten-manuell vs. Versorgungs-Transporter-Crew), UI-Auswirkung, Aggregat-Wirkung auf `bundling_count` (ADR-006). Ergebnis: ADR `[ERKENNTNIS] [MODUL]` mit Auslöser-Wahl Phase 1 (Vermutung: manuell durch Disponent).
 
 ---
