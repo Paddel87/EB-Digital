@@ -26,6 +26,20 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-19 – [BEOBACHTUNG] Methodik-Feedback an Vorlagen-Repo ausgelagert
+
+- **Session-Charakter:** Meta-Reflexion über die `CLAUDE.md`-Vorlage, **kein Eingriff am EB-Digital-Projekt**. Auslöser: bei der Pflichtlektüre fiel auf, dass `project-context.md` mit ~35 k Token das 25 k-Token-Limit eines einzelnen `Read`-Aufrufs in Claude Code überschritten hat — eine Methodik-Voraussetzung (laut `CLAUDE.md` §2 ist `project-context.md` **komplett** zu lesen) ist damit durch eine Werkzeug-Realität gebrochen. Parallel sichtbar geworden: die §14-Archivierung wurde im Projekt-Verlauf nicht ausgelöst (Phasen 1 + 2 noch im aktiven `fahrplan.md`, `logbuch.md` bei Faktor 3 über dem 500-Zeilen-Richtwert, gelöste Blocker noch in `blockers.md`). Der Mechanismus existiert, sein Trigger ist nur weich genug, dass er übersehen wird.
+- **Output:** Issue [Paddel87/Dev-Templates#6](https://github.com/Paddel87/Dev-Templates/issues/6) – „Dokument-Hygiene: harte Trigger für Archivierung und Größen-Budgets der Pflicht-Dokumente". Fünf konkrete Empfehlungen an die Vorlage:
+  1. §14-Archivierung quantifizieren (harte Schwellenwerte je Dokument, analog zur Reaktiv-Quote).
+  2. Größen-Budget für Pflicht-komplett-Dokumente (z. B. `project-context.md` ≤ 15 k Token, sonst Splitting-Pflicht).
+  3. Inter-Pflicht-Drift-Tabelle analog zu §16 (Konsistenz zwischen `decisions.md`, `fahrplan.md`, `architecture.md` §9).
+  4. Graceful Degradation an Tool-Grenzen (stabile Sprung-Anker, abschnittsweises Splitting).
+  5. Logbuch-Verdichtung beim `[PHASEN-WECHSEL]` (Phasen-Reflexions-Eintrag, Detail-Auslagerung nach `docs/archiv/logbuch-phase-N.md`).
+- **Wirkung auf EB-Digital:** keine direkte. Bearbeitung des Issues erfolgt in separater Session am Vorlagen-Repo. Falls Vorlagen-Änderungen entstehen, wird EB-Digital nicht automatisch nachgezogen – Übernahme wäre ein eigener Schritt mit ADR (Methodik-Änderung mit Wirkung auf laufendes Projekt).
+- **Quer-Beobachtung an EB-Digital direkt anschlussfähig:** die akute Wartungs-Lücke aus der Vorlagen-Diskussion liegt auch hier lokal vor — Phasen-1+2-Archivierung im `fahrplan.md`, Logbuch-Auslagerung der Mai-Frühphase, Recherche-Block aus `project-context.md` Abschnitt 11 (TomTom-Befunde) nach `docs/research/` verlagern. Wäre ein eigener `STABILISIERUNG`-Schritt, **nicht in dieser Session**, **nicht Voraussetzung für 3.2**. Vorgemerkt als Kandidat für eine spätere Stabilisierungs-Session.
+- **Reaktiv-Quote / Reifegrad / Blocker / Nächster Schritt:** alle unverändert. Keine Code-Änderung, kein ADR, kein Schritt-Wechsel. Nächster Fahrplan-Schritt bleibt **3.2** (Spike J, Bündelungs-Trigger, Zeitbox 4 h).
+- **Klassifikation:** rein dokumentations-/methodik-bezogen, Autonomiebereich `CLAUDE.md` §5 (Logbuch-Eintrag zu nennenswerter Beobachtung – §6 „Logbuch-Einträge sind proaktiv").
+
 ### 2026-05-18 – [PROBLEM-GELÖST] Spike I abgeschlossen — ADR-017 angelegt
 
 - **Schritt 3.1 ERLEDIGT** durch ADR-017 `[ERKENNTNIS] [PERFORMANCE] [MODUL]` „Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)". Spike-Messprotokoll in [docs/spikes/spike-i-results.md](spikes/spike-i-results.md).
