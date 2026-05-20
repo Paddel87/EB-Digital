@@ -26,6 +26,24 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-20 – [SESSIONENDE]
+
+- **Session-Dauer:** kurz (ca. 15 min).
+- **Charakter:** Sicherheits-Einschätzung, kein Code-Eingriff.
+- **Bearbeiteter Schritt:** keiner (kein Fahrplan-Schritt). Reine Analyse auf Patrick-Anfrage.
+- **Erledigtes:** Einschätzung Reddit-Post „mini-shai-hulud worm" (npm-Supply-Chain-Angriff über unpinned Ranges). Befund: Für EB-Digital **nicht relevant** — `pnpm-lock.yaml` (6.166 Zeilen) und `uv.lock` eingecheckt, beide nicht in `.gitignore`, `pnpm audit` (Schwellenwert `high`) und `pip-audit` in CI-Pipeline aktiv. Alle Frontend-`package.json` nutzen `~` (Patch-only, kein `^`), Root-`package.json` nutzt exakte Pins. Bewusste Projekt-Entscheidung (Patch-Updates frei, Regel-001/ADR-002) ist mit Lockfile-Strategie sicher abgedeckt.
+- **Offen geblieben:** nichts.
+- **Nächster Schritt:** **3.2** Spike J (Bündelungs-Trigger, Zeitbox 4 h).
+- **Reaktiv-Quote:** 1/10 = 10 % — unverändert.
+- **Aktive Blocker:** 0 — unverändert.
+- **README-Drift:** keiner.
+
+### 2026-05-20 – [SESSIONSTART]
+
+- **Letzter Stand:** Phase 3 ERKUNDUNG laufend. Schritt 3.1 (Spike I, Geo-Plausibilitäts-Algorithmus) ERLEDIGT 2026-05-18 durch ADR-017. Nächster Schritt 3.2 (Spike J, Bündelungs-Trigger, Zeitbox 4 h). Reaktiv-Quote 1/10 = 10 %. Keine aktiven Blocker.
+- **Auftrag dieser Session:** Einschätzung eines Reddit-Posts zum Thema npm-Supply-Chain-Sicherheit ("mini-shai-hulud worm"). Prüfung der Relevanz für dieses Projekt.
+- **Kein Code-Eingriff geplant.**
+
 ### 2026-05-19 – [BEOBACHTUNG] Methodik-Feedback an Vorlagen-Repo ausgelagert
 
 - **Session-Charakter:** Meta-Reflexion über die `CLAUDE.md`-Vorlage, **kein Eingriff am EB-Digital-Projekt**. Auslöser: bei der Pflichtlektüre fiel auf, dass `project-context.md` mit ~35 k Token das 25 k-Token-Limit eines einzelnen `Read`-Aufrufs in Claude Code überschritten hat — eine Methodik-Voraussetzung (laut `CLAUDE.md` §2 ist `project-context.md` **komplett** zu lesen) ist damit durch eine Werkzeug-Realität gebrochen. Parallel sichtbar geworden: die §14-Archivierung wurde im Projekt-Verlauf nicht ausgelöst (Phasen 1 + 2 noch im aktiven `fahrplan.md`, `logbuch.md` bei Faktor 3 über dem 500-Zeilen-Richtwert, gelöste Blocker noch in `blockers.md`). Der Mechanismus existiert, sein Trigger ist nur weich genug, dass er übersehen wird.
