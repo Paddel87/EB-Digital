@@ -26,6 +26,18 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-20 – [SESSIONENDE]
+
+- **Session-Dauer:** kurz (ca. 15 min).
+- **Charakter:** Sicherheits-Einschätzung, kein Code-Eingriff.
+- **Bearbeiteter Schritt:** keiner (kein Fahrplan-Schritt). Reine Analyse auf Patrick-Anfrage.
+- **Erledigtes:** Einschätzung Reddit-Post „mini-shai-hulud worm" (npm-Supply-Chain-Angriff über unpinned Ranges). Befund: Für EB-Digital **nicht relevant** — `pnpm-lock.yaml` (6.166 Zeilen) und `uv.lock` eingecheckt, beide nicht in `.gitignore`, `pnpm audit` (Schwellenwert `high`) und `pip-audit` in CI-Pipeline aktiv. Alle Frontend-`package.json` nutzen `~` (Patch-only, kein `^`), Root-`package.json` nutzt exakte Pins. Bewusste Projekt-Entscheidung (Patch-Updates frei, Regel-001/ADR-002) ist mit Lockfile-Strategie sicher abgedeckt.
+- **Offen geblieben:** nichts.
+- **Nächster Schritt:** **3.2** Spike J (Bündelungs-Trigger, Zeitbox 4 h).
+- **Reaktiv-Quote:** 1/10 = 10 % — unverändert.
+- **Aktive Blocker:** 0 — unverändert.
+- **README-Drift:** keiner.
+
 ### 2026-05-20 – [SESSIONSTART]
 
 - **Letzter Stand:** Phase 3 ERKUNDUNG laufend. Schritt 3.1 (Spike I, Geo-Plausibilitäts-Algorithmus) ERLEDIGT 2026-05-18 durch ADR-017. Nächster Schritt 3.2 (Spike J, Bündelungs-Trigger, Zeitbox 4 h). Reaktiv-Quote 1/10 = 10 %. Keine aktiven Blocker.
