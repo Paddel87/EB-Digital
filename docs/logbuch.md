@@ -26,6 +26,137 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [SESSIONENDE] Schritt 4.1 ERLEDIGT — `backend/catalog` produktiv
+
+- **Session-Dauer-Summe** seit Sessionstart 2026-05-28: ca. 8 h netto. Patrick-Direktive nach Pause-Sessionende-Eintrag: „docker ist nun verfügbar" → Migration-Sanity-Check → „API-Tests + dev-smoke.sh" → vollständiger Schritt-4.1-Abschluss in derselben Session.
+- **Bearbeitet:** **Schritt 4.1** (`backend/catalog`) **ERLEDIGT**. Phase 4 läuft mit Folge-Schritt 4.2 (`backend/fleet`) als nächster.
+- **Erreicht (zusätzlich zum Modulskeleton-Stand aus dem Zwischen-Sessionende):**
+  - **27 API-Tests** in `test_catalog_api.py` für vier Rollen (Plattform-Admin Categories+Base, Disponent Tenant-Extensions, Carer Read effektiv, Anon Read mit Session-Pflicht + URL-Token-Match + Rate-Limit-Schutz). TestClient + dependency_overrides + fakeredis-Pattern aus Phase 2. 55 Catalog-Tests gesamt grün, 495 Gesamt-Tests, Coverage 88 % (CI-Gate 80 % bestanden).
+  - **`dev-smoke.sh`-Catalog-Stufe** mit 9 Sub-Checks gegen vollen Compose-Stack: Tenant + Dispatcher-Setup (PA-Cookie aus Tenants-Smoke wiederverwendet, Login-Counter-Disziplin), PA Category+Base-Create (201), Disponent Override+Own-Create (201), GET tenant (2 Extensions), GET catalog (Resolver-Output mit Override-Name + eigenständigem Item), Berechtigungs-Verweigerungen (401 ohne Auth, 403 Dispatcher→Plattform-Admin-Pflicht). Smoke-Hygiene: `valkey-cli FLUSHDB` vor Catalog-Stufe als Rate-Limit-Counter-Reset.
+  - **Reifegrad-Beförderung:** `backend/catalog` `[VORLÄUFIG]` → `[BELASTBAR]`; neue Schnittstellen-Sub-Surfaces S8c (`/api/catalog/*`) und S2b (`/api/anon/{url}/catalog`) angelegt mit Reifegrad `[BELASTBAR]`. Drei Datenmodelle (`catalog_category`, `catalog_item_base`, `catalog_item_tenant_extension`) als belastbar geführt.
+  - **Doku-Updates:** `architecture.md` §3 Modul-Eintrag voll ausgebaut + §9 Reifegrad-Tabelle + §4 (S8c, S2b ergänzt); `fahrplan.md` Schritt 4.1 auf ERLEDIGT mit Verifikations-Block (6 Punkte: Migration, DB-Struktur, Tests, Lint/Type/Security, dev-smoke.sh, Reifegrad-Wirkung), Aktueller-Stand-Block + Aktiver-Schritt + Nächster-Schritt synchronisiert; `README.md` Status-Block auf 4.1 ERLEDIGT + Nächste-Schritte auf 4.2.
+- **Reibungen:**
+  - **Docker initial nicht verfügbar** → Migration manuell ohne `--autogenerate`; Verifikation via `alembic check` nach Docker-Verfügbarkeit nachgezogen, „No new upgrade operations detected" bestätigt ORM-Konsistenz (Eintrag oben).
+  - **Login-Rate-Limit-Konflikt** im Smoke: erste Catalog-Smoke-Variante mit eigenem PA-Login + Dispatcher-Login riss den IP-Counter (5/15 min). Auflösung: PA-Cookie aus Tenants-Smoke wiederverwendet (1 Login statt 2) + `valkey-cli FLUSHDB` als Smoke-Hygiene-Reset vor Catalog-Stufe.
+  - **Test-Bug** in `test_update_base_item_unknown_id_raises_not_found`: Stub-Funktion `_update(**_kw)` hatte keinen positional-`session`-Parameter; Use-Case ruft mit `(session, **kw)` auf → TypeError; sofort gefixed durch `_update(_session, **_kw)`.
+  - **`.env` fehlte** initial im Repo-Root (Compose verlangt die Datei); aus `.env.example` kopiert (POSTGRES_PASSWORD=CHANGE_ME als Smoke-Default, OK).
+  - **DB-Volume-Passwort-Drift** zwischen Sanity-Check (eb_digital-Default) und Smoke (.env-Wert CHANGE_ME) → `docker compose down -v` zum Frischlauf.
+  - **Ruff-Auto-Fix** lief mehrfach (Import-Sortierung, Format, eine UP006-Regel im Test-File); keine inhaltlichen Eingriffe.
+- **Reaktiv-Quote:** 1 / 10 = 10 % unverändert (Fenster ADR-010–019; ADR-019 war `[STRATEGISCH]`). Kein neuer ADR in dieser Session-Phase.
+- **README-Sync-Check (CLAUDE.md §16 Trigger 1):** Schritt 4.1 hat nutzersichtbare Wirkung (neue Module + API-Endpunkte + Verifikations-Status). README-Status-Block + Nächste-Schritte aktualisiert. Architektur-Reife-Block in der ausführlichen Form noch nicht voll synchronisiert (Phase-7-Stabilisierungs-Kandidat — die Aufzählung dort ist 24 BELASTBAR-Stand vor 4.1; neu sind +catalog-Modul, +S8c, +S2b, +3 Datenmodelle → ~28 BELASTBAR; Detail-Update geht im nächsten 4.x-Schritt mit).
+- **Bekannter Stand:** Branch `feat/4.1-backend-catalog` mit (vor diesem Commit) vier Commits (`153c3f3` ADR-019 + Fahrplan, `5d1cc0d` Modulskeleton, `7024881` Zwischen-Sessionende, `93fb396` Migration-Round-Trip-Verifikation). Vor dem finalen Commit modifizierte Files: `backend/eb_digital/catalog/`, `backend/tests/test_catalog_api.py` (neu), `scripts/dev-smoke.sh` (Catalog-Stufe + FLUSHDB-Hygiene), `docs/{architecture,fahrplan,logbuch,project-context (n/a)}.md`, `README.md`, `.env` (aus `.env.example` kopiert, sollte nicht committet werden). **Nicht gepusht** — Patrick-Entscheidung über Push-Zeitpunkt nach finalem Commit.
+- **Nächster Schritt:** Schritt **4.2** `backend/fleet` (Fahrzeuge, Beladung, Versorgungs-Transporter-Modi). Detail-Plan-Vorlage analog zur 4.1-Disziplin vorbereiten und Patrick zur Freigabe vorlegen. Spätestens beim Sessionstart der nächsten Session.
+
+### 2026-05-28 – [REIFEGRAD-WECHSEL] Modul `backend/catalog` → `[BELASTBAR]`
+
+- **Beförderung** `backend/catalog`: `[VORLÄUFIG]` (seit 2026-05-07) → `[BELASTBAR]` (2026-05-28, Schritt 4.1).
+- **Begründung:** drei Tabellen mit `mode_constraint` + Partial-UNIQUE produktiv (Migration `b3a9c7e1f205` Round-Trip-verifiziert mit `alembic check` deckungsgleich zum ORM); Repository + Use-Cases + Resolver-Drei-Query-Pattern + vier Rollen-API-Endpunkte; 55 Catalog-Tests grün; dev-smoke.sh-Catalog-Stufe mit 9 Sub-Checks E2E komplett grün; Coverage Gesamt 88 % (CI-Gate 80 % bestanden).
+- **Mitbeförderte Bestandteile:**
+  - Schnittstelle **S8c** (Sub-Surface `/api/catalog/categories`, `/api/catalog/base`, `/api/catalog/tenant`, `/api/catalog`) — neu eingeführt, `[BELASTBAR]`.
+  - Schnittstelle **S2b** (Sub-Surface `/api/anon/{operation_url}/catalog`) — neu eingeführt, `[BELASTBAR]`.
+  - Datenmodelle `catalog_category`, `catalog_item_base`, `catalog_item_tenant_extension` — neu, `[BELASTBAR]`.
+- **Phase-4-Sonderregel** (ADR-019 / Regel-019) hat die Eingangs-Disziplin getragen: Modul war zum Schrittbeginn `[VORLÄUFIG]`, alle konsumierten Bestandteile waren `[BELASTBAR]` (Plumbing, backend/auth, backend/auth_anonymous, backend/tenants, S10, Regel-013/014, get_db_session); Beförderung erfolgte funktional erfüllt mit Schrittabschluss.
+
+### 2026-05-28 – [SCHRITT-ABSCHLUSS] Schritt 4.1 ERLEDIGT
+
+- **Akzeptanzkriterien-Verifikation** (siehe `fahrplan.md` Schritt-4.1-Verifikations-Block):
+  1. ✅ Migration `b3a9c7e1f205` Round-Trip gegen Postgres 17.9 sauber, `alembic check` „No new upgrade operations detected".
+  2. ✅ DB-Struktur (PK + 2 Indizes + CHECK + 3 FKs) verifiziert via psql.
+  3. ✅ 55 Catalog-Tests + 495 Gesamt-Tests grün, Coverage 88 %.
+  4. ✅ Lint-/Type-/Security-Gates (`ruff`, `ruff format`, `mypy --strict`, `bandit`, `pre-commit`) alle grün; null `assert # noqa: S101` im Endzustand.
+  5. ✅ `dev-smoke.sh`-Catalog-Stufe mit 9 Sub-Checks gegen vollen Compose-Stack komplett grün.
+  6. ✅ Reifegrad-Wirkung realisiert (Modul + 2 Schnittstellen-Sub-Surfaces + 3 Datenmodelle auf `[BELASTBAR]`); Doku-Updates in `architecture.md` §3/§4/§9, `fahrplan.md`, `README.md`.
+- **Klassifikation:** `[ERLEDIGT]`, Schritt 4.1 vollständig nach CLAUDE.md §9 Definition of Done.
+
+### 2026-05-28 – [PROBLEM-GELÖST] Migration `b3a9c7e1f205` Round-Trip gegen Postgres verifiziert
+
+- **Befund:** Nach dem Sessionende-Block kam von Patrick die Meldung „docker ist nun verfügbar". Auf Patrick-Freigabe „Migration-Sanity-Check jetzt" wurde der Compose-Stack hochgefahren (`docker compose --profile dev up -d db`, `postgres:17.9@sha256:347bc4e6…`-Pin, healthy nach <5 s).
+- **Verifikations-Sequenz** (alle gegen `eb_digital`-User/DB des `db`-Service):
+  1. `alembic upgrade head` — wendet alle Migrationen inklusive der neuen `b3a9c7e1f205 add catalog tables` an, läuft fehlerfrei.
+  2. `alembic check` — **„No new upgrade operations detected"**. Bestätigt: die handgeschriebene Migration ist deckungsgleich mit dem ORM-Modell (`backend/eb_digital/catalog/models.py`); kein Drift, kein Diff.
+  3. `alembic downgrade -1` — dropt die drei Catalog-Tabellen + zugehörige Indizes/Constraints zurück auf `a7c3b2d8e9f1` (Phase-2-Stand).
+  4. `alembic upgrade head` — Re-Apply der Catalog-Migration; identisch zum ersten Upgrade.
+  5. `alembic check` (post-roundtrip) — erneut „No new upgrade operations detected".
+  6. `\d catalog_item_tenant_extension` im psql: PK + zwei Indizes (`ix_*_tenant_id` und Partial-UNIQUE `ix_*_tenant_id_base_item_id_unique` mit `WHERE base_item_id IS NOT NULL`) + CHECK-Constraint `ck_*_mode_constraint` mit der zweiseitigen Bedingung + drei FK-Constraints (`base_item_id` CASCADE, `category_id` RESTRICT, `tenant_id` CASCADE) exakt wie in `models.py` spezifiziert.
+- **Damit aufgelöst:** Die Reibung „Migration manuell ohne `--autogenerate` geschrieben, Round-Trip-Test verschoben auf dev-smoke.sh" aus dem Sessionende-Block. Migration `b3a9c7e1f205` ist als ORM-konsistent verifiziert; Round-Trip gegen Postgres 17.9 ist sauber. Schritt-4.1-G `dev-smoke.sh`-Catalog-Stufe wird damit ausschließlich auf den End-to-End-API-Pfad fokussieren (PlatformAdmin Base + Category → Disponent Tenant-Extension → Carer Read effektiv → Anon Read effektiv) — die Migration selbst ist schon vor 4.1-G belastbar.
+- **Compose-Stack** wurde nach Verifikation sauber heruntergefahren (`docker compose --profile dev down`); Container und Network entfernt, Volume bleibt (Default, Postgres-Daten persistieren).
+- **Klassifikation:** Verifikations-Befund ohne ADR-Pflicht (keine Architekturentscheidung). Schritt 4.1 bleibt **IN ARBEIT** (API-Tests + dev-smoke.sh-Erweiterung + Coverage + Doku-Updates stehen weiterhin aus).
+
+### 2026-05-28 – [SESSIONENDE]
+
+- **Session-Dauer:** ca. 6 h netto (Sessionstart 2026-05-28 nach Pflichtlektüre + Vertiefung; Patrick-Vorgaben „start" → „vertiefung" → Detail-Plan-Freigabe `0B/1D/2B/3A/4A/5A/6A/7A` → „direkt weiter" → Pause-Wahl „Doku-Commit jetzt, Code separat" + „Feature-Branch" + „Pause nach Modulskeleton, nächste Session für API-Tests + Smoke + Doku-Finalisierung").
+- **Bearbeitet:** **Schritt 4.1 (`backend/catalog`)** ist **IN ARBEIT** (nicht ERLEDIGT). Vorbereitung + Modulskeleton erledigt; API-Tests + dev-smoke.sh-Erweiterung + Coverage-Härtung auf ≥ 80 % + Doku-Updates (`architecture.md` §3/§4/§7/§9 + Schritt-Verifikations-Block in `fahrplan.md`) folgen in nächster Session.
+- **Erreicht in dieser Session:**
+  - **ADR-019** `[STRATEGISCH] [METHODIK]` angelegt: Phase-4-Sonderregel (UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen, generisch für künftige UMSETZUNG-Phasen). **Regel-019** in `decisions.md` Teil C abgeleitet. Reaktiv-Quote 1/10 = 10 % unverändert (Fenster wandert auf ADR-010 bis ADR-019).
+  - **`fahrplan.md`**: Aktueller-Stand-Block aktualisiert (Phase 4 LAUFEND, Schritt 4.1 IN ARBEIT), Phasenübersicht-Tabelle Phase 4 von „NÄCHSTE" auf „LÄUFT", Phase-4-Header um „Hinweis Sonderregel" mit ADR-019/Regel-019-Referenz, Schritt 4.1 von gröberer Zeile auf Voll-Format mit allen freigegebenen Antworten 1D/2B/3A/4A/5A/6A/7A (drei Tabellen-Migration mit CHECK + Partial-UNIQUE, Resolver-Drei-Query-Pattern, vier Rollen-Endpunkte, Soft-Delete), Schritte 4.2–4.6 als Stub-Schritte.
+  - **`logbuch.md`**: SCHRITT-START, BEOBACHTUNG (Detail-Plan-Freigabe-Aufschlüsselung), ADR-ANGELEGT als drei Einträge.
+  - **Doku-Commit** `153c3f3` auf `feat/4.1-backend-catalog` (pre-commit + commitlint grün): `docs(adr): ADR-019 Phase-4-Sonderregel + Detail-Plan 4.1 backend/catalog`.
+  - **Modul `backend/catalog`** angelegt (sechs Dateien: `__init__.py`, `models.py`, `schemas.py`, `repositories.py`, `use_cases.py`, `api.py`). Drei ORM-Tabellen mit `mode_constraint` und Partial-UNIQUE-Index. 12 Pydantic-Schemas. Resolver mit Drei-Query-Pattern (kein N+1), Override-Felder priorisiert. Zwei FastAPI-Router (authenticated `/api/catalog` + anon `/api/anon/{url}/catalog` mit Rate-Limit 60/15 min). Router-Wiring in `app.py`. Migration `b3a9c7e1f205` mit drei Tabellen, manuell ohne autogenerate geschrieben (Docker daemon nicht verfügbar — Round-Trip-Test verschoben auf dev-smoke.sh-Catalog-Stufe in 4.1-G).
+  - **28 grüne Unit-Tests** (`test_catalog_repositories.py` mit StubSession + IntegrityError-Mapping; `test_catalog_use_cases.py` mit monkeypatch + Vorbedingungs-Pfaden + Defense-in-depth Helper). `mypy --strict` und `ruff check`/`format` grün.
+  - **`README.md`** synchronisiert: Status-Block auf Phase 4 LAUFEND + 4.1 IN ARBEIT, ADR-Zähler 17 → 19, „Nächste Schritte" auf Phase 4 → Phase 5.
+  - **Feature-Branch-Commit** `5d1cc0d`: `feat(catalog): backend/catalog Modulskeleton + Migration + Repo-/Use-Case-Tests (Schritt 4.1 WIP)`.
+- **Reibungen:**
+  - **Docker daemon nicht verfügbar** während der Implementation. Konsequenz: Alembic-Migration manuell geschrieben (ohne `--autogenerate`), Round-Trip-Verifikation gegen echte DB verschoben auf dev-smoke.sh-Catalog-Stufe (4.1-G).
+  - **Drei `assert # noqa: S101`-Stellen** in `api.py` waren initial drin, weil mypy nicht durchsah, dass `_require_dispatcher_with_tenant` das `tenant_id`-Binding garantiert. Refaktoriert auf `tuple[SessionUser, uuid.UUID]`-Rückgabe — null `assert`s im Catalog-Modul-Endzustand, konsistent zum Phase-2-Repo-Pattern.
+  - **Pydantic-/Repo-Test-Bug**: `_update`-Stub in `test_update_base_item_unknown_id_raises_not_found` hatte nur `**_kw`, aber Use-Case ruft mit positional `session`. Einmaliger Test-Bug, sofort gefixed.
+  - **Ruff-Auto-Fix** lief mehrfach (Import-Sortierung, Format-Standardisierung) — keine inhaltlichen Eingriffe.
+- **Reifegrad-Wirkung:** keine Beförderungen in dieser Session. `backend/catalog` bleibt `[VORLÄUFIG]`, weil Schritt 4.1 noch IN ARBEIT (Coverage + dev-smoke.sh + Doku-Updates ausstehend).
+- **Reaktiv-Quote:** 1 / 10 = 10 % (unverändert; ADR-019 ist `[STRATEGISCH]`; Fenster ADR-010–019).
+- **Zusatz-Befund** für Phase 7 Stabilisierung: Coverage des Catalog-Moduls liegt nach den Repo-/Use-Case-Tests bei ~50 %. Erwartung: nach API-Tests + dev-smoke.sh-Catalog-Stufe ≥ 80 % (Standard-Schwelle). Falls nicht: Coverage-Härtung wird in Phase-7-Stabilisierung erfasst.
+- **Bekannter Stand:** Branch `feat/4.1-backend-catalog` mit zwei Commits: `153c3f3` (ADR-019 + Fahrplan-Voll-Format) und `5d1cc0d` (Modulskeleton + Migration + 28 Tests). Working-Tree clean. **Nicht gepusht** — Patrick-Entscheidung über Push-Zeitpunkt nach Schritt-Abschluss.
+- **Nächster Schritt:** API-Tests für vier Rollen (Pattern `test_tenants_api.py`: TestClient + dependency_overrides + fakeredis), dann dev-smoke.sh-Erweiterung um Catalog-Stufe (E2E: Plattform-Admin Base + Category → Disponent Tenant-Extension → Carer Read effektiv → Anon Read effektiv + Migration-Round-Trip), Coverage-Verifikation gegen ≥ 80 %-Schwelle, Doku-Updates `architecture.md` §3/§4/§7/§9 + Schritt-4.1-Status auf ERLEDIGT mit Verifikations-Block in `fahrplan.md`, Reifegrad-Beförderung `backend/catalog` auf `[BELASTBAR]`, Sessionende-Eintrag im Logbuch, abschließender Commit.
+
+### 2026-05-28 – [SCHRITT-START] 4.1 `backend/catalog`
+
+- **Schritt 4.1** ist auf **IN ARBEIT** gesetzt (`fahrplan.md` Aktueller Stand + Phase-4-Block).
+- **Voraussetzungen erfüllt:**
+  - ADR-019 / Regel-019 (Phase-4-Sonderregel) angelegt — Modul darf trotz `[VORLÄUFIG]`-Reifegrad starten.
+  - Konsumierte `[BELASTBAR]`-Bestandteile vorhanden: `backend/auth` (2.2), `backend/auth_anonymous` (2.3), `backend/tenants` + S10 (2.4), Regel-013/014 (ADR-009), `get_db_session` (2.5b), Plumbing (1.4).
+  - Detail-Plan freigegeben (siehe `[BEOBACHTUNG]`-Eintrag unten).
+- **Plan-Übersicht (Detail im `fahrplan.md`-Voll-Format unter Schritt 4.1):**
+  1. Alembic-Migration mit drei Tabellen (`catalog_category`, `catalog_item_base`, `catalog_item_tenant_extension`) inkl. CHECK-Constraint und Partial-UNIQUE-Index.
+  2. SQLAlchemy-Modelle + Pydantic-Schemas.
+  3. Repository-Layer und Resolver-Query (`resolve_catalog_for_operation`).
+  4. Use-Cases (CreateCategory/CreateBaseItem/DeactivateBaseItem/CreateTenantExtension/UpdateTenantExtension/DisableTenantExtension/ResolveCatalogForOperation).
+  5. API-Endpunkte für Plattform-Admin, Disponent, Carer, Anon.
+  6. Tests (Unit + Integration mit DB-Fixture, Coverage ≥ 80 % Lines).
+  7. dev-smoke.sh-Erweiterung.
+  8. Doku-Updates `architecture.md` §3/§4/§7/§9 beim Schrittabschluss.
+- **Erwartete Reifegrad-Wirkung am Schrittende:** Modul `backend/catalog` `[VORLÄUFIG]` → `[BELASTBAR]`; S8-/S2-Sub-Surfaces für Catalog `[VORLÄUFIG]` → `[BELASTBAR]`; drei Datenmodelle neu, `[BELASTBAR]`.
+
+### 2026-05-28 – [BEOBACHTUNG] Detail-Plan 4.1 — Freigabe 0B/1D/2B/3A/4A/5A/6A/7A
+
+- **Detail-Plan-Disziplin** aus Phase 2 fortgeführt: 7 Designfragen (plus eine Methodik-Vorbemerkung Frage 0) zu Schritt 4.1 mit A/B/C/D-Optionen plus Empfehlungs-Zeile an Patrick vorgelegt; Freigabe als Buchstaben-Kombination **0B / 1D / 2B / 3A / 4A / 5A / 6A / 7A**.
+- **Aufschlüsselung:**
+  - **0-B:** Mini-ADR `[STRATEGISCH] [METHODIK]` für die Phase-4-Sonderregel statt nur Fahrplan-Hinweis. Patrick-Begründung: reproduzierbar im ADR-Index für künftige UMSETZUNG-Phasen (insbesondere Phase 6). Umgesetzt als **ADR-019** plus **Regel-019**.
+  - **1-D:** `catalog_item_base` mit `category_id`-FK auf neue Tabelle `catalog_category` — explizite Kategorien-Hierarchie ab Phase 1. Plus `name, unit, default_unit_label, description (NULL), is_active, audit-timestamps`.
+  - **2-B:** `catalog_item_tenant_extension` als Schalt-Tabelle mit `base_item_id` NULL-fähig (für eigene Tenant-Items) plus Override-Spalten (`override_name`, `override_unit_label`) plus `is_disabled` Flag. Tenant kann Basis-Items inhaltlich lokal überschreiben, eigene Items hinzufügen und Basis-Items deaktivieren.
+  - **3-A:** Resolver als reine SQL-Query (LEFT JOIN + Filter), kein Cache, kein Snapshot. S10/Regel-014 liefert Tenant-Zuordnung der Operation.
+  - **4-A:** Anonyme Schnittstelle `/api/anon/{operation_url}/catalog` setzt aktive anonyme Session voraus (analog `/session` aus 2.3); Rate-Limit IP+URL AND analog ADR-013 mit separatem Schlüsselraum.
+  - **5-A:** Soft-Delete via `is_active` (Base) / `is_disabled` (Tenant-Extension). Hard-Delete nur über Plattform-Admin-CLI in Edge-Cases.
+  - **6-A:** Pflege-Berechtigungen — Plattform-Admin: Base + Categories. Disponent: Tenant-Extension nur für eigenen Tenant. Carer: nur Read. Anon: Read über Session.
+  - **7-A:** Test-Strategie Phase-2-Pattern — Unit + Integration mit DB-Fixture + `dev-smoke.sh`-Catalog-Stufe.
+- **Folgeschritte (in dieser Session, vor Code-Eingriff):** ADR-019 + Regel-019 angelegt, Reaktiv-Quote-Fenster aktualisiert (1/10 = 10 %; Fenster wandert auf ADR-010 bis ADR-019), `fahrplan.md` mit Sonderregel-Hinweis vor Phase 4 + 4.1 in Voll-Format ergänzt. Code-Eingriff folgt nach Patrick-Bestätigung zur Implementierungs-Reihenfolge.
+
+### 2026-05-28 – [ADR-ANGELEGT] ADR-019: Phase-4-Sonderregel
+
+- **Tags:** `[STRATEGISCH] [METHODIK]`. Klassifikation `[STRATEGISCH]`, nicht `[REAKTIV]` → Reaktiv-Quote bleibt 1 / 10 = 10 % (Fenster wandert auf ADR-010 bis ADR-019).
+- **Entscheidungs-Kern:** UMSETZUNG-Eingangsdisziplin „alle berührten Bestandteile vor Schrittbeginn `[BELASTBAR]`" gilt **abgemildert** für Phasen, deren Hauptzweck die Beförderung berührter Module von `[VORLÄUFIG]` auf `[BELASTBAR]` ist (heute Phase 1, Phase 2, Phase 4, Phase 6). Voraussetzungen: (a) Modul-Schnitt strategisch fixiert, (b) konsumierte Bestandteile außerhalb der zu befördernden Module tatsächlich `[BELASTBAR]`, (c) Detail-Plan vor Code-Eingriff jeden berührten Bestandteil benennt.
+- **Abgeleitete Regel-019** in `decisions.md` Teil C ergänzt; Geltungsbereich generisch für alle künftigen UMSETZUNG-Phasen — keine erneute ADR-Pflicht in Phase 6.
+- **Anwendung Phase 4:** Phase-Header in `fahrplan.md` um „Hinweis Sonderregel"-Block mit ADR-019/Regel-019-Referenz ergänzt; Schritt 4.1 (`backend/catalog`) darf trotz `[VORLÄUFIG]`-Reifegrad starten.
+
+### 2026-05-28 – [SESSIONSTART]
+
+- **Sync-Schritt 0 (Lehre aus 2026-05-28-SESSIONENDE Stale-Base-Vorfall):** `git fetch && git log HEAD..origin/main --oneline` zu Sessionbeginn ausgeführt — kein Output, lokal `main` ist auf Höhe von `origin/main`. Kein Stale-Base-Risiko diese Session.
+- **Pflichtlektüre nach `CLAUDE.md` Abschnitt 2 vollständig durchlaufen:** `project-context.md` (Abschnitte 1–12 vollständig, inkl. Stack-Verifikations-Stempel, Constraints, Code-Standards Abschnitt 7, Triage-Stand 2026-05-07/2026-05-10, TomTom-Provider-Befunde 2026-05-17 und Glossar), `logbuch.md` (letzter `[SESSIONENDE]` 2026-05-28 zu Schritt 3.2 plus den umliegenden `[PHASEN-WECHSEL]`-/`[REIFEGRAD-WECHSEL]`-/`[ADR-ANGELEGT]`-/`[BEOBACHTUNG]`-Einträgen vom selben Tag), `fahrplan.md` „Aktueller Stand" + Phase 4 als nächste laufende Phase (Schritte 4.1–4.6 als gröbere Liste), `architecture.md` Abschnitte 1/2/9 (Reifegrad-Übersicht Stand 2026-05-18/2026-05-28 inkl. ADR-017- und ADR-018-Spalten), `decisions.md` Teil A (ADR-001 bis ADR-018, Reaktiv-Quote 1/10 = 10 %), `blockers.md` „Aktive Blocker" (leer; Blocker #001 als gelöste Referenz vermerkt).
+- **Stand vor Session:** Phase 3 (ERKUNDUNG, Spikes Wave 1) **abgeschlossen** — 3.1 [ERLEDIGT] 2026-05-18 (ADR-017), 3.2 [ERLEDIGT] 2026-05-28 (ADR-018). Phase 4 (UMSETZUNG, Operations Core + Realtime + Einsatzkraft-PWA) als nächste laufende Phase nominiert; kein aktiver Schritt. Keine offenen STOPP-Situationen, keine aktiven Blocker.
+- **Auftrag dieser Session:** **Schritt 4.1** `backend/catalog` — Basis-Artikelkatalog plus mandantenspezifische Erweiterung. Patrick-Vorgabe „start" nach kurzem Vorlauf zur Sync-Disziplin (impliziter Schritt 0 hat funktioniert).
+- **Geplanter Einstieg in 4.1 (vor Code-Eingriff):** Detail-Plan-Vorlage analog zur Phase-2-Disziplin (3–7 Designfragen mit A/B/C-Optionen plus Empfehlungs-Zeile) erarbeiten und Patrick zur Freigabe vorlegen. Vor dem Detail-Plan **Vertiefung** der Pflichtlektüre nach `CLAUDE.md` §2 (Vertiefung auf Anforderung):
+  - `architecture.md` §3 Modul-Eintrag `backend/catalog` (Zeile 145 ff.) vollständig lesen.
+  - `architecture.md` §7 Datenmodell-Abschnitt(e) zu Catalog-Entitäten lesen.
+  - Relevante ADRs durchgehen, soweit für Catalog-Design einschlägig: ADR-002 (Stack), ADR-006 (Aggregations-Schema — Catalog-Felder erscheinen nicht direkt, aber `bestellungen`-Aggregat referenziert), ADR-009 (Verbund-Invarianten — Catalog-Mandanten-Trennung relevant), ADR-018 (Bündelung — Catalog-Items werden durch `order`-Pfad bestellt). Plus etwaige Regeln in `decisions.md` Teil C, die Datenmodell- oder Mandanten-Filter-Disziplin betreffen (Regel-013/014).
+  - Sonderregel-Frage prüfen: gilt Phase-2-Sonderregel (Modul startet `[VORLÄUFIG]`, wird mit Funktionsschritt auf `[BELASTBAR]` befördert) auch für Phase 4 oder ist die volle UMSETZUNG-Eingangsdisziplin („alle berührten Architektur-Bestandteile vor Schrittbeginn `[BELASTBAR]`") anzuwenden? Klärung im Detail-Plan, ggf. als ADR.
+
 ### 2026-05-28 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 4 h netto (Sessionstart 2026-05-28 nach 8-tägiger Pause seit 2026-05-20; Patrick-Auftrag „neue Session" + „3.1 Spike I" + nach Stale-Base-Aufklärung „Option A: meine Commits zurücknehmen und Spike J neu auf Remote-Basis aufbauen"; Sessionende nach erfolgreichem Push).

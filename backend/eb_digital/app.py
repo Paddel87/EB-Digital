@@ -12,6 +12,7 @@ from eb_digital import __version__
 from eb_digital.auth import api as auth_api
 from eb_digital.auth_anonymous import api as auth_anonymous_api
 from eb_digital.cache import create_valkey_client
+from eb_digital.catalog import api as catalog_api
 from eb_digital.db import create_db_engine, create_session_factory
 from eb_digital.logging import configure_logging, get_logger
 from eb_digital.settings import get_settings
@@ -74,6 +75,8 @@ def create_app() -> FastAPI:
     api_router.include_router(auth_api.router)
     api_router.include_router(auth_anonymous_api.router)
     api_router.include_router(tenants_api.router)
+    api_router.include_router(catalog_api.router)
+    api_router.include_router(catalog_api.anon_router)
 
     app.include_router(api_router)
 
