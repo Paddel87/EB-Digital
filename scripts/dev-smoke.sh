@@ -547,6 +547,192 @@ else
 	exit 1
 fi
 
+step "Catalog-Smoke (Schritt 4.1): PA Category+Base → Disponent Override+Own → Carer-Read effektiv"
+
+# Smoke-Hygiene: vor den Login-intensiven Stages (Catalog + Frontend) den
+# Valkey-Rate-Limit-Counter resetten. Tenants-Smoke hat den 5/15-min-IP-Login-
+# Counter bereits 4× aktiviert (Smoke-Admin, PA-relogin, Disp, Disp-blocked);
+# Catalog-Dispatcher-Login + Frontend-Login würden den Counter ohne Reset auf
+# 6 treiben → 429. Phase-1-Smoke nutzt Valkey ausschließlich für Rate-Limit-
+# Counter (Pub/Sub ist Phase 4); FLUSHDB ist daher unkritisch.
+docker exec eb-digital-cache-1 valkey-cli FLUSHDB > /dev/null 2>&1 || true
+
+# Eigener Tenant + eigener Dispatcher, weil Tenants-Smoke seinen Tenant am Ende
+# deaktiviert. Plattform-Admin-Cookie wird aus Tenants-Smoke wiederverwendet
+# (TENANTS_COOKIE_JAR; PA-Timeout 8 h).
+CATALOG_TENANT_SLUG="cat-smoke-$(date +%s)"
+CATALOG_TENANT_NAME="Catalog Smoke Verein $(date +%H%M%S)"
+CATALOG_DISP_USER="catdisp_$(date +%s)"
+CATALOG_DISP_PW="catdispatcher-password-12345"
+CATALOG_DISP_JAR=$(mktemp)
+# shellcheck disable=SC2064
+trap "rm -f $CATALOG_DISP_JAR" EXIT
+
+# Tenant anlegen + approve + Dispatcher invite + reset + login.
+# TENANTS_COOKIE_JAR ist die PA-Session aus Tenants-Smoke (PA-Timeout 8 h).
+cat_reg=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /tmp/dev-smoke-catalog-reg.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"name\":\"$CATALOG_TENANT_NAME\",\"slug\":\"$CATALOG_TENANT_SLUG\"}" \
+	https://localhost/api/auth/register-tenant)
+[[ "$cat_reg" == "201" ]] || { fail "Catalog: register-tenant Status $cat_reg"; exit 1; }
+CATALOG_TENANT_ID=$(jq -r .tenant_id /tmp/dev-smoke-catalog-reg.json)
+
+cat_appr=$(curl --silent --insecure --max-time 10 \
+	-X POST -b "$TENANTS_COOKIE_JAR" \
+	-w '%{http_code}' -o /dev/null \
+	"https://localhost/api/tenants/$CATALOG_TENANT_ID/approve")
+[[ "$cat_appr" == "200" ]] || { fail "Catalog: tenant approve Status $cat_appr"; exit 1; }
+
+cat_inv=$(curl --silent --insecure --max-time 10 \
+	-b "$TENANTS_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-catalog-invite.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"username\":\"$CATALOG_DISP_USER\"}" \
+	"https://localhost/api/tenants/$CATALOG_TENANT_ID/dispatchers")
+[[ "$cat_inv" == "201" ]] || { fail "Catalog: dispatcher invite Status $cat_inv"; exit 1; }
+CATALOG_RESET=$(jq -r .reset_token /tmp/dev-smoke-catalog-invite.json)
+
+cat_reset=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /dev/null \
+	-H 'Content-Type: application/json' \
+	-d "{\"token\":\"$CATALOG_RESET\",\"new_password\":\"$CATALOG_DISP_PW\"}" \
+	https://localhost/api/auth/reset-password)
+[[ "$cat_reset" == "204" ]] || { fail "Catalog: reset-password Status $cat_reset"; exit 1; }
+
+cat_disp_login=$(curl --silent --insecure --max-time 10 \
+	-c "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /dev/null \
+	-H 'Content-Type: application/json' \
+	-d "{\"username\":\"$CATALOG_DISP_USER\",\"password\":\"$CATALOG_DISP_PW\"}" \
+	https://localhost/api/auth/login)
+[[ "$cat_disp_login" == "200" ]] || { fail "Catalog: dispatcher login Status $cat_disp_login"; exit 1; }
+
+ok "Catalog: Tenant + Dispatcher vorbereitet (tenant_id=$CATALOG_TENANT_ID, PA-Cookie aus Tenants-Smoke wiederverwendet)"
+
+# 1. Plattform-Admin: Kategorie anlegen.
+CATALOG_CAT_NAME="Smoke-Kategorie-$(date +%s)"
+cat_cat=$(curl --silent --insecure --max-time 10 \
+	-b "$TENANTS_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-catalog-category.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"name\":\"$CATALOG_CAT_NAME\"}" \
+	https://localhost/api/catalog/categories)
+if [[ "$cat_cat" == "201" ]]; then
+	CATALOG_CAT_ID=$(jq -r .id /tmp/dev-smoke-catalog-category.json)
+	ok "POST /api/catalog/categories 201 — category_id=$CATALOG_CAT_ID"
+else
+	fail "POST /api/catalog/categories Status $cat_cat (body: $(cat /tmp/dev-smoke-catalog-category.json))"
+	exit 1
+fi
+
+# 2. Plattform-Admin: Base-Item anlegen.
+cat_base=$(curl --silent --insecure --max-time 10 \
+	-b "$TENANTS_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-catalog-base.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"name\":\"Wasser still\",\"unit\":\"liter\",\"default_unit_label\":\"Liter\",\"category_id\":\"$CATALOG_CAT_ID\"}" \
+	https://localhost/api/catalog/base)
+if [[ "$cat_base" == "201" ]]; then
+	CATALOG_BASE_ID=$(jq -r .id /tmp/dev-smoke-catalog-base.json)
+	ok "POST /api/catalog/base 201 — base_item_id=$CATALOG_BASE_ID"
+else
+	fail "POST /api/catalog/base Status $cat_base (body: $(cat /tmp/dev-smoke-catalog-base.json))"
+	exit 1
+fi
+
+# 3. Dispatcher: Override des Base-Items für eigenen Tenant.
+cat_ovr=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-catalog-override.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"base_item_id\":\"$CATALOG_BASE_ID\",\"override_name\":\"Wasser regional\"}" \
+	https://localhost/api/catalog/tenant/override)
+if [[ "$cat_ovr" == "201" ]]; then
+	ok "POST /api/catalog/tenant/override 201 — Disponent legt Override an"
+else
+	fail "POST /api/catalog/tenant/override Status $cat_ovr (body: $(cat /tmp/dev-smoke-catalog-override.json))"
+	exit 1
+fi
+
+# 4. Dispatcher: eigenständiges Tenant-Item.
+cat_own=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-catalog-own.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"name\":\"Lokales Brot\",\"unit\":\"piece\",\"default_unit_label\":\"Stück\",\"category_id\":\"$CATALOG_CAT_ID\"}" \
+	https://localhost/api/catalog/tenant/own)
+if [[ "$cat_own" == "201" ]]; then
+	ok "POST /api/catalog/tenant/own 201 — Disponent legt eigenständiges Item an"
+else
+	fail "POST /api/catalog/tenant/own Status $cat_own (body: $(cat /tmp/dev-smoke-catalog-own.json))"
+	exit 1
+fi
+
+# 5. Dispatcher: GET /api/catalog/tenant liefert die beiden Extensions.
+cat_list=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-catalog-tenant-list.json \
+	https://localhost/api/catalog/tenant)
+if [[ "$cat_list" == "200" ]]; then
+	ext_count=$(jq 'length' /tmp/dev-smoke-catalog-tenant-list.json)
+	if [[ "$ext_count" -ge 2 ]]; then
+		ok "GET /api/catalog/tenant 200 — $ext_count Extensions (Override + Own)"
+	else
+		fail "GET /api/catalog/tenant lieferte nur $ext_count Extensions (erwartet ≥ 2)"
+		exit 1
+	fi
+else
+	fail "GET /api/catalog/tenant Status $cat_list"
+	exit 1
+fi
+
+# 6. Dispatcher: GET /api/catalog liefert effektiven Resolver-Output mit
+#    Override-Name und eigenständigem Item (Dispatcher konsumiert über den
+#    Carer-Pfad — _require_carer_or_dispatcher erlaubt beide).
+cat_resolve=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-catalog-resolved.json \
+	https://localhost/api/catalog)
+if [[ "$cat_resolve" == "200" ]]; then
+	override_visible=$(jq '[.[] | select(.name == "Wasser regional")] | length' /tmp/dev-smoke-catalog-resolved.json)
+	own_visible=$(jq '[.[] | select(.name == "Lokales Brot")] | length' /tmp/dev-smoke-catalog-resolved.json)
+	if [[ "$override_visible" == "1" && "$own_visible" == "1" ]]; then
+		ok "GET /api/catalog 200 — Override-Name aktiv (\"Wasser regional\"), eigenständiges Item sichtbar (\"Lokales Brot\")"
+	else
+		fail "GET /api/catalog: Override sichtbar=$override_visible (erwartet 1), Own sichtbar=$own_visible (erwartet 1)"
+		exit 1
+	fi
+else
+	fail "GET /api/catalog Status $cat_resolve"
+	exit 1
+fi
+
+# 7. Berechtigungs-Check: GET /api/catalog ohne Auth → 401.
+cat_unauth=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /dev/null \
+	https://localhost/api/catalog)
+if [[ "$cat_unauth" == "401" ]]; then
+	ok "GET /api/catalog ohne Auth 401 — Carer/Dispatcher-Pflicht durchgesetzt"
+else
+	fail "GET /api/catalog ohne Auth Status $cat_unauth (erwartet 401)"
+	exit 1
+fi
+
+# 8. Berechtigungs-Check: POST /api/catalog/categories als Dispatcher → 403.
+cat_forbidden=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /dev/null \
+	-H 'Content-Type: application/json' \
+	-d "{\"name\":\"Forbidden Kat\"}" \
+	https://localhost/api/catalog/categories)
+if [[ "$cat_forbidden" == "403" ]]; then
+	ok "POST /api/catalog/categories als Dispatcher 403 — Plattform-Admin-Pflicht durchgesetzt"
+else
+	fail "POST /api/catalog/categories als Dispatcher Status $cat_forbidden (erwartet 403)"
+	exit 1
+fi
+
 step "Frontend-Disponent — statischer Build + Cookie-Round-Trip (Schritt 2.5)"
 
 # 1. Statischer Build der frontend-disponent-App via pnpm. Build-Fehler fallen

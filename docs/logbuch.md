@@ -26,6 +26,48 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [SESSIONENDE] Schritt 4.1 ERLEDIGT — `backend/catalog` produktiv
+
+- **Session-Dauer-Summe** seit Sessionstart 2026-05-28: ca. 8 h netto. Patrick-Direktive nach Pause-Sessionende-Eintrag: „docker ist nun verfügbar" → Migration-Sanity-Check → „API-Tests + dev-smoke.sh" → vollständiger Schritt-4.1-Abschluss in derselben Session.
+- **Bearbeitet:** **Schritt 4.1** (`backend/catalog`) **ERLEDIGT**. Phase 4 läuft mit Folge-Schritt 4.2 (`backend/fleet`) als nächster.
+- **Erreicht (zusätzlich zum Modulskeleton-Stand aus dem Zwischen-Sessionende):**
+  - **27 API-Tests** in `test_catalog_api.py` für vier Rollen (Plattform-Admin Categories+Base, Disponent Tenant-Extensions, Carer Read effektiv, Anon Read mit Session-Pflicht + URL-Token-Match + Rate-Limit-Schutz). TestClient + dependency_overrides + fakeredis-Pattern aus Phase 2. 55 Catalog-Tests gesamt grün, 495 Gesamt-Tests, Coverage 88 % (CI-Gate 80 % bestanden).
+  - **`dev-smoke.sh`-Catalog-Stufe** mit 9 Sub-Checks gegen vollen Compose-Stack: Tenant + Dispatcher-Setup (PA-Cookie aus Tenants-Smoke wiederverwendet, Login-Counter-Disziplin), PA Category+Base-Create (201), Disponent Override+Own-Create (201), GET tenant (2 Extensions), GET catalog (Resolver-Output mit Override-Name + eigenständigem Item), Berechtigungs-Verweigerungen (401 ohne Auth, 403 Dispatcher→Plattform-Admin-Pflicht). Smoke-Hygiene: `valkey-cli FLUSHDB` vor Catalog-Stufe als Rate-Limit-Counter-Reset.
+  - **Reifegrad-Beförderung:** `backend/catalog` `[VORLÄUFIG]` → `[BELASTBAR]`; neue Schnittstellen-Sub-Surfaces S8c (`/api/catalog/*`) und S2b (`/api/anon/{url}/catalog`) angelegt mit Reifegrad `[BELASTBAR]`. Drei Datenmodelle (`catalog_category`, `catalog_item_base`, `catalog_item_tenant_extension`) als belastbar geführt.
+  - **Doku-Updates:** `architecture.md` §3 Modul-Eintrag voll ausgebaut + §9 Reifegrad-Tabelle + §4 (S8c, S2b ergänzt); `fahrplan.md` Schritt 4.1 auf ERLEDIGT mit Verifikations-Block (6 Punkte: Migration, DB-Struktur, Tests, Lint/Type/Security, dev-smoke.sh, Reifegrad-Wirkung), Aktueller-Stand-Block + Aktiver-Schritt + Nächster-Schritt synchronisiert; `README.md` Status-Block auf 4.1 ERLEDIGT + Nächste-Schritte auf 4.2.
+- **Reibungen:**
+  - **Docker initial nicht verfügbar** → Migration manuell ohne `--autogenerate`; Verifikation via `alembic check` nach Docker-Verfügbarkeit nachgezogen, „No new upgrade operations detected" bestätigt ORM-Konsistenz (Eintrag oben).
+  - **Login-Rate-Limit-Konflikt** im Smoke: erste Catalog-Smoke-Variante mit eigenem PA-Login + Dispatcher-Login riss den IP-Counter (5/15 min). Auflösung: PA-Cookie aus Tenants-Smoke wiederverwendet (1 Login statt 2) + `valkey-cli FLUSHDB` als Smoke-Hygiene-Reset vor Catalog-Stufe.
+  - **Test-Bug** in `test_update_base_item_unknown_id_raises_not_found`: Stub-Funktion `_update(**_kw)` hatte keinen positional-`session`-Parameter; Use-Case ruft mit `(session, **kw)` auf → TypeError; sofort gefixed durch `_update(_session, **_kw)`.
+  - **`.env` fehlte** initial im Repo-Root (Compose verlangt die Datei); aus `.env.example` kopiert (POSTGRES_PASSWORD=CHANGE_ME als Smoke-Default, OK).
+  - **DB-Volume-Passwort-Drift** zwischen Sanity-Check (eb_digital-Default) und Smoke (.env-Wert CHANGE_ME) → `docker compose down -v` zum Frischlauf.
+  - **Ruff-Auto-Fix** lief mehrfach (Import-Sortierung, Format, eine UP006-Regel im Test-File); keine inhaltlichen Eingriffe.
+- **Reaktiv-Quote:** 1 / 10 = 10 % unverändert (Fenster ADR-010–019; ADR-019 war `[STRATEGISCH]`). Kein neuer ADR in dieser Session-Phase.
+- **README-Sync-Check (CLAUDE.md §16 Trigger 1):** Schritt 4.1 hat nutzersichtbare Wirkung (neue Module + API-Endpunkte + Verifikations-Status). README-Status-Block + Nächste-Schritte aktualisiert. Architektur-Reife-Block in der ausführlichen Form noch nicht voll synchronisiert (Phase-7-Stabilisierungs-Kandidat — die Aufzählung dort ist 24 BELASTBAR-Stand vor 4.1; neu sind +catalog-Modul, +S8c, +S2b, +3 Datenmodelle → ~28 BELASTBAR; Detail-Update geht im nächsten 4.x-Schritt mit).
+- **Bekannter Stand:** Branch `feat/4.1-backend-catalog` mit (vor diesem Commit) vier Commits (`153c3f3` ADR-019 + Fahrplan, `5d1cc0d` Modulskeleton, `7024881` Zwischen-Sessionende, `93fb396` Migration-Round-Trip-Verifikation). Vor dem finalen Commit modifizierte Files: `backend/eb_digital/catalog/`, `backend/tests/test_catalog_api.py` (neu), `scripts/dev-smoke.sh` (Catalog-Stufe + FLUSHDB-Hygiene), `docs/{architecture,fahrplan,logbuch,project-context (n/a)}.md`, `README.md`, `.env` (aus `.env.example` kopiert, sollte nicht committet werden). **Nicht gepusht** — Patrick-Entscheidung über Push-Zeitpunkt nach finalem Commit.
+- **Nächster Schritt:** Schritt **4.2** `backend/fleet` (Fahrzeuge, Beladung, Versorgungs-Transporter-Modi). Detail-Plan-Vorlage analog zur 4.1-Disziplin vorbereiten und Patrick zur Freigabe vorlegen. Spätestens beim Sessionstart der nächsten Session.
+
+### 2026-05-28 – [REIFEGRAD-WECHSEL] Modul `backend/catalog` → `[BELASTBAR]`
+
+- **Beförderung** `backend/catalog`: `[VORLÄUFIG]` (seit 2026-05-07) → `[BELASTBAR]` (2026-05-28, Schritt 4.1).
+- **Begründung:** drei Tabellen mit `mode_constraint` + Partial-UNIQUE produktiv (Migration `b3a9c7e1f205` Round-Trip-verifiziert mit `alembic check` deckungsgleich zum ORM); Repository + Use-Cases + Resolver-Drei-Query-Pattern + vier Rollen-API-Endpunkte; 55 Catalog-Tests grün; dev-smoke.sh-Catalog-Stufe mit 9 Sub-Checks E2E komplett grün; Coverage Gesamt 88 % (CI-Gate 80 % bestanden).
+- **Mitbeförderte Bestandteile:**
+  - Schnittstelle **S8c** (Sub-Surface `/api/catalog/categories`, `/api/catalog/base`, `/api/catalog/tenant`, `/api/catalog`) — neu eingeführt, `[BELASTBAR]`.
+  - Schnittstelle **S2b** (Sub-Surface `/api/anon/{operation_url}/catalog`) — neu eingeführt, `[BELASTBAR]`.
+  - Datenmodelle `catalog_category`, `catalog_item_base`, `catalog_item_tenant_extension` — neu, `[BELASTBAR]`.
+- **Phase-4-Sonderregel** (ADR-019 / Regel-019) hat die Eingangs-Disziplin getragen: Modul war zum Schrittbeginn `[VORLÄUFIG]`, alle konsumierten Bestandteile waren `[BELASTBAR]` (Plumbing, backend/auth, backend/auth_anonymous, backend/tenants, S10, Regel-013/014, get_db_session); Beförderung erfolgte funktional erfüllt mit Schrittabschluss.
+
+### 2026-05-28 – [SCHRITT-ABSCHLUSS] Schritt 4.1 ERLEDIGT
+
+- **Akzeptanzkriterien-Verifikation** (siehe `fahrplan.md` Schritt-4.1-Verifikations-Block):
+  1. ✅ Migration `b3a9c7e1f205` Round-Trip gegen Postgres 17.9 sauber, `alembic check` „No new upgrade operations detected".
+  2. ✅ DB-Struktur (PK + 2 Indizes + CHECK + 3 FKs) verifiziert via psql.
+  3. ✅ 55 Catalog-Tests + 495 Gesamt-Tests grün, Coverage 88 %.
+  4. ✅ Lint-/Type-/Security-Gates (`ruff`, `ruff format`, `mypy --strict`, `bandit`, `pre-commit`) alle grün; null `assert # noqa: S101` im Endzustand.
+  5. ✅ `dev-smoke.sh`-Catalog-Stufe mit 9 Sub-Checks gegen vollen Compose-Stack komplett grün.
+  6. ✅ Reifegrad-Wirkung realisiert (Modul + 2 Schnittstellen-Sub-Surfaces + 3 Datenmodelle auf `[BELASTBAR]`); Doku-Updates in `architecture.md` §3/§4/§9, `fahrplan.md`, `README.md`.
+- **Klassifikation:** `[ERLEDIGT]`, Schritt 4.1 vollständig nach CLAUDE.md §9 Definition of Done.
+
 ### 2026-05-28 – [PROBLEM-GELÖST] Migration `b3a9c7e1f205` Round-Trip gegen Postgres verifiziert
 
 - **Befund:** Nach dem Sessionende-Block kam von Patrick die Meldung „docker ist nun verfügbar". Auf Patrick-Freigabe „Migration-Sanity-Check jetzt" wurde der Compose-Stack hochgefahren (`docker compose --profile dev up -d db`, `postgres:17.9@sha256:347bc4e6…`-Pin, healthy nach <5 s).
