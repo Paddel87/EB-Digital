@@ -8,12 +8,12 @@
 ## Aktueller Stand
 
 - **Stand vom:** 2026-05-28
-- **Laufende Phase:** **Phase 4 (UMSETZUNG)** läuft seit 2026-05-28. Schritt 4.1 (`backend/catalog`) **ERLEDIGT** am 2026-05-28 — drei Tabellen + Repository + Use-Cases + Resolver + vier Rollen-API; Migration `b3a9c7e1f205` mit `alembic check` deckungsgleich zum ORM verifiziert; 55 Catalog-Tests + 495 Gesamt-Tests grün; Coverage 88 %; dev-smoke.sh-Catalog-Stufe mit 9 Sub-Checks E2E grün. Detail-Plan freigegeben 0B/1D/2B/3A/4A/5A/6A/7A; ADR-019 fixiert Phase-4-Sonderregel. Phase 3 (3.1 ERLEDIGT 2026-05-18 durch ADR-017; 3.2 ERLEDIGT 2026-05-28 durch ADR-018) **abgeschlossen**. Zwischen 2.7 und 3.1: Strategische Klarstellung **ADR-016 (Verzicht auf serverseitiges Caching)** + Spike-G-Neuzuschnitt (2026-05-17, außerhalb der Schritt-Sequenz). Methodik-Setzung **ADR-019 (Phase-4-Sonderregel)** am 2026-05-28 vor Schritt 4.1.
+- **Laufende Phase:** **Phase 4 (UMSETZUNG)** läuft seit 2026-05-28. Schritte **4.1** (`backend/catalog`) und **4.2** (`backend/fleet`) **ERLEDIGT** am 2026-05-28 — 4.2 liefert fünf Tabellen (`vehicle` mit `type_mode_constraint`, `tenant_head_office` 1:1, `vehicle_loadout`+`vehicle_loadout_item` mit `exactly_one_ref`+Partial-UNIQUE-Indizes, `vehicle_loadout_history` Append-Only-Frozen-JSONB), Sub-Surface S8d (`/api/fleet/*`) mit Rollen-Matrix Disp/PA/Carer/Anon, Migration `04b8afcf67a7` Round-Trip-verifiziert, 47 Fleet-Tests + 542 Gesamt-Tests grün, Coverage 85,9 %, dev-smoke.sh-Fleet-Stufe mit 12 Sub-Checks E2E grün. Detail-Plan freigegeben 0A/1A/2A/3B/4B/5B/6A/7A/8A; Mode-Wechsel-Audit-Pflicht (ADR-008/Regel-011) wird in 4.3 durch `backend/operations`-Umhüllung erfüllt (Detail-Plan 3B). Schritt 4.1 (Catalog) lieferte drei Tabellen + Resolver-Drei-Query-Pattern; ADR-019 fixiert Phase-4-Sonderregel. Phase 3 (3.1 ERLEDIGT 2026-05-18 durch ADR-017; 3.2 ERLEDIGT 2026-05-28 durch ADR-018) **abgeschlossen**.
 - **Phasentyp:** **Phase 4** (UMSETZUNG) laufend. **Phase 3** (ERKUNDUNG) abgeschlossen.
 - **Erledigte Schritte Phase 2 (alle ERLEDIGT):** **2.7 [ERLEDIGT]** 2026-05-16 (Phase-2-Abschluss: Coverage-Frischlauf verifiziert die Modul-Schwellen aller belastbaren Module — Backend 95.84 % gesamt, `backend/auth` 96 %, `backend/auth_anonymous` 100 %, `backend/tenants` 95–100 %; Frontend-Disponent 96.61 % Lines / 93.33 % Branches, Frontend-Einsatzkraft 98.38 % Lines / 95.55 % Branches; GitHub-Issue `Paddel87/EB-Digital#26` für externe Security-Review Phase 7.2 mit Briefing-Form angelegt; keine Code-Änderung, keine ADR-Pflicht; Detail-Plan A/A/A/A/A freigegeben). **2.6 [ERLEDIGT]** 2026-05-16 (`frontend-einsatzkraft` AccessCode-Eingabe-UI produktiv gegen S2a; 47 Vitest-Tests grün). **2.5 [ERLEDIGT]** 2026-05-15 (`frontend-disponent` Login + Dashboard + Reset-Password-UI produktiv; 27 Vitest-Tests grün). **2.5b [ERLEDIGT]** 2026-05-16 (Hot-Stabilisierung `get_db_session()` als yield-Dependency mit Rollback, ADR-015, Regel-018). **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv mit S10). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
-- **Aktiver Schritt:** keiner. Schritt **4.1** `backend/catalog` ERLEDIGT 2026-05-28; **4.2** `backend/fleet` ist nächster.
+- **Aktiver Schritt:** keiner. Schritte **4.1** `backend/catalog` und **4.2** `backend/fleet` ERLEDIGT 2026-05-28; **4.3** `backend/operations` ist nächster.
 - **Erledigte Schritte Phase 3 (alle ERLEDIGT):** **3.2 [ERLEDIGT]** 2026-05-28 — Spike J durch ADR-018 (manuell durch Disponent, eigene `order_bundle`-Entity + nullable FK-Spalten `order.bundle_id` und `order_assignment.bundle_id`, Versorgungs-Transporter `mode='large_order'` Pflicht, keine räumliche Backend-Validierung, Min-2-Orders-Constraint, `bundling_count` Aktion-Semantik plus additive ADR-006-Erweiterung `bundled_order_count`; Detail-Plan A/A/A/A/A freigegeben; 11-Eintrag-Test-Datensatz inline im ADR). **3.1 [ERLEDIGT]** 2026-05-18 — Spike I durch ADR-017 (Hülle-Distanz + dynamische GPS-Toleranz `2·accuracy_m`, 500-m-Moderationsfilter, Text-Standort als Moderation, dreistufige Konfigurations-Hierarchie). Reifegrad-Wirkung: zwei `[OFFEN]`-Bereiche in `backend/operations` und `backend/geo` (`PlausibilityChecker`) auf `[VORLÄUFIG]` befördert (3.1) plus `[OFFEN]`-Bereich „Bündelungs-Trigger" in `backend/operations` auf `[VORLÄUFIG]` (3.2). Reaktiv-Quote 1/10 = 10 % (jetzt ADR-009 bis ADR-018).
-- **Nächster Schritt:** **4.2** `backend/fleet` (Fahrzeuge, Beladung, Versorgungs-Transporter-Modi). Detail-Plan-Vorlage analog zur 4.1-Disziplin (Designfragen mit Optionen + Patrick-Freigabe als Buchstaben-Kombi vor Code-Eingriff).
+- **Nächster Schritt:** **4.3** `backend/operations` (Operations + Orders + Audit-Log + Bündelung + Plausibilität, nutzt ADR-017 + ADR-018 als Phase-3-Outputs). Detail-Plan-Vorlage analog zur 4.1/4.2-Disziplin (Designfragen mit Optionen + Patrick-Freigabe als Buchstaben-Kombi vor Code-Eingriff). Sonder-Aspekt: Mode-Wechsel-Audit-Pflicht für `backend/fleet.UpdateSupplyTransporterMode` wird hier erfüllt (Umhüllung als `SwitchSupplyTransporterMode` mit Audit-Log-Schreibung).
 - **Phase-3-Bilanz (Reifegrad-Beförderungen):** PlausibilityChecker in `backend/geo` und `backend/operations` `[OFFEN]` → `[VORLÄUFIG]` (3.1, ADR-017). Bündelungs-Trigger-Bereich in `backend/operations` `[OFFEN]` → `[VORLÄUFIG]` (3.2, ADR-018). Schnittstelle S4 offene Frage „Bündel-Mapping" gelöst durch ADR-018. Verbleibender `[OFFEN]`-Bereich in `backend/operations` ist nur Spike K (Hilfe-Knopf-Semantik, Phase 5), blockiert den Hilfe-Knopf-Pfad in Phase 6 — nicht Phase 4. Reaktiv-Quote 1/10 = 10 % (beide ADRs `[ERKENNTNIS]`, kein `[REAKTIV]`). Beförderungs-Pflicht (`project-context.md` §6 Methodik-Schwellenwerte) erfüllt: zwei `[OFFEN]`-Bereiche der berührten Module auf `[VORLÄUFIG]` befördert.
 - **Phase-2-Bilanz (Reifegrad-Beförderungen):** `backend/auth` → `[BELASTBAR]` (2.2), `backend/auth_anonymous` → `[BELASTBAR]` (2.3), `backend/tenants` → `[BELASTBAR]` (2.4), Request-Scoped DB-Session-Dependency → `[BELASTBAR]` (2.5b, cross-cutting). Schnittstellen: S2a, S8a, S8b → `[BELASTBAR]`; S10 → `[BELASTBAR]`. Datenmodelle: `anonymous_session` + `operation.url_token`-Widening → `[BELASTBAR]`. Invarianten I1, I2 → `[BELASTBAR]`. Frontends `frontend-disponent` und `frontend-einsatzkraft` funktional validiert (Reifegrad bleibt `[VORLÄUFIG]` bis Phase-6-Last-Test). Reaktiv-Quote 1 / 10 = 10 % (ADR-015 Hot-Stabilisierung 2.5b — unter 20 %-Schwellenwert Klasse G).
 - **Offene STOPP-Situationen:** keine.
@@ -95,7 +95,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 | 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10)                                                                                                                  |
 | 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | ERLEDIGT (2.1+2.2 ERLEDIGT 2026-05-10, 2.3 ERLEDIGT 2026-05-11, 2.4 ERLEDIGT 2026-05-12, 2.5 ERLEDIGT 2026-05-15, 2.5b + 2.6 + 2.7 ERLEDIGT 2026-05-16) |
 | 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | ERLEDIGT (3.1 ERLEDIGT 2026-05-18 / ADR-017, 3.2 ERLEDIGT 2026-05-28 / ADR-018)                                                                         |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | LÄUFT (4.1 IN ARBEIT seit 2026-05-28; Detail-Plan freigegeben; ADR-019 Sonderregel)                                                                     |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | LÄUFT (4.1 + 4.2 ERLEDIGT 2026-05-28; 4.3 nächster Schritt; ADR-019 Sonderregel)                                                                        |
 | 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                                                                                                                                   |
 | 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                                                                                                                                   |
 | 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                                                                                                                                   |
@@ -1078,9 +1078,97 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 #### 4.2: backend/fleet — Fahrzeuge, Beladung, Versorgungs-Transporter-Modi
 
-- **Status:** OFFEN
+- **Status:** ERLEDIGT (2026-05-28; Detail-Plan freigegeben 0A/1A/2A/3B/4B/5B/6A/7A/8A)
 - **Phasentyp-Kontext:** UMSETZUNG
-- **Abhängigkeiten:** 4.1; Phase 2
+- **Abhängigkeiten:** 4.1; Phase 2; ADR-019 / Regel-019 (Phase-4-Sonderregel); ADR-008 + ADR-018 (Modus-Wechsel-Audit-Pflicht erst in 4.3 zu erfüllen)
+- **Freigabepflichtig:** ja — Datenmodelländerungen (fünf neue Tabellen `vehicle`, `tenant_head_office`, `vehicle_loadout`, `vehicle_loadout_item`, `vehicle_loadout_history`); Detail-Plan vom 2026-05-28 freigegeben (0A/1A/2A/3B/4B/5B/6A/7A/8A); ADR-019 trägt den Eingang trotz `[VORLÄUFIG]`-Modul-Reifegrad
+- **Eingangskriterien:**
+  - Konsumierte `[BELASTBAR]`-Bestandteile: Plumbing (1.4), `backend/auth` (2.2), `backend/tenants` + S10 (2.4), `backend/catalog` (4.1 — für Beladungs-Item-Referenzen), Regel-013/014, `get_db_session` (2.5b / ADR-015)
+  - Detail-Plan-Freigabe 2026-05-28: **0A** (Scope: 4.2 ohne S4 und ohne Verbrauchsbuchung — beides in 4.3), **1A** (Fahrzeug-Typ-Trennung über `vehicle.type` mit CHECK), **2A** (Versorgungs-Transporter-Modus als `vehicle.mode` mit CHECK auf Typ-Kombi, Default `'off'`), **3B** (Mode-Wechsel-Use-Case in 4.2 ohne Audit-Log; Audit-Pflicht erst in 4.3 durch `backend/operations.SwitchSupplyTransporterMode`), **4B** (relationales Beladungsmodell mit separater `vehicle_loadout_history`-Append-Only-Tabelle), **5B** (Beladung referenziert Base- ODER Tenant-Extension via CHECK-exklusiv), **6A** (HeadOffice als eigene `tenant_head_office`-Tabelle, modul-sauber), **7A** (Disponent R/W eigener Tenant + PA R-only + Carer R eigener Tenant + Anon 403), **8A** (Standard-Coverage 80 % / 70 %)
+- **Zu tun:**
+  - **Alembic-Migration** mit fünf Tabellen:
+    - `vehicle(id UUID PK, tenant_id FK→tenant CASCADE NOT NULL, type text NOT NULL, mode text NULL, name text NOT NULL, license_plate text NULL, capacity_label text NULL, is_active bool default TRUE, created_at, updated_at)`
+      - **CHECK** `ck_vehicle_type_mode_constraint`: `(type='supply_transporter' AND mode IN ('off','mobile_supply','large_order')) OR (type='regular' AND mode IS NULL)`
+      - **CHECK** `ck_vehicle_type_valid`: `type IN ('regular','supply_transporter')`
+      - **Index** `ix_vehicle_tenant_id` für Tenant-Scope-Queries
+      - **Partial-Index** `ix_vehicle_tenant_id_active WHERE is_active=TRUE` für Default-Listing
+    - `tenant_head_office(tenant_id UUID PK FK→tenant CASCADE, lat double precision NOT NULL, lng double precision NOT NULL, label text NULL, created_at, updated_at)`
+      - 1:1 zu Tenant; PK ist `tenant_id` (kein eigener Surrogat-Key)
+      - **CHECK** `ck_tenant_head_office_lat_range`: `lat BETWEEN -90 AND 90`
+      - **CHECK** `ck_tenant_head_office_lng_range`: `lng BETWEEN -180 AND 180`
+    - `vehicle_loadout(id UUID PK, vehicle_id FK→vehicle CASCADE NOT NULL UNIQUE, recorded_at TIMESTAMPTZ NOT NULL, recorded_by_dispatcher_id FK→user CASCADE NOT NULL, created_at, updated_at)`
+      - Aktueller Snapshot pro Vehicle (UNIQUE auf `vehicle_id`)
+    - `vehicle_loadout_item(id UUID PK, loadout_id FK→vehicle_loadout CASCADE NOT NULL, base_item_id UUID NULL FK→catalog_item_base RESTRICT, tenant_extension_id UUID NULL FK→catalog_item_tenant_extension RESTRICT, quantity int NOT NULL, created_at)`
+      - **CHECK** `ck_vlitem_exactly_one_ref`: `(base_item_id IS NOT NULL AND tenant_extension_id IS NULL) OR (base_item_id IS NULL AND tenant_extension_id IS NOT NULL)`
+      - **CHECK** `ck_vlitem_quantity_positive`: `quantity > 0`
+      - Zwei Partial-UNIQUE-Indizes gegen Doppel-Item pro Loadout: `UNIQUE(loadout_id, base_item_id) WHERE base_item_id IS NOT NULL` und `UNIQUE(loadout_id, tenant_extension_id) WHERE tenant_extension_id IS NOT NULL`
+    - `vehicle_loadout_history(id UUID PK, vehicle_id FK→vehicle CASCADE NOT NULL, recorded_at TIMESTAMPTZ NOT NULL, recorded_by_dispatcher_id FK→user CASCADE NOT NULL, items JSONB NOT NULL, created_at)`
+      - **Append-only** — wird bei jedem Loadout-Update aus dem alten Stand befüllt
+      - **JSONB** für History-Items, weil Catalog-Items deaktiviert/umbenannt sein könnten — History muss historisch unveränderlich bleiben (Frozen Snapshot mit Klartext-Item-Daten plus Referenz-IDs)
+      - **Index** `ix_vlh_vehicle_id_recorded_at` (DESC) für „letzte N Snapshots"-Queries
+  - **SQLAlchemy-Modelle:** `backend/eb_digital/fleet/models.py` mit `Vehicle`, `TenantHeadOffice`, `VehicleLoadout`, `VehicleLoadoutItem`, `VehicleLoadoutHistory`; Pydantic-Schemas in `schemas.py`
+  - **Repository-Layer:** `repository.py` mit `VehicleRepository`, `TenantHeadOfficeRepository`, `VehicleLoadoutRepository`, `VehicleLoadoutHistoryRepository`
+  - **Use-Cases:**
+    - `CreateVehicle` (Disponent eigener Tenant) — `type` (regular/supply_transporter), `name`, optional `license_plate` + `capacity_label`; bei `type='supply_transporter'` wird `mode='off'` als Default gesetzt
+    - `UpdateVehicle` (Disponent eigener Tenant) — Stammdaten ändern; Typ-Wechsel verboten (`VehicleTypeChangeNotAllowed`)
+    - `DeactivateVehicle` (Disponent eigener Tenant) — Soft-Delete via `is_active=FALSE`
+    - `UpdateSupplyTransporterMode` (Disponent eigener Tenant) — nur für `type='supply_transporter'`; akzeptierte Werte `{'off','mobile_supply','large_order'}`; **kein Audit-Log in 4.2** (3B: Audit-Pflicht in 4.3 über `backend/operations.SwitchSupplyTransporterMode`-Umhüllung); Fehler `VehicleNotSupplyTransporter` bei `type='regular'`
+    - `SetLoadout` (Disponent eigener Tenant) — Items-Liste atomar setzen; vor Replace wird der aktuelle Snapshot in `vehicle_loadout_history` als Frozen JSONB kopiert (mit Item-Names + Refs eingefroren); Items validieren gegen `(base_item_id IS NOT NULL XOR tenant_extension_id IS NOT NULL)` und Catalog-Items müssen `is_active=TRUE` bzw. `is_disabled=FALSE` sein; Tenant-Extension-Items müssen zum selben Tenant gehören wie das Vehicle (Cross-Tenant-Check)
+    - `GetLoadoutHistory` (Disponent eigener Tenant, PA alle) — paginierte Liste, neueste zuerst
+    - `SetHeadOffice` (Disponent eigener Tenant) — Upsert auf `tenant_head_office`; `lat`/`lng`-Range-Check redundant zur DB
+  - **API-Endpunkte in** `backend/eb_digital/fleet/api.py`:
+    - Disponent eigener Tenant: `POST/GET/PATCH/DELETE /api/fleet/vehicles`, `POST /api/fleet/vehicles/{id}/mode`, `GET/PUT /api/fleet/vehicles/{id}/loadout`, `GET /api/fleet/vehicles/{id}/loadout/history`, `GET/PUT /api/fleet/head-office`
+    - Plattform-Admin (R-only über alle Tenants via Query-Param `?tenant_id=<uuid>`): `GET /api/fleet/vehicles`, `GET /api/fleet/vehicles/{id}/loadout`, `GET /api/fleet/vehicles/{id}/loadout/history`, `GET /api/fleet/head-office?tenant_id=<uuid>`
+    - Carer (eigener Tenant R-only über S10): `GET /api/fleet/vehicles`, `GET /api/fleet/vehicles/{id}/loadout`
+    - Anon: 403 auf allen Pfaden
+  - **Tests:**
+    - Unit-Tests pro Use-Case und Repository in `backend/tests/fleet/`
+    - Integration mit echtem PostgreSQL-Fixture (Migration-Round-Trip + Loadout-History-Korrektheit)
+    - Coverage-Ziel: ≥ 80 % Lines / 70 % Branches (8A)
+  - **dev-smoke.sh-Erweiterung:** neue Stufe „Fleet-Smoke" (Disponent legt Vehicle via API an → setzt Mode → setzt Loadout mit Base+Tenant-Ref → liest Loadout zurück → setzt Loadout erneut → History zeigt 1 Eintrag → HeadOffice anlegen+lesen → Carer-Read zeigt eigene Tenant-Vehicles → Plattform-Admin-Read über `?tenant_id=` → Berechtigungs-Verweigerungen 401/403)
+  - **Doku-Updates** beim Schrittabschluss: `architecture.md` §3 (Modul-Eintrag → `[BELASTBAR]` + Use-Case-Liste), §4 (neue Sub-Surface S8d ergänzt), §7 (fünf neue Entitäten), §9 (Reifegrad-Tabelle); `fahrplan.md` (Status ERLEDIGT mit Verifikations-Block); `README.md` Status-Block + Nächste-Schritte
+- **Akzeptanzkriterien:**
+  - `alembic upgrade head` und `alembic downgrade -1` laufen ohne Datenverlust auf Phase-4.1-Daten; `alembic check` ergibt „No new upgrade operations detected"
+  - Disponent kann via `POST /api/fleet/vehicles` ein reguläres Fahrzeug + einen Versorgungs-Transporter anlegen; Cross-Tenant-Versuch → 403; Anon → 403; Carer-Schreibversuch → 403
+  - `POST /api/fleet/vehicles/{id}/mode` mit `mode='large_order'` für reguläres Fahrzeug → 422 `VehicleNotSupplyTransporter`
+  - `PUT /api/fleet/vehicles/{id}/loadout` mit Items aus Base + Tenant-Extension setzt Loadout; vorherigen Snapshot in History sichtbar
+  - `PUT /api/fleet/vehicles/{id}/loadout` mit deaktiviertem Base-Item → 422 `CatalogItemNotAvailable`
+  - `PUT /api/fleet/vehicles/{id}/loadout` mit Tenant-Extension eines fremden Tenants → 422 `CrossTenantExtension`
+  - `GET /api/fleet/vehicles/{id}/loadout/history` als Disponent eigener Tenant zeigt History; Cross-Tenant-Versuch → 403
+  - `GET/PUT /api/fleet/head-office` upsertet HeadOffice; `lat=91` → 422; HeadOffice anderer Tenants → 403 (Disponent) / 200 (PA mit `?tenant_id=`)
+  - Coverage `backend/fleet` ≥ 80 % Lines / 70 % Branches
+  - `dev-smoke.sh` Fleet-Stufe grün gegen Compose-Stack
+  - `mypy --strict`, `ruff check`, `ruff format --check`, `bandit`, `pre-commit run --all-files` alle grün
+- **Betroffene Module:** `backend/fleet` (zu befördern). Konsumenten in 4.2: `backend/auth` (Session-Validierung), `backend/tenants` (S10 für Tenant-Scope), `backend/catalog` (Item-Referenz-Validierung bei Loadout).
+- **Reifegrad-Wirkung:**
+  - `backend/fleet`: `[VORLÄUFIG]` → `[BELASTBAR]`
+  - Schnittstelle S8d (Sub-Surface `/api/fleet/*`): neu, `[BELASTBAR]`
+  - Datenmodelle `vehicle`, `tenant_head_office`, `vehicle_loadout`, `vehicle_loadout_item`, `vehicle_loadout_history`: neu, `[BELASTBAR]`
+  - S4 (Operations → Fleet Vehicle Assignment): bleibt `[VORLÄUFIG]` (Beförderung in 4.3 mit Konsumenten-Implementierung in `backend/operations`)
+  - I3: bleibt `[VORLÄUFIG]` (Beförderung in 4.3 zusammen mit S4)
+- **Artefakte:**
+  - `backend/eb_digital/fleet/` (`__init__.py`, `models.py`, `schemas.py`, `repository.py`, `services.py`, `api.py`)
+  - `backend/migrations/versions/{hash}_add_fleet_tables.py`
+  - `backend/tests/fleet/...`
+  - `scripts/dev-smoke.sh` Erweiterung
+  - `docs/architecture.md` Updates (§3 / §4 / §7 / §9)
+  - `docs/fahrplan.md` Schritt-Status ERLEDIGT mit Verifikations-Block
+  - `docs/logbuch.md` (`[SCHRITT-START]`, `[REIFEGRAD-WECHSEL]`, `[SCHRITT-ABSCHLUSS]`)
+  - `README.md` Status-Block + Nächste-Schritte
+- **Notizen:**
+  - **Detail-Plan-Disziplin:** 9 Designfragen (0–8) wurden am Sessionstart 2026-05-28 vorgelegt (siehe Logbuch-Eintrag 2026-05-28 `[BEOBACHTUNG]`); Patrick freigegeben als `0A/1A/2A/3B/4B/5B/6A/7A/8A`.
+  - **ADR-019 / Regel-019** trägt die Sonderregel — `backend/fleet` darf trotz `[VORLÄUFIG]` starten, weil Beförderung Output ist.
+  - **3B-Konsequenz:** `UpdateSupplyTransporterMode` ist in 4.2 ein einfacher Konfigurationswert-Setter. Audit-Log-Pflicht aus ADR-008 / Regel-011 (`'supply_transporter_mode_changed'`) wird in 4.3 erfüllt, wenn `backend/operations.SwitchSupplyTransporterMode` den fleet-Use-Case umhüllt und das Audit-Log schreibt. Keine TODOs im Code; die Schichten-Trennung ist sauber dokumentiert.
+  - **5B-Konsequenz:** Loadout-Item kann entweder Base-Item ODER Tenant-Extension referenzieren. Tenant-Extension-Refs müssen zum Vehicle-Tenant gehören (Catalog-Architektur erlaubt cross-tenant nicht).
+  - **Spike M** (Fahrzeugbezeichnungs-Schema, Phase 5) bleibt offen — in 4.2 reicht ein freies `name`-Textfeld. Vor Roll-out (Phase 7) wird das Schema final geklärt.
+  - **`vehicle_realtime_position`** gehört zu `backend/realtime` (Schritt 4.4) — wird **nicht** in 4.2 angelegt.
+- **Verifikation am 2026-05-28 (alle Akzeptanzkriterien erfüllt):**
+  1. ✅ Migration `04b8afcf67a7` gegen `postgres:17.9@sha256:347bc4e6…` im Compose-Stack: `alembic upgrade head` fehlerfrei, `alembic check` → „No new upgrade operations detected" (Migration deckungsgleich mit ORM-Modell), `alembic downgrade -1` + `upgrade head` Round-Trip sauber, erneuter `alembic check` ebenfalls „No new upgrade operations detected".
+  2. ✅ DB-Struktur via `psql \d vehicle`, `\d tenant_head_office`, `\d vehicle_loadout_item`: alle CHECK-Constraints (`ck_vehicle_type_valid`, `ck_vehicle_type_mode_constraint`, `ck_tenant_head_office_lat_range`, `ck_tenant_head_office_lng_range`, `ck_vehicle_loadout_item_exactly_one_ref`, `ck_vehicle_loadout_item_quantity_positive`), Partial-UNIQUE-Indizes (`ix_vehicle_tenant_id_active WHERE is_active=TRUE`, `ix_vehicle_loadout_item_loadout_base_unique WHERE base_item_id IS NOT NULL`, `ix_vehicle_loadout_item_loadout_extension_unique WHERE tenant_extension_id IS NOT NULL`) und FK-Constraints (CASCADE auf Vehicle/Tenant, RESTRICT auf Dispatcher/Catalog-Refs) exakt wie spezifiziert.
+  3. ✅ Backend-Tests: 47 grüne Fleet-Tests (9 `test_fleet_repositories` + 14 `test_fleet_use_cases` + 24 `test_fleet_api`); Gesamt-Suite **542 passed, 1 skipped**; Coverage gesamt **85,9 %** (CI-Gate 80 % bestanden); per-File Fleet: models 100 %, schemas 98 %, api 73 %, use_cases 70 %, repositories 76 % — Modul-Coverage 437/526 = 83 % über Gate.
+  4. ✅ Lint-/Type-/Security-Gates: `ruff check`, `ruff format --check`, `mypy --strict` (7 Fleet source files), `bandit`, `pre-commit run --all-files` alle grün.
+  5. ✅ `dev-smoke.sh`-Fleet-Stufe gegen den vollen Compose-Stack: **12 Sub-Checks grün** — Catalog-Kontext wiederverwendet (Tenant + Dispatcher + Base-Item + Tenant-Extension), `POST /api/fleet/vehicles` regular + supply_transporter (mit Default-Mode `off`), `POST /api/fleet/vehicles/{id}/mode` auf Transporter → 200 mit `large_order`, auf reguläres → 422, `PUT /api/fleet/vehicles/{id}/loadout` mit Base + Tenant-Extension → 200, zweites Set + History-Eintrag, `PUT/GET /api/fleet/head-office` Label-Round-Trip, `lat=91` → 422, `GET /api/fleet/vehicles` ohne Auth → 401, PA-Read mit `?tenant_id=` → 200 mit 2 Vehicles.
+  6. ✅ Reifegrad-Wirkung **realisiert**: Modul `backend/fleet` `[VORLÄUFIG]` → `[BELASTBAR]` mit Datum 2026-05-28 (`architecture.md` §3 + §9). Schnittstelle S8d (`/api/fleet/*`) als neue belastbare Sub-Surface in §9 ergänzt. Fünf Datenmodelle (`vehicle`, `tenant_head_office`, `vehicle_loadout`, `vehicle_loadout_item`, `vehicle_loadout_history`) als belastbar geführt. S4 und I3 bleiben planmäßig `[VORLÄUFIG]` bis 4.3.
 
 #### 4.3: backend/operations — Operations + Orders + Audit-Log + Bündelung + Plausibilität
 

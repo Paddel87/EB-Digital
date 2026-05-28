@@ -26,6 +26,84 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [SESSIONENDE] Schritt 4.2 ERLEDIGT — `backend/fleet` produktiv
+
+- **Session-Dauer-Summe** seit Sessionstart 2026-05-28 (zweite Session des Tages, nach 4.1-Abschluss): ca. 4 h netto. Patrick-Freigabe `0A/1A/2A/3B/4B/5B/6A/7A/8A` für 9 Designfragen analog 4.1-Disziplin; dann vollständiger Schritt-4.2-Abschluss in derselben Session.
+- **Bearbeitet:** **Schritt 4.2** (`backend/fleet`) **ERLEDIGT**. Phase 4 läuft mit Folge-Schritt 4.3 (`backend/operations`) als nächster.
+- **Erreicht:**
+  - **Fünf Tabellen** angelegt (`vehicle` mit `type_mode_constraint`, `tenant_head_office` 1:1, `vehicle_loadout`+`vehicle_loadout_item` mit `exactly_one_ref`+Partial-UNIQUE-Indizes, `vehicle_loadout_history` als Append-Only-Frozen-JSONB); Migration `04b8afcf67a7` Round-Trip-verifiziert gegen Postgres 17.9 mit `alembic check` → „No new upgrade operations detected".
+  - **Repository + Use-Cases + API** (Sub-Surface S8d `/api/fleet/*`) mit Rollen-Matrix Disp R/W eigener Tenant + PA R-only via `?tenant_id=` + Carer R-only eigener Tenant + Anon 403. Domain-Exceptions (`VehicleNotSupplyTransporterError`, `CatalogItemNotAvailableError`, `CrossTenantExtensionError`, `HeadOfficeNotFoundError`) auf 422/404 gemappt.
+  - **47 Fleet-Tests** + 542 Gesamt-Tests grün; Coverage Gesamt **85,9 %** (CI-Gate 80 %); Fleet-Modul-Coverage 83 % (per-File models 100 / schemas 98 / api 73 / use_cases 70 / repositories 76).
+  - **`dev-smoke.sh`-Fleet-Stufe** mit 12 Sub-Checks gegen vollen Compose-Stack: Catalog-Kontext wiederverwendet (Tenant/Disp/PA-Cookie + Base + Tenant-Extension), Vehicle-CRUD regular+supply_transporter (Default-Mode `off`), Mode-Wechsel auf `large_order` (200) und auf reguläres Fahrzeug (422), Loadout-Set mit Base+Extension (200), zweites Set + History-Eintrag, HeadOffice-Upsert-Round-Trip, `lat=91` → 422, Auth-401, PA-Read mit `?tenant_id=` über 2 Vehicles.
+  - **Reifegrad-Beförderung:** `backend/fleet` `[VORLÄUFIG]` → `[BELASTBAR]`; neue Sub-Surface S8d `[BELASTBAR]`; fünf Datenmodelle als belastbar geführt. S4 (`assign_vehicle`) und I3 (Fahrzeug-Zuweisung über Einsatz-Kontext) bleiben planmäßig `[VORLÄUFIG]` bis 4.3.
+  - **Doku-Updates:** `architecture.md` §3 (Modul-Eintrag voll ausgebaut) + §7 (ER-Diagramm-Ergänzungen `TenantHeadOffice`, `VehicleLoadoutItem` mit Catalog-Bezügen + Fleet-Spezifika-Block) + §9 (Reifegrad-Tabelle mit neuen Zeilen für `backend/fleet`, S8d und vier Datenmodellen); `fahrplan.md` Schritt 4.2 auf ERLEDIGT mit 6-Punkte-Verifikations-Block + Aktueller-Stand-Block + Phasen-Übersicht-Tabelle synchronisiert; `README.md` Status-Block + „Letzte Änderung" + Nächste-Schritte auf 4.3 aktualisiert.
+- **Reibungen:**
+  - **`app.py`-Router-Registrierung** wurde durch zwei verlorene Edit-Versuche initial vergessen; erster Test-Lauf brachte 404. Nach Lesen + neuer Edit-Sequenz korrekt registriert. Notiz: Sequenzielles Edit auf nicht-zuvor-gelesenen Dateien scheitert lautlos.
+  - **`SessionUser`-Attribut hieß `.id` statt `user_id`**; mypy hat es gefangen (zwei strict-Findings), Korrektur in einer Stelle.
+  - **`docker compose down` nach dev-smoke.sh** wurde manuell nachgezogen (Skript wurde ohne `--keep` gestartet, hat aber den Stack nicht vollständig aufgeräumt — Folge-Untersuchung könnte das Skript verbessern).
+- **Reaktiv-Quote:** 1 / 10 = 10 % unverändert (Fenster ADR-010–019; kein neuer ADR in dieser Session).
+- **README-Sync-Check (CLAUDE.md §16 Trigger 1):** Schritt 4.2 hat nutzersichtbare Wirkung (neues Modul + neue API-Endpunkte). README-Status-Block + Nächste-Schritte aktualisiert; „Letzte Änderung" auf 2026-05-28 gesetzt. Architektur-Reife-Block (Aufzählung der `[BELASTBAR]`-Bestandteile) ist in der ausführlichen Form noch nicht voll synchronisiert — die granulare Aufzählung (24+ Einträge) bleibt Phase-7-Stabilisierungs-Kandidat; neuer Stand laut §9 ist Modul `backend/fleet` + S8d + vier Datenmodelle zusätzlich, d. h. ~32 `[BELASTBAR]`.
+- **Bekannter Stand:** Branch `feat/4.2-backend-fleet` mit drei Commits (zuvor: `88b8e49` Sessionstart, `a8da8fa` Detail-Plan-Doku). Final-Commit folgt. **Nicht gepusht** — Patrick-Entscheidung über Push-Zeitpunkt.
+- **Nächster Schritt:** Schritt **4.3** `backend/operations` (Operations + Orders + Audit-Log + Bündelung + Plausibilität, nutzt ADR-017 + ADR-018 als Phase-3-Outputs; Audit-Log-Pflicht für Mode-Wechsel via Fleet-Use-Case-Umhüllung erfüllen). Detail-Plan-Vorlage analog 4.1/4.2-Disziplin im Sessionstart vorlegen.
+
+### 2026-05-28 – [REIFEGRAD-WECHSEL] Modul `backend/fleet` → `[BELASTBAR]`
+
+- **Beförderung** `backend/fleet`: `[VORLÄUFIG]` (seit 2026-05-07) → `[BELASTBAR]` (2026-05-28, Schritt 4.2).
+- **Begründung:** fünf Tabellen mit CHECK-Constraints + Partial-UNIQUE-Indizes produktiv (Migration `04b8afcf67a7` Round-Trip-verifiziert mit `alembic check` deckungsgleich zum ORM); Repository + Use-Cases + Sub-Surface S8d mit Rollen-Matrix; 47 Fleet-Tests grün; dev-smoke.sh-Fleet-Stufe mit 12 Sub-Checks E2E komplett grün; Coverage Modul 83 % über Gate (80 %).
+- **Mitbeförderte Bestandteile:**
+  - Schnittstelle **S8d** (Sub-Surface `/api/fleet/vehicles*`, `/api/fleet/head-office`) — neu eingeführt, `[BELASTBAR]`.
+  - Datenmodelle `vehicle`, `tenant_head_office`, `vehicle_loadout`+`vehicle_loadout_item`, `vehicle_loadout_history` — neu, `[BELASTBAR]`.
+- **Nicht befördert (planmäßig):** S4 (`assign_vehicle`) bleibt `[VORLÄUFIG]` bis 4.3 (braucht `order`/`order_assignment` aus `backend/operations`). Invariante I3 (Fahrzeug-Zuweisung über Einsatz-Kontext) bleibt `[VORLÄUFIG]` bis 4.3.
+- **Phase-4-Sonderregel** (ADR-019 / Regel-019) hat die Eingangs-Disziplin getragen: Modul war zum Schrittbeginn `[VORLÄUFIG]`, alle konsumierten Bestandteile waren `[BELASTBAR]` (Plumbing, backend/auth, backend/auth_anonymous, backend/tenants, S10, Regel-013/014, get_db_session, backend/catalog); Beförderung erfolgte funktional erfüllt mit Schrittabschluss.
+
+### 2026-05-28 – [SCHRITT-ABSCHLUSS] Schritt 4.2 ERLEDIGT
+
+- **Akzeptanzkriterien-Verifikation** (siehe `fahrplan.md` Schritt-4.2-Verifikations-Block):
+  1. ✅ Migration `04b8afcf67a7` Round-Trip gegen Postgres 17.9 sauber, `alembic check` (vor und nach Round-Trip) jeweils „No new upgrade operations detected".
+  2. ✅ DB-Struktur via psql verifiziert: alle CHECK-Constraints, Partial-UNIQUE-Indizes und FK-Constraints (CASCADE Vehicle/Tenant, RESTRICT Dispatcher/Catalog-Refs) exakt wie spezifiziert.
+  3. ✅ 47 Fleet-Tests + 542 Gesamt-Tests grün, Coverage Gesamt 85,9 %, Fleet-Modul 83 % über CI-Gate.
+  4. ✅ Lint-/Type-/Security-Gates (`ruff`, `ruff format`, `mypy --strict`, `bandit`, `pre-commit`) alle grün.
+  5. ✅ `dev-smoke.sh`-Fleet-Stufe mit 12 Sub-Checks gegen vollen Compose-Stack komplett grün.
+  6. ✅ Reifegrad-Wirkung realisiert (Modul + 1 Schnittstellen-Sub-Surface + 4 Datenmodelle auf `[BELASTBAR]`); Doku-Updates in `architecture.md` §3/§7/§9, `fahrplan.md`, `README.md`.
+- **Klassifikation:** `[ERLEDIGT]`, Schritt 4.2 vollständig nach CLAUDE.md §9 Definition of Done.
+
+### 2026-05-28 – [SCHRITT-START] Schritt 4.2 `backend/fleet` IN ARBEIT
+
+- **Eingangs-Disziplin (ADR-019 / Regel-019, Phase-4-Sonderregel):** Modul startet `[VORLÄUFIG]`, wird durch den Schritt zu `[BELASTBAR]` befördert. Konsumierte `[BELASTBAR]`-Bestandteile geprüft: Plumbing (1.4), `backend/auth` (2.2), `backend/tenants` + S10 (2.4), `backend/catalog` (4.1), Regel-013/014, `get_db_session` (2.5b). Alle vorhanden.
+- **Detail-Plan-Disziplin (analog 4.1):** 9 Designfragen (0–8) wurden zu Sessionbeginn vorgelegt (siehe [BEOBACHTUNG]-Eintrag unten); Patrick freigegeben als `0A/1A/2A/3B/4B/5B/6A/7A/8A`.
+- **Geplante Reifegrad-Wirkung:** `backend/fleet` → `[BELASTBAR]`; Schnittstelle S8d (neu, `/api/fleet/*`) → `[BELASTBAR]`; fünf neue Datenmodelle → `[BELASTBAR]`. S4 + I3 bleiben `[VORLÄUFIG]` bis 4.3.
+- **Branch:** `feat/4.2-backend-fleet` (von `main` nach 4.1-Merge `7f8b330` abgezweigt).
+- **Sub-Tasks** über TaskCreate angelegt (#1–#11): Doku-Vorlauf, Modulskeleton, Migration, Repository, Use-Cases, API, Tests, Migration-Round-Trip, dev-smoke.sh-Erweiterung, Doku-Synchronisation, Schritt-Abschluss.
+
+### 2026-05-28 – [BEOBACHTUNG] Detail-Plan-Freigabe Schritt 4.2 `backend/fleet` (Buchstaben-Kombi `0A/1A/2A/3B/4B/5B/6A/7A/8A`)
+
+- **Vorgehen analog Schritt 4.1:** 9 Designfragen mit Optionen wurden vorgelegt. Patrick-Freigabe ohne Abweichung von den Empfehlungen.
+- **Entscheidungen:**
+  - **0A** Scope: 4.2 baut Stammdaten + Beladung + Modus-Feld + HeadOffice + API. **S4 `fleet.assign_vehicle` und automatische Verbrauchsbuchung sind 4.3-Aufgabe** (brauchen `order`/`order_assignment`-Tabellen).
+  - **1A** Fahrzeug-Typ über `vehicle.type` text NOT NULL mit CHECK `IN ('regular','supply_transporter')` — Single Table Inheritance.
+  - **2A** Versorgungs-Transporter-Modus als `vehicle.mode` text NULL mit CHECK `((type='supply_transporter' AND mode IN ('off','mobile_supply','large_order')) OR (type='regular' AND mode IS NULL))`. Default `'off'` für neue Supply-Transporter.
+  - **3B** `UpdateSupplyTransporterMode`-Use-Case in 4.2 **ohne** Audit-Log. Audit-Pflicht aus ADR-008 / Regel-011 wird in 4.3 erfüllt, wenn `backend/operations.SwitchSupplyTransporterMode` den fleet-Use-Case umhüllt und das Audit-Log schreibt. Keine TODOs im Code; saubere Schichten-Trennung.
+  - **4B** Relationales Beladungs-Modell: `vehicle_loadout(id, vehicle_id UNIQUE, recorded_at, recorded_by_dispatcher_id)` + `vehicle_loadout_item(loadout_id, base_item_id NULL, tenant_extension_id NULL, quantity)` + separate Append-Only-Tabelle `vehicle_loadout_history(items JSONB)` als Frozen Snapshot bei jedem Update.
+  - **5B** Beladungs-Item-Refs: entweder `base_item_id` ODER `tenant_extension_id` (CHECK exklusiv eine NOT NULL). Tenant-Extensions müssen zum Vehicle-Tenant gehören (Cross-Tenant verboten).
+  - **6A** HeadOffice als eigene Tabelle `tenant_head_office(tenant_id PK, lat, lng, label)` 1:1 mit `tenant`. Modul-sauber: `backend/fleet`-Migration ändert keine `backend/tenants`-Tabelle.
+  - **7A** Rollen-Matrix: Disponent R/W eigener Tenant, Plattform-Admin R-only über alle Tenants via `?tenant_id=`-Query, Carer R-only eigener Tenant, Anon 403.
+  - **8A** Standard-Coverage (80 % Lines / 70 % Branches) — konsistent zu 4.1.
+- **Freigabepflichtig** (CLAUDE.md §4): ja, wegen fünf neuer Tabellen. Patrick-Freigabe als ENTSCHEIDUNG-Block-Antwort gilt; ADR-Pflicht entfällt analog zu 4.1 (Detail-Plan-Freigabe im Fahrplan dokumentiert; kein eigener ADR — Designfragen sind keine Architekturentscheidungen, die wiederkehrendes Muster begründen).
+- **Out-of-Scope-Vermerke:** `vehicle_realtime_position` gehört zu `backend/realtime` (4.4); Fahrzeugbezeichnungs-Schema bleibt Spike M (Phase 5, vor Roll-out).
+
+### 2026-05-28 – [SESSIONSTART] Neue Session — Vorbereitung Schritt 4.2 `backend/fleet`
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2) durchgeführt:** `project-context.md` (vollständig), `logbuch.md` (letzter SESSIONENDE-Block 2026-05-28 plus alle Einträge danach — keine späteren Einträge), `fahrplan.md` (Aktueller Stand + Phase 4 inkl. Schritte 4.1 ERLEDIGT-Block und 4.2-Stub), `architecture.md` Abschnitte 1+2+9, `decisions.md` Teil A (ADR-Übersicht inkl. ADR-019 + Reaktiv-Quote 1/10), `blockers.md` (Aktive Blocker: 0).
+- **Aufgenommener Stand:**
+  - **Phase 4** (UMSETZUNG) läuft seit 2026-05-28. **Schritt 4.1** (`backend/catalog`) ERLEDIGT 2026-05-28 — Modul + drei Tabellen + Repository + Use-Cases + Resolver + vier Rollen-API; 55 Catalog-Tests + 495 Gesamt-Tests grün; Coverage 88 %; dev-smoke.sh-Catalog-Stufe (9 Sub-Checks) E2E grün; Reifegrad `backend/catalog` → `[BELASTBAR]`, S8c + S2b neu `[BELASTBAR]`, drei Datenmodelle belastbar.
+  - **Nächster Schritt:** **4.2** `backend/fleet` (Fahrzeuge, Beladung, Versorgungs-Transporter-Modi). Fahrplan-Eintrag ist Stub (Status OFFEN, Abhängigkeiten 4.1+Phase 2). ADR-019 / Regel-019 (Phase-4-Sonderregel) gilt: Modul darf trotz `[VORLÄUFIG]`-Reifegrad starten, weil die Beförderung Output des Schritts ist.
+  - **Detail-Plan-Disziplin** wie 4.1: Designfragen mit Optionen vorlegen, Patrick-Freigabe als Buchstaben-Kombi einholen, **erst danach** Code-Eingriff.
+  - **Git-Stand (korrigiert nach `git status`-Check beim Sessionstart):** PR [#34](https://github.com/Paddel87/EB-Digital/pull/34) für `feat/4.1-backend-catalog` ist bereits **MERGED** (Merge-Commit `7f8b330` auf `main`). Der Sessionende-Vermerk „Nicht gepusht" aus dem 2026-05-28-Block war zum damaligen Zeitpunkt korrekt, ist aber zwischenzeitlich obsolet. Lokales `main` wurde via `git pull --ff-only` auf `7f8b330` gebracht; neuer Branch `feat/4.2-backend-fleet` ist von `main` abgezweigt und trägt diesen SESSIONSTART-Eintrag als ersten Commit.
+  - **Reaktiv-Quote** unverändert bei 1/10 = 10 % (Fenster ADR-010–019, ADR-019 STRATEGISCH).
+- **Aktive Blocker:** 0.
+- **Offene Stopp-Situationen:** keine.
+- **Vorgehensplan dieser Session:** (1) Sessionstart-Eintrag setzen ✅; (2) Branching-Strategie mit Patrick geklärt: Push+PR+Merge für 4.1 ✅ (PR #34 bereits gemergt vor Sessionstart); neuer Branch `feat/4.2-backend-fleet` von `main` abgezweigt ✅; (3) Detail-Plan-Vorlage für Schritt 4.2 ausarbeiten (Designfragen mit Optionen analog zu 4.1, inkl. Datenmodell-Skizze für `vehicle` + Versorgungs-Transporter-Modi, Beladungs-Buchung, S4-Skizze, Rollen-API); (4) Freigabe einholen, dann Implementierung.
+
 ### 2026-05-28 – [SESSIONENDE] Schritt 4.1 ERLEDIGT — `backend/catalog` produktiv
 
 - **Session-Dauer-Summe** seit Sessionstart 2026-05-28: ca. 8 h netto. Patrick-Direktive nach Pause-Sessionende-Eintrag: „docker ist nun verfügbar" → Migration-Sanity-Check → „API-Tests + dev-smoke.sh" → vollständiger Schritt-4.1-Abschluss in derselben Session.

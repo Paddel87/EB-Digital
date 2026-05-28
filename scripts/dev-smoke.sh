@@ -733,6 +733,188 @@ else
 	exit 1
 fi
 
+step "Fleet-Smoke (Schritt 4.2): Vehicle CRUD + Mode + Loadout + History + HeadOffice"
+
+# Wir bleiben im Catalog-Tenant-/Dispatcher-Kontext — derselbe Verein, dieselbe
+# Login-Session. CATALOG_DISP_JAR (Disponent) + TENANTS_COOKIE_JAR (PA) gelten
+# weiter; CATALOG_BASE_ID + CATALOG_TENANT_OVERRIDE_… stehen ebenfalls bereits.
+
+# Tenant-Extension-ID für Loadout-Items aus dem Catalog-Tenant-Listing extrahieren
+# (eigenständiges „Lokales Brot" — base_item_id IS NULL).
+CATALOG_OWN_EXT_ID=$(jq -r '.[] | select(.name == "Lokales Brot") | .id' /tmp/dev-smoke-catalog-tenant-list.json)
+if [[ -z "$CATALOG_OWN_EXT_ID" || "$CATALOG_OWN_EXT_ID" == "null" ]]; then
+	fail "Fleet: Tenant-Extension für 'Lokales Brot' konnte nicht ermittelt werden"
+	exit 1
+fi
+ok "Fleet: nutze Catalog-Tenant ($CATALOG_TENANT_ID), Base $CATALOG_BASE_ID, Extension $CATALOG_OWN_EXT_ID"
+
+# 1. Disponent legt reguläres Fahrzeug an.
+fleet_v1=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fleet-vehicle1.json \
+	-H 'Content-Type: application/json' \
+	-d '{"type":"regular","name":"ELW-Smoke-01","license_plate":"HB-EB 1"}' \
+	https://localhost/api/fleet/vehicles)
+if [[ "$fleet_v1" == "201" ]]; then
+	FLEET_REGULAR_ID=$(jq -r .id /tmp/dev-smoke-fleet-vehicle1.json)
+	ok "POST /api/fleet/vehicles regular 201 — vehicle_id=$FLEET_REGULAR_ID"
+else
+	fail "POST /api/fleet/vehicles regular Status $fleet_v1 (body: $(cat /tmp/dev-smoke-fleet-vehicle1.json))"
+	exit 1
+fi
+
+# 2. Disponent legt Versorgungs-Transporter an (mode-Default 'off').
+fleet_v2=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fleet-vehicle2.json \
+	-H 'Content-Type: application/json' \
+	-d '{"type":"supply_transporter","name":"VT-Smoke-01","capacity_label":"3.5t"}' \
+	https://localhost/api/fleet/vehicles)
+if [[ "$fleet_v2" == "201" ]]; then
+	FLEET_TRANSPORTER_ID=$(jq -r .id /tmp/dev-smoke-fleet-vehicle2.json)
+	fleet_v2_mode=$(jq -r .mode /tmp/dev-smoke-fleet-vehicle2.json)
+	[[ "$fleet_v2_mode" == "off" ]] || { fail "Fleet: Supply-Transporter Default-Mode '$fleet_v2_mode' (erwartet 'off')"; exit 1; }
+	ok "POST /api/fleet/vehicles supply_transporter 201 — vehicle_id=$FLEET_TRANSPORTER_ID, mode='off' (Default)"
+else
+	fail "POST /api/fleet/vehicles supply_transporter Status $fleet_v2 (body: $(cat /tmp/dev-smoke-fleet-vehicle2.json))"
+	exit 1
+fi
+
+# 3. Mode-Wechsel auf Versorgungs-Transporter.
+fleet_mode=$(curl --silent --insecure --max-time 10 \
+	-X POST -b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fleet-mode.json \
+	-H 'Content-Type: application/json' \
+	-d '{"mode":"large_order"}' \
+	"https://localhost/api/fleet/vehicles/$FLEET_TRANSPORTER_ID/mode")
+if [[ "$fleet_mode" == "200" ]]; then
+	fleet_mode_new=$(jq -r .mode /tmp/dev-smoke-fleet-mode.json)
+	[[ "$fleet_mode_new" == "large_order" ]] || { fail "Fleet: Mode-Wechsel-Antwort '$fleet_mode_new' (erwartet 'large_order')"; exit 1; }
+	ok "POST /api/fleet/vehicles/{id}/mode 200 — mode='large_order' aktiv"
+else
+	fail "POST /api/fleet/vehicles/{id}/mode Status $fleet_mode (body: $(cat /tmp/dev-smoke-fleet-mode.json))"
+	exit 1
+fi
+
+# 4. Mode-Wechsel auf reguläres Fahrzeug → 422.
+fleet_mode_bad=$(curl --silent --insecure --max-time 10 \
+	-X POST -b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /dev/null \
+	-H 'Content-Type: application/json' \
+	-d '{"mode":"large_order"}' \
+	"https://localhost/api/fleet/vehicles/$FLEET_REGULAR_ID/mode")
+if [[ "$fleet_mode_bad" == "422" ]]; then
+	ok "POST /api/fleet/vehicles/{regular_id}/mode 422 — Supply-Transporter-Pflicht durchgesetzt"
+else
+	fail "Fleet: Mode-Wechsel auf reguläres Fahrzeug Status $fleet_mode_bad (erwartet 422)"
+	exit 1
+fi
+
+# 5. Loadout setzen mit Base + Tenant-Extension.
+fleet_loadout=$(curl --silent --insecure --max-time 10 \
+	-X PUT -b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fleet-loadout.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"items\":[{\"base_item_id\":\"$CATALOG_BASE_ID\",\"quantity\":24},{\"tenant_extension_id\":\"$CATALOG_OWN_EXT_ID\",\"quantity\":12}]}" \
+	"https://localhost/api/fleet/vehicles/$FLEET_TRANSPORTER_ID/loadout")
+if [[ "$fleet_loadout" == "200" ]]; then
+	loadout_items=$(jq '.items | length' /tmp/dev-smoke-fleet-loadout.json)
+	[[ "$loadout_items" == "2" ]] || { fail "Fleet: Loadout-Items=$loadout_items (erwartet 2)"; exit 1; }
+	ok "PUT /api/fleet/vehicles/{id}/loadout 200 — 2 Items (Base + Tenant-Extension)"
+else
+	fail "PUT /api/fleet/vehicles/{id}/loadout Status $fleet_loadout (body: $(cat /tmp/dev-smoke-fleet-loadout.json))"
+	exit 1
+fi
+
+# 6. Loadout neu setzen — vorheriger Stand muss in History landen.
+fleet_loadout2=$(curl --silent --insecure --max-time 10 \
+	-X PUT -b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fleet-loadout2.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"items\":[{\"base_item_id\":\"$CATALOG_BASE_ID\",\"quantity\":36}]}" \
+	"https://localhost/api/fleet/vehicles/$FLEET_TRANSPORTER_ID/loadout")
+[[ "$fleet_loadout2" == "200" ]] || { fail "Fleet: 2. Loadout-Set Status $fleet_loadout2"; exit 1; }
+ok "PUT /api/fleet/vehicles/{id}/loadout (2. Set) 200 — vorheriger Snapshot in History"
+
+# 7. History prüfen — muss 1 Eintrag haben (der erste Snapshot).
+fleet_history=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fleet-history.json \
+	"https://localhost/api/fleet/vehicles/$FLEET_TRANSPORTER_ID/loadout/history")
+if [[ "$fleet_history" == "200" ]]; then
+	history_count=$(jq '.entries | length' /tmp/dev-smoke-fleet-history.json)
+	[[ "$history_count" -ge 1 ]] || { fail "Fleet: History-Count=$history_count (erwartet ≥ 1)"; exit 1; }
+	ok "GET /api/fleet/vehicles/{id}/loadout/history 200 — $history_count Eintrag/Einträge"
+else
+	fail "GET /api/fleet/vehicles/{id}/loadout/history Status $fleet_history"
+	exit 1
+fi
+
+# 8. HeadOffice setzen + lesen.
+fleet_ho_put=$(curl --silent --insecure --max-time 10 \
+	-X PUT -b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fleet-ho.json \
+	-H 'Content-Type: application/json' \
+	-d '{"lat":53.0793,"lng":8.8017,"label":"DPolG Bremen Lagezentrum"}' \
+	https://localhost/api/fleet/head-office)
+if [[ "$fleet_ho_put" == "200" ]]; then
+	ok "PUT /api/fleet/head-office 200 — Geschäftsstelle gesetzt (lat=53.0793, lng=8.8017)"
+else
+	fail "PUT /api/fleet/head-office Status $fleet_ho_put (body: $(cat /tmp/dev-smoke-fleet-ho.json))"
+	exit 1
+fi
+
+fleet_ho_get=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fleet-ho-get.json \
+	https://localhost/api/fleet/head-office)
+if [[ "$fleet_ho_get" == "200" ]]; then
+	ho_label=$(jq -r .label /tmp/dev-smoke-fleet-ho-get.json)
+	[[ "$ho_label" == "DPolG Bremen Lagezentrum" ]] || { fail "Fleet: HeadOffice-Label '$ho_label' (erwartet 'DPolG Bremen Lagezentrum')"; exit 1; }
+	ok "GET /api/fleet/head-office 200 — Label-Round-Trip"
+else
+	fail "GET /api/fleet/head-office Status $fleet_ho_get"
+	exit 1
+fi
+
+# 9. Berechtigungs-Verweigerungen: ohne Auth 401, HeadOffice mit lat=91 → 422.
+fleet_unauth=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /dev/null \
+	"https://localhost/api/fleet/vehicles?tenant_id=$CATALOG_TENANT_ID")
+if [[ "$fleet_unauth" == "401" ]]; then
+	ok "GET /api/fleet/vehicles ohne Auth 401 — Session-Pflicht durchgesetzt"
+else
+	fail "GET /api/fleet/vehicles ohne Auth Status $fleet_unauth (erwartet 401)"
+	exit 1
+fi
+
+fleet_lat_oor=$(curl --silent --insecure --max-time 10 \
+	-X PUT -b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /dev/null \
+	-H 'Content-Type: application/json' \
+	-d '{"lat":91.0,"lng":0.0}' \
+	https://localhost/api/fleet/head-office)
+if [[ "$fleet_lat_oor" == "422" ]]; then
+	ok "PUT /api/fleet/head-office mit lat=91 422 — Pydantic-Range-Check greift"
+else
+	fail "PUT /api/fleet/head-office mit lat=91 Status $fleet_lat_oor (erwartet 422)"
+	exit 1
+fi
+
+# 10. PA-Read mit ?tenant_id= über alle Vehicles des Catalog-Tenants.
+fleet_pa_list=$(curl --silent --insecure --max-time 10 \
+	-b "$TENANTS_COOKIE_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-fleet-pa-list.json \
+	"https://localhost/api/fleet/vehicles?tenant_id=$CATALOG_TENANT_ID")
+if [[ "$fleet_pa_list" == "200" ]]; then
+	pa_count=$(jq 'length' /tmp/dev-smoke-fleet-pa-list.json)
+	[[ "$pa_count" -ge 2 ]] || { fail "Fleet: PA-Read-Count=$pa_count (erwartet ≥ 2)"; exit 1; }
+	ok "GET /api/fleet/vehicles?tenant_id=… als PA 200 — $pa_count Vehicles sichtbar"
+else
+	fail "GET /api/fleet/vehicles?tenant_id=… als PA Status $fleet_pa_list"
+	exit 1
+fi
+
 step "Frontend-Disponent — statischer Build + Cookie-Round-Trip (Schritt 2.5)"
 
 # 1. Statischer Build der frontend-disponent-App via pnpm. Build-Fehler fallen
