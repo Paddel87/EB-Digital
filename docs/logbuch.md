@@ -26,6 +26,23 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [SESSIONSTART] Neue Session — Vorbereitung Schritt 4.3 `backend/operations`
+
+- **Sync-Schritt 0:** `git fetch origin main` + `git log HEAD..origin/main --oneline` → kein Output; lokales `main` ist bereits auf Stand (Merge-Commit `33df0f4` für 4.2-PR [#35](https://github.com/Paddel87/EB-Digital/pull/35) ist gemeinsamer HEAD). `git status` clean. Branch noch nicht abgezweigt — passiert nach Detail-Plan-Freigabe.
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2) durchgeführt:**
+  - `project-context.md` vollständig (Abschnitte 1–12 inkl. Stack/Versions-Stempel, Constraints — vor allem §6 Datenschutz „30-Tage-Anonymisierung individueller Bestell- und Standortdaten" + Sicherheit „Geo-Plausibilität mit Disponenten-Moderation", Code-Standards §7 mit Modul-Coverage-Pflicht `backend/operations` ≥ 90 % Lines, §10 Repo-Regeln, §11 Triage-Stand 2026-05-07/2026-05-10/2026-05-17 inkl. Glossar).
+  - `logbuch.md` letzter `[SESSIONENDE]`-Block 2026-05-28 (4.2 ERLEDIGT) plus die umliegenden `[REIFEGRAD-WECHSEL]`-/`[SCHRITT-ABSCHLUSS]`-/`[SCHRITT-START]`-/`[BEOBACHTUNG]`-/`[SESSIONSTART]`-Einträge desselben Tages — keine späteren Einträge.
+  - `fahrplan.md` „Aktueller Stand" + Phasen-Übersicht-Tabelle + Phase 4 (Schritte 4.1 ERLEDIGT mit Voll-Verifikations-Block, 4.2 ERLEDIGT mit Voll-Verifikations-Block, 4.3 als OFFEN-Stub, 4.4–4.6 als OFFEN-Stub).
+  - `architecture.md` §1 (Überblick mit Modular-Monolith-Pattern), §2 (Modul-Karte mit Diagramm und erlaubten Beziehungen), §3 für `backend/operations` (`[VORLÄUFIG]` mit eingebetteten `[VORLÄUFIG]`/`[OFFEN]`-Bereichen) + `backend/fleet` (jetzt `[BELASTBAR]`); §4 für S3, S4, S5, S8, S9, S10 (alle relevant für 4.3); §5 Flow F2 (Hard-Path) + F3 (Audit-Log); §7 Datenmodell (ER-Diagramm + Fleet-Spezifika); §9 Reifegrad-Übersicht (alle 4.2-Zeilen `[BELASTBAR]` Stand 2026-05-28).
+  - `decisions.md` Teil A (ADR-001 bis ADR-019, Reaktiv-Quote 1/10 = 10 % über ADR-010 bis ADR-019); für 4.3 zusätzlich vertieft: ADR-006 (Aggregations-Schema), ADR-008 (Multi-Disponent + Audit-Log), ADR-009 (Verbund-Invarianten I1–I5), ADR-017 (Geo-Plausibilität), ADR-018 (Bündelung), ADR-019 (Phase-4-Sonderregel).
+  - `blockers.md` „Aktive Blocker": **0** (Stand 2026-05-10; Blocker #001 als gelöste Referenz).
+- **Aufgenommener Stand:**
+  - **Phase 4** (UMSETZUNG) läuft seit 2026-05-28. **Schritte 4.1 + 4.2 ERLEDIGT** am 2026-05-28. **Nächster Schritt 4.3:** `backend/operations` — Operations + Orders + Audit-Log + Bündelung + Plausibilität. Detail-Plan ist Stub im Fahrplan; ADR-019/Regel-019 (Phase-4-Sonderregel) gilt.
+  - **Konsumierte `[BELASTBAR]`-Bestandteile für 4.3:** Plumbing (1.4), `backend/auth` (2.2), `backend/auth_anonymous` (2.3), `backend/tenants` + S10 (2.4), `backend/catalog` (4.1), `backend/fleet` (4.2), Regel-013/014, `get_db_session` (2.5b/ADR-015).
+  - **Geplante Reifegrad-Wirkung 4.3:** `backend/operations` `[VORLÄUFIG]` → `[BELASTBAR]`. S3 (Event Bus → Realtime) bleibt `[VORLÄUFIG]` bis 4.4 (Realtime-Konsument). S4 (Vehicle Assignment) und I3 (Fahrzeug-Zuweisung über Einsatz-Kontext) → `[BELASTBAR]`. S5 (Retention Aggregat-Trigger) bleibt `[VORLÄUFIG]` bis Phase 6 (Retention). Spike-I-Bereich + Spike-J-Bereich in `backend/operations` von `[VORLÄUFIG]` (durch ADR-017/018 spezifiziert) → `[BELASTBAR]` (produktiv implementiert). Eingebetteter `[OFFEN]`-Bereich Spike K (Hilfe-Knopf-Semantik) bleibt `[OFFEN]` — Hilfe-Knopf wird in 4.3 **nicht** umgesetzt, dafür ist Spike K (Phase 5) zuständig. Spike-I-Bereich in `backend/geo` (`PlausibilityChecker`-Komponente) → `[BELASTBAR]`.
+  - **Reaktiv-Quote:** 1/10 = 10 % (Fenster ADR-010 bis ADR-019). Unverändert solange dieser Schritt keinen `[REAKTIV]`-ADR erzeugt.
+- **Nächster Arbeitsschritt in dieser Session:** Detail-Plan-Vorlage für 4.3 analog zu 4.1/4.2: Designfragen mit Optionen vorlegen, Patrick-Freigabe als Buchstaben-Kombi einholen, **erst danach** Code-Eingriff und Branch-Anlage. Sub-Tasks werden über TaskCreate erst nach Freigabe angelegt.
+
 ### 2026-05-28 – [SESSIONENDE] Schritt 4.2 ERLEDIGT — `backend/fleet` produktiv
 
 - **Session-Dauer-Summe** seit Sessionstart 2026-05-28 (zweite Session des Tages, nach 4.1-Abschluss): ca. 4 h netto. Patrick-Freigabe `0A/1A/2A/3B/4B/5B/6A/7A/8A` für 9 Designfragen analog 4.1-Disziplin; dann vollständiger Schritt-4.2-Abschluss in derselben Session.
