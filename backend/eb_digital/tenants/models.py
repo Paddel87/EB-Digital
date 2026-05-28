@@ -6,6 +6,10 @@ ADR-009 Invariante I1 — kein direkter ``operation.tenant_id``-FK).
 
 Use-Case-Logik (Antrag, Freischaltung, Status-Übergänge, Teilnahme-Filter
 für Invariante I2) folgt in Schritt 2.4.
+
+Phase 4 Schritt 4.3a: additive Spalte ``plausibility_default_threshold_m``
+(ADR-017, dreistufige Konfigurations-Hierarchie — Tenant-Default zwischen
+Plattform-Konstante und Operation-Override).
 """
 
 from __future__ import annotations
@@ -19,6 +23,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    Integer,
     String,
     text,
 )
@@ -64,6 +69,13 @@ class Tenant(Base, TimestampMixin):
             "status IN ('applied', 'active', 'deactivated')",
             name="status_allowed",
         ),
+        # ADR-017: Tenant-Default für die Plausibilitäts-Schwelle. Plattform-
+        # Konstanten (Min/Max) garantieren die DB-seitige Bandbreite; Operation-
+        # Overrides werden auf demselben Range geprüft (siehe Operation-Modell).
+        CheckConstraint(
+            "plausibility_default_threshold_m BETWEEN 50 AND 50000",
+            name="plausibility_default_threshold_m_range",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -91,6 +103,17 @@ class Tenant(Base, TimestampMixin):
     deactivated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
+    )
+    # ADR-017 dreistufige Konfigurations-Hierarchie:
+    #   Plattform-Konstante (Min/Max-Range, Accuracy-Cutoff)
+    #   → Tenant-Default (hier)
+    #   → optionaler Operation-Override (``operation.plausibility_threshold_m``).
+    # Default 5 000 m (Vision-/project-context-Initialwert).
+    plausibility_default_threshold_m: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=5000,
+        server_default=text("5000"),
     )
 
 
