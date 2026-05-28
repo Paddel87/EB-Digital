@@ -16,6 +16,7 @@ from eb_digital.catalog import api as catalog_api
 from eb_digital.db import create_db_engine, create_session_factory
 from eb_digital.fleet import api as fleet_api
 from eb_digital.logging import configure_logging, get_logger
+from eb_digital.operations import api as operations_api
 from eb_digital.settings import get_settings
 from eb_digital.tenants import api as tenants_api
 
@@ -79,6 +80,8 @@ def create_app() -> FastAPI:
     api_router.include_router(catalog_api.router)
     api_router.include_router(catalog_api.anon_router)
     api_router.include_router(fleet_api.router)
+    api_router.include_router(operations_api.router)
+    api_router.include_router(operations_api.anon_order_router)
 
     app.include_router(api_router)
 

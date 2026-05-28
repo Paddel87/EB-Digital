@@ -36,6 +36,7 @@ dependencies = [
     "argon2-cffi~=25.1.0",          # Verifiziert: 2026-05-07; Re-Bestätigung 2026-05-09 (Schritt 1.6)
     "itsdangerous~=2.2.0",          # Verifiziert: 2026-05-09 (Schritt 1.6); BSD-3-Clause; einzige stabile 2.x-Linie seit 2024-04-16, kein 2.3 in Sicht
     "redis~=7.4.0",                 # Verifiziert: 2026-05-10 (Schritt 2.2); MIT; async-Client gegen Valkey 8.1.7 (wire-protokoll-kompatibel). ADR-013 Rate-Limit-Counter; ab Phase 4 zusätzlich WebSocket-Pub/Sub. Sub-Wahl gegenüber valkey-py 6.1.1 in Schritt 2.2 dokumentiert.
+    "shapely~=2.1.2",               # Verifiziert: 2026-05-28 (Schritt 4.3a); BSD-3-Clause. ADR-017 Plausibility-Algorithmus. Sub-Dep GEOS LGPL-2.1 ausnahmsweise akzeptiert via ADR-020 (Geltungsbereich Plausibility-/Geo-Pfad). NumPy ≥1.21 BSD-3 als transitive Pflicht-Sub-Dep.
 ]
 
 [dependency-groups]
@@ -96,6 +97,15 @@ python_version = "3.13"
 files = ["backend/eb_digital"]
 plugins = []
 # Externe Bibliotheken ohne Type-Stubs werden in 1.3+ ergänzt.
+
+[[tool.mypy.overrides]]
+# Shapely 2.x publiziert noch keine py.typed-Marker und stellt keine
+# Stubs bereit (Stand 2026-05-28). types-shapely ist als externes Stub-
+# Paket verfügbar, aber für unsere Aufruf-Oberfläche (Point/Polygon +
+# distance) reicht das untyped-Modul. Wenn die Berührung wächst, ist die
+# Umstellung auf types-shapely in einer Stabilisierungs-Phase fällig.
+module = ["shapely.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
