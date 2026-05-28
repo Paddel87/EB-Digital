@@ -26,6 +26,20 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [PROBLEM-GELÖST] Migration `b3a9c7e1f205` Round-Trip gegen Postgres verifiziert
+
+- **Befund:** Nach dem Sessionende-Block kam von Patrick die Meldung „docker ist nun verfügbar". Auf Patrick-Freigabe „Migration-Sanity-Check jetzt" wurde der Compose-Stack hochgefahren (`docker compose --profile dev up -d db`, `postgres:17.9@sha256:347bc4e6…`-Pin, healthy nach <5 s).
+- **Verifikations-Sequenz** (alle gegen `eb_digital`-User/DB des `db`-Service):
+  1. `alembic upgrade head` — wendet alle Migrationen inklusive der neuen `b3a9c7e1f205 add catalog tables` an, läuft fehlerfrei.
+  2. `alembic check` — **„No new upgrade operations detected"**. Bestätigt: die handgeschriebene Migration ist deckungsgleich mit dem ORM-Modell (`backend/eb_digital/catalog/models.py`); kein Drift, kein Diff.
+  3. `alembic downgrade -1` — dropt die drei Catalog-Tabellen + zugehörige Indizes/Constraints zurück auf `a7c3b2d8e9f1` (Phase-2-Stand).
+  4. `alembic upgrade head` — Re-Apply der Catalog-Migration; identisch zum ersten Upgrade.
+  5. `alembic check` (post-roundtrip) — erneut „No new upgrade operations detected".
+  6. `\d catalog_item_tenant_extension` im psql: PK + zwei Indizes (`ix_*_tenant_id` und Partial-UNIQUE `ix_*_tenant_id_base_item_id_unique` mit `WHERE base_item_id IS NOT NULL`) + CHECK-Constraint `ck_*_mode_constraint` mit der zweiseitigen Bedingung + drei FK-Constraints (`base_item_id` CASCADE, `category_id` RESTRICT, `tenant_id` CASCADE) exakt wie in `models.py` spezifiziert.
+- **Damit aufgelöst:** Die Reibung „Migration manuell ohne `--autogenerate` geschrieben, Round-Trip-Test verschoben auf dev-smoke.sh" aus dem Sessionende-Block. Migration `b3a9c7e1f205` ist als ORM-konsistent verifiziert; Round-Trip gegen Postgres 17.9 ist sauber. Schritt-4.1-G `dev-smoke.sh`-Catalog-Stufe wird damit ausschließlich auf den End-to-End-API-Pfad fokussieren (PlatformAdmin Base + Category → Disponent Tenant-Extension → Carer Read effektiv → Anon Read effektiv) — die Migration selbst ist schon vor 4.1-G belastbar.
+- **Compose-Stack** wurde nach Verifikation sauber heruntergefahren (`docker compose --profile dev down`); Container und Network entfernt, Volume bleibt (Default, Postgres-Daten persistieren).
+- **Klassifikation:** Verifikations-Befund ohne ADR-Pflicht (keine Architekturentscheidung). Schritt 4.1 bleibt **IN ARBEIT** (API-Tests + dev-smoke.sh-Erweiterung + Coverage + Doku-Updates stehen weiterhin aus).
+
 ### 2026-05-28 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 6 h netto (Sessionstart 2026-05-28 nach Pflichtlektüre + Vertiefung; Patrick-Vorgaben „start" → „vertiefung" → Detail-Plan-Freigabe `0B/1D/2B/3A/4A/5A/6A/7A` → „direkt weiter" → Pause-Wahl „Doku-Commit jetzt, Code separat" + „Feature-Branch" + „Pause nach Modulskeleton, nächste Session für API-Tests + Smoke + Doku-Finalisierung").
