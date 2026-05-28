@@ -26,6 +26,30 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [SCHRITT-START] Schritt 4.2 `backend/fleet` IN ARBEIT
+
+- **Eingangs-Disziplin (ADR-019 / Regel-019, Phase-4-Sonderregel):** Modul startet `[VORLÄUFIG]`, wird durch den Schritt zu `[BELASTBAR]` befördert. Konsumierte `[BELASTBAR]`-Bestandteile geprüft: Plumbing (1.4), `backend/auth` (2.2), `backend/tenants` + S10 (2.4), `backend/catalog` (4.1), Regel-013/014, `get_db_session` (2.5b). Alle vorhanden.
+- **Detail-Plan-Disziplin (analog 4.1):** 9 Designfragen (0–8) wurden zu Sessionbeginn vorgelegt (siehe [BEOBACHTUNG]-Eintrag unten); Patrick freigegeben als `0A/1A/2A/3B/4B/5B/6A/7A/8A`.
+- **Geplante Reifegrad-Wirkung:** `backend/fleet` → `[BELASTBAR]`; Schnittstelle S8d (neu, `/api/fleet/*`) → `[BELASTBAR]`; fünf neue Datenmodelle → `[BELASTBAR]`. S4 + I3 bleiben `[VORLÄUFIG]` bis 4.3.
+- **Branch:** `feat/4.2-backend-fleet` (von `main` nach 4.1-Merge `7f8b330` abgezweigt).
+- **Sub-Tasks** über TaskCreate angelegt (#1–#11): Doku-Vorlauf, Modulskeleton, Migration, Repository, Use-Cases, API, Tests, Migration-Round-Trip, dev-smoke.sh-Erweiterung, Doku-Synchronisation, Schritt-Abschluss.
+
+### 2026-05-28 – [BEOBACHTUNG] Detail-Plan-Freigabe Schritt 4.2 `backend/fleet` (Buchstaben-Kombi `0A/1A/2A/3B/4B/5B/6A/7A/8A`)
+
+- **Vorgehen analog Schritt 4.1:** 9 Designfragen mit Optionen wurden vorgelegt. Patrick-Freigabe ohne Abweichung von den Empfehlungen.
+- **Entscheidungen:**
+  - **0A** Scope: 4.2 baut Stammdaten + Beladung + Modus-Feld + HeadOffice + API. **S4 `fleet.assign_vehicle` und automatische Verbrauchsbuchung sind 4.3-Aufgabe** (brauchen `order`/`order_assignment`-Tabellen).
+  - **1A** Fahrzeug-Typ über `vehicle.type` text NOT NULL mit CHECK `IN ('regular','supply_transporter')` — Single Table Inheritance.
+  - **2A** Versorgungs-Transporter-Modus als `vehicle.mode` text NULL mit CHECK `((type='supply_transporter' AND mode IN ('off','mobile_supply','large_order')) OR (type='regular' AND mode IS NULL))`. Default `'off'` für neue Supply-Transporter.
+  - **3B** `UpdateSupplyTransporterMode`-Use-Case in 4.2 **ohne** Audit-Log. Audit-Pflicht aus ADR-008 / Regel-011 wird in 4.3 erfüllt, wenn `backend/operations.SwitchSupplyTransporterMode` den fleet-Use-Case umhüllt und das Audit-Log schreibt. Keine TODOs im Code; saubere Schichten-Trennung.
+  - **4B** Relationales Beladungs-Modell: `vehicle_loadout(id, vehicle_id UNIQUE, recorded_at, recorded_by_dispatcher_id)` + `vehicle_loadout_item(loadout_id, base_item_id NULL, tenant_extension_id NULL, quantity)` + separate Append-Only-Tabelle `vehicle_loadout_history(items JSONB)` als Frozen Snapshot bei jedem Update.
+  - **5B** Beladungs-Item-Refs: entweder `base_item_id` ODER `tenant_extension_id` (CHECK exklusiv eine NOT NULL). Tenant-Extensions müssen zum Vehicle-Tenant gehören (Cross-Tenant verboten).
+  - **6A** HeadOffice als eigene Tabelle `tenant_head_office(tenant_id PK, lat, lng, label)` 1:1 mit `tenant`. Modul-sauber: `backend/fleet`-Migration ändert keine `backend/tenants`-Tabelle.
+  - **7A** Rollen-Matrix: Disponent R/W eigener Tenant, Plattform-Admin R-only über alle Tenants via `?tenant_id=`-Query, Carer R-only eigener Tenant, Anon 403.
+  - **8A** Standard-Coverage (80 % Lines / 70 % Branches) — konsistent zu 4.1.
+- **Freigabepflichtig** (CLAUDE.md §4): ja, wegen fünf neuer Tabellen. Patrick-Freigabe als ENTSCHEIDUNG-Block-Antwort gilt; ADR-Pflicht entfällt analog zu 4.1 (Detail-Plan-Freigabe im Fahrplan dokumentiert; kein eigener ADR — Designfragen sind keine Architekturentscheidungen, die wiederkehrendes Muster begründen).
+- **Out-of-Scope-Vermerke:** `vehicle_realtime_position` gehört zu `backend/realtime` (4.4); Fahrzeugbezeichnungs-Schema bleibt Spike M (Phase 5, vor Roll-out).
+
 ### 2026-05-28 – [SESSIONSTART] Neue Session — Vorbereitung Schritt 4.2 `backend/fleet`
 
 - **Pflicht-Mindest-Lektüre (CLAUDE.md §2) durchgeführt:** `project-context.md` (vollständig), `logbuch.md` (letzter SESSIONENDE-Block 2026-05-28 plus alle Einträge danach — keine späteren Einträge), `fahrplan.md` (Aktueller Stand + Phase 4 inkl. Schritte 4.1 ERLEDIGT-Block und 4.2-Stub), `architecture.md` Abschnitte 1+2+9, `decisions.md` Teil A (ADR-Übersicht inkl. ADR-019 + Reaktiv-Quote 1/10), `blockers.md` (Aktive Blocker: 0).
