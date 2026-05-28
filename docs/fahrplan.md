@@ -8,12 +8,12 @@
 ## Aktueller Stand
 
 - **Stand vom:** 2026-05-28
-- **Laufende Phase:** **Phase 3 abgeschlossen** (3.1 ERLEDIGT 2026-05-18 durch ADR-017; 3.2 ERLEDIGT 2026-05-28 durch ADR-018). Nächste laufende Phase: **Phase 4 – Operations Core + Realtime + Einsatzkraft-PWA (UMSETZUNG).** Zwischen 2.7 und 3.1: Strategische Klarstellung **ADR-016 (Verzicht auf serverseitiges Caching)** + Spike-G-Neuzuschnitt (2026-05-17, außerhalb der Schritt-Sequenz).
-- **Phasentyp:** **Phase 3** (ERKUNDUNG) **abgeschlossen.** **Phase 4** (UMSETZUNG) ist als nächste laufende Phase nominiert.
+- **Laufende Phase:** **Phase 4 (UMSETZUNG)** läuft seit 2026-05-28. Schritt 4.1 (`backend/catalog`) **IN ARBEIT** (Detail-Plan freigegeben 2026-05-28 als 0B/1D/2B/3A/4A/5A/6A/7A; ADR-019 fixiert Phase-4-Sonderregel). Phase 3 (3.1 ERLEDIGT 2026-05-18 durch ADR-017; 3.2 ERLEDIGT 2026-05-28 durch ADR-018) **abgeschlossen**. Zwischen 2.7 und 3.1: Strategische Klarstellung **ADR-016 (Verzicht auf serverseitiges Caching)** + Spike-G-Neuzuschnitt (2026-05-17, außerhalb der Schritt-Sequenz). Methodik-Setzung **ADR-019 (Phase-4-Sonderregel)** am 2026-05-28 vor Schritt 4.1.
+- **Phasentyp:** **Phase 4** (UMSETZUNG) laufend. **Phase 3** (ERKUNDUNG) abgeschlossen.
 - **Erledigte Schritte Phase 2 (alle ERLEDIGT):** **2.7 [ERLEDIGT]** 2026-05-16 (Phase-2-Abschluss: Coverage-Frischlauf verifiziert die Modul-Schwellen aller belastbaren Module — Backend 95.84 % gesamt, `backend/auth` 96 %, `backend/auth_anonymous` 100 %, `backend/tenants` 95–100 %; Frontend-Disponent 96.61 % Lines / 93.33 % Branches, Frontend-Einsatzkraft 98.38 % Lines / 95.55 % Branches; GitHub-Issue `Paddel87/EB-Digital#26` für externe Security-Review Phase 7.2 mit Briefing-Form angelegt; keine Code-Änderung, keine ADR-Pflicht; Detail-Plan A/A/A/A/A freigegeben). **2.6 [ERLEDIGT]** 2026-05-16 (`frontend-einsatzkraft` AccessCode-Eingabe-UI produktiv gegen S2a; 47 Vitest-Tests grün). **2.5 [ERLEDIGT]** 2026-05-15 (`frontend-disponent` Login + Dashboard + Reset-Password-UI produktiv; 27 Vitest-Tests grün). **2.5b [ERLEDIGT]** 2026-05-16 (Hot-Stabilisierung `get_db_session()` als yield-Dependency mit Rollback, ADR-015, Regel-018). **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv mit S10). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
-- **Aktiver Schritt:** keiner.
+- **Aktiver Schritt:** **4.1** `backend/catalog` (IN ARBEIT seit 2026-05-28; Detail-Plan freigegeben 0B/1D/2B/3A/4A/5A/6A/7A; ADR-019 fixiert Eingangs-Sonderregel).
 - **Erledigte Schritte Phase 3 (alle ERLEDIGT):** **3.2 [ERLEDIGT]** 2026-05-28 — Spike J durch ADR-018 (manuell durch Disponent, eigene `order_bundle`-Entity + nullable FK-Spalten `order.bundle_id` und `order_assignment.bundle_id`, Versorgungs-Transporter `mode='large_order'` Pflicht, keine räumliche Backend-Validierung, Min-2-Orders-Constraint, `bundling_count` Aktion-Semantik plus additive ADR-006-Erweiterung `bundled_order_count`; Detail-Plan A/A/A/A/A freigegeben; 11-Eintrag-Test-Datensatz inline im ADR). **3.1 [ERLEDIGT]** 2026-05-18 — Spike I durch ADR-017 (Hülle-Distanz + dynamische GPS-Toleranz `2·accuracy_m`, 500-m-Moderationsfilter, Text-Standort als Moderation, dreistufige Konfigurations-Hierarchie). Reifegrad-Wirkung: zwei `[OFFEN]`-Bereiche in `backend/operations` und `backend/geo` (`PlausibilityChecker`) auf `[VORLÄUFIG]` befördert (3.1) plus `[OFFEN]`-Bereich „Bündelungs-Trigger" in `backend/operations` auf `[VORLÄUFIG]` (3.2). Reaktiv-Quote 1/10 = 10 % (jetzt ADR-009 bis ADR-018).
-- **Nächster Schritt:** **4.1** `backend/catalog` (UMSETZUNG-Phase 4) — Basis-Artikelkatalog plus mandantenspezifische Erweiterung. Start mit Detail-Plan-Vorlage analog zur Phase-2-Disziplin.
+- **Nächster Schritt:** Code-Eingriff für **4.1** `backend/catalog` (Migration → SQLAlchemy-Modelle → Use-Cases → API-Endpunkte → Tests → dev-smoke.sh-Erweiterung). Detail-Plan ist freigegeben (siehe Schritt-Voll-Format unten).
 - **Phase-3-Bilanz (Reifegrad-Beförderungen):** PlausibilityChecker in `backend/geo` und `backend/operations` `[OFFEN]` → `[VORLÄUFIG]` (3.1, ADR-017). Bündelungs-Trigger-Bereich in `backend/operations` `[OFFEN]` → `[VORLÄUFIG]` (3.2, ADR-018). Schnittstelle S4 offene Frage „Bündel-Mapping" gelöst durch ADR-018. Verbleibender `[OFFEN]`-Bereich in `backend/operations` ist nur Spike K (Hilfe-Knopf-Semantik, Phase 5), blockiert den Hilfe-Knopf-Pfad in Phase 6 — nicht Phase 4. Reaktiv-Quote 1/10 = 10 % (beide ADRs `[ERKENNTNIS]`, kein `[REAKTIV]`). Beförderungs-Pflicht (`project-context.md` §6 Methodik-Schwellenwerte) erfüllt: zwei `[OFFEN]`-Bereiche der berührten Module auf `[VORLÄUFIG]` befördert.
 - **Phase-2-Bilanz (Reifegrad-Beförderungen):** `backend/auth` → `[BELASTBAR]` (2.2), `backend/auth_anonymous` → `[BELASTBAR]` (2.3), `backend/tenants` → `[BELASTBAR]` (2.4), Request-Scoped DB-Session-Dependency → `[BELASTBAR]` (2.5b, cross-cutting). Schnittstellen: S2a, S8a, S8b → `[BELASTBAR]`; S10 → `[BELASTBAR]`. Datenmodelle: `anonymous_session` + `operation.url_token`-Widening → `[BELASTBAR]`. Invarianten I1, I2 → `[BELASTBAR]`. Frontends `frontend-disponent` und `frontend-einsatzkraft` funktional validiert (Reifegrad bleibt `[VORLÄUFIG]` bis Phase-6-Last-Test). Reaktiv-Quote 1 / 10 = 10 % (ADR-015 Hot-Stabilisierung 2.5b — unter 20 %-Schwellenwert Klasse G).
 - **Offene STOPP-Situationen:** keine.
@@ -95,7 +95,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 | 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10)                                                                                                                  |
 | 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | ERLEDIGT (2.1+2.2 ERLEDIGT 2026-05-10, 2.3 ERLEDIGT 2026-05-11, 2.4 ERLEDIGT 2026-05-12, 2.5 ERLEDIGT 2026-05-15, 2.5b + 2.6 + 2.7 ERLEDIGT 2026-05-16) |
 | 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | ERLEDIGT (3.1 ERLEDIGT 2026-05-18 / ADR-017, 3.2 ERLEDIGT 2026-05-28 / ADR-018)                                                                         |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | NÄCHSTE (Eingangsstart Phase-3-Abschluss)                                                                                                               |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | LÄUFT (4.1 IN ARBEIT seit 2026-05-28; Detail-Plan freigegeben; ADR-019 Sonderregel)                                                                     |
 | 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                                                                                                                                   |
 | 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                                                                                                                                   |
 | 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                                                                                                                                   |
@@ -1000,14 +1000,99 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 **Reifegrad-Erwartung am Phasenende:** `backend/operations`, `backend/fleet`, `backend/catalog`, `backend/realtime`, `frontend-einsatzkraft` zu `[BELASTBAR]`. Schnittstellen S3 (Operations Event Bus), S4 (Vehicle Assignment), S9 (WebSocket-Topologie) zu `[BELASTBAR]`. Invariante I3 zu `[BELASTBAR]`.
 
-**Schritte (gröber):**
+**Hinweis Sonderregel:** Die UMSETZUNG-Eingangs-Disziplin (Schritt-Format: „alle berührten Architektur-Bestandteile vor Schrittbeginn `[BELASTBAR]`") gilt für Phase 4 **abgemildert** gemäß **ADR-019 / Regel-019**. Die Module `backend/catalog`, `backend/fleet`, `backend/operations`, `backend/realtime`, `frontend-einsatzkraft` sind zum Phasenstart `[VORLÄUFIG]` und werden **durch** die Phase-4-Schritte erst zu `[BELASTBAR]` befördert. Voraussetzung: (a) Modul-Schnitt strategisch fixiert (ADR-002/003/009), (b) konsumierte Bestandteile (Plumbing, `backend/auth`, `backend/auth_anonymous`, `backend/tenants`, S10, Regel-013/014, `get_db_session`) tatsächlich `[BELASTBAR]`, (c) Detail-Plan vor Code-Eingriff jeden berührten Bestandteil benennt.
 
-- **4.1** `backend/catalog`: Basis-Artikelkatalog plus mandantenspezifische Erweiterung.
-- **4.2** `backend/fleet`: Fahrzeuge, Beladung, Versorgungs-Transporter-Modi.
-- **4.3** `backend/operations`: Operations + Orders + Vehicle-Assignment (über Operation-Kontext, I3) + Stornierung + Bündelung + Audit-Log (`operation_audit_log`).
-- **4.4** `backend/realtime`: WebSocket-Hub, Pub/Sub via Valkey, Live-Standorte, Auftragsstatus, Disponent↔Betreuer-Chat-Skelett, Hilfe-Knopf-Routing.
-- **4.5** `frontend-einsatzkraft`: anonyme Bestell-PWA (F2 Hard-Path), AccessCode-Eingabe, Bestell-Form, Status-Anzeige.
-- **4.6** Tests + Coverage (Operations ≥ 90 %).
+**Schritte:**
+
+#### 4.1: backend/catalog — Basis-Artikelkatalog + mandantenspezifische Erweiterung
+
+- **Status:** IN ARBEIT (Detail-Plan freigegeben 2026-05-28 als 0B/1D/2B/3A/4A/5A/6A/7A; ADR-019 fixiert Eingangs-Sonderregel)
+- **Phasentyp-Kontext:** UMSETZUNG
+- **Abhängigkeiten:** Phase 2 ERLEDIGT (S10, Regel-013/014, `get_db_session`); Plumbing aus Schritt 1.4; ADR-019 angelegt
+- **Freigabepflichtig:** ja — Datenmodelländerungen (drei neue Tabellen `catalog_category`, `catalog_item_base`, `catalog_item_tenant_extension`); Detail-Plan vom 2026-05-28 freigegeben (0B/1D/2B/3A/4A/5A/6A/7A); ADR-019 fixiert die Methodik-Voraussetzung
+- **Eingangskriterien:**
+  - Konsumierte `[BELASTBAR]`-Bestandteile: `backend/auth` (2.2), `backend/auth_anonymous` (2.3), `backend/tenants` + S10 (2.4), Regel-013/014, `get_db_session` (2.5b), Plumbing (1.4)
+  - ADR-019 / Regel-019 (Phase-4-Sonderregel) gilt — `backend/catalog` darf trotz `[VORLÄUFIG]`-Reifegrad starten
+- **Zu tun:**
+  - **Alembic-Migration** mit drei Tabellen:
+    - `catalog_category(id UUID PK, name string UNIQUE, created_at, updated_at)` — Kategorien-Tabelle aus Frage 1-D
+    - `catalog_item_base(id UUID PK, name string, unit string, default_unit_label string, description text NULL, category_id FK→catalog_category NOT NULL, is_active bool default TRUE, created_at, updated_at)` — Felder aus Frage 1-D
+    - `catalog_item_tenant_extension(id UUID PK, tenant_id FK→tenant NOT NULL, base_item_id FK→catalog_item_base NULL, name string NULL, unit string NULL, default_unit_label string NULL, override_name string NULL, override_unit_label string NULL, description text NULL, category_id FK→catalog_category NULL, is_disabled bool default FALSE, created_at, updated_at)` — Frage 2-B
+      - **CHECK-Constraint:** `(base_item_id IS NOT NULL) OR (name IS NOT NULL AND unit IS NOT NULL)` — entweder Override eines Base-Items oder eigenständiges Tenant-Item
+      - **Partial-UNIQUE-Index:** `UNIQUE(tenant_id, base_item_id) WHERE base_item_id IS NOT NULL` — höchstens ein Override pro Base-Item pro Tenant
+  - **SQLAlchemy-Modelle:** `backend/eb_digital/catalog/models.py` mit `CatalogCategory`, `CatalogItemBase`, `CatalogItemTenantExtension`, Pydantic-Schemas in `schemas.py`
+  - **Repository-Layer:** `repository.py` mit `CatalogCategoryRepository`, `CatalogItemBaseRepository`, `CatalogItemTenantExtensionRepository`; Resolver-Query in `services.py::resolve_catalog_for_operation(operation_id)` (Frage 3-A: SQL-LEFT-JOIN über S10/Regel-014, Filter `is_active=TRUE` und `(extension IS NULL OR is_disabled=FALSE)`, Override-Felder priorisiert)
+  - **Use-Cases:** `CreateCategory` (Plattform-Admin), `CreateBaseItem` (Plattform-Admin), `DeactivateBaseItem` (Plattform-Admin Soft-Delete, Frage 5-A), `CreateTenantExtension` (Disponent eigener Tenant, Frage 6-A), `UpdateTenantExtension` (Disponent), `DisableTenantExtension` (Disponent Soft-Delete), `ResolveCatalogForOperation` (intern, Frage 3-A)
+  - **API-Endpunkte in** `backend/eb_digital/catalog/api.py`:
+    - Plattform-Admin: `POST/GET/PATCH /api/catalog/base`, `POST/GET /api/catalog/categories`
+    - Disponent (eigener Tenant über `current_user.tenant_id`): `POST/GET/PATCH /api/catalog/tenant`
+    - Carer: `GET /api/catalog` (effektiver Katalog des eigenen Tenants)
+    - Anon (Frage 4-A — Session-Pflicht, Rate-Limit IP+URL AND analog ADR-013, separater Schlüsselraum): `GET /api/anon/{operation_url}/catalog`
+  - **Tests:**
+    - Unit-Tests pro Use-Case und Repository in `backend/tests/catalog/`
+    - Integration mit echtem PostgreSQL-Fixture (Migration-Round-Trip + Resolver-Korrektheit)
+    - Coverage-Ziel: ≥ 80 % Lines / 70 % Branches (Standard, Frage 7-A)
+  - **dev-smoke.sh-Erweiterung:** neue Stufe „Catalog-Smoke" (Plattform-Admin legt Base-Item via API an → Disponent legt Tenant-Extension via API → Carer-Read `/api/catalog` zeigt effektiven Katalog → Anon-Read `/api/anon/{url}/catalog` zeigt effektiven Katalog der Operation)
+  - **Doku-Updates** beim Schrittabschluss: `architecture.md` §3 (Modul-Eintrag → `[BELASTBAR]` + Use-Case-Liste), §4 (S8 + S2 Sub-Surfaces zu `[BELASTBAR]`), §7 (drei neue Entitäten), §9 (Reifegrad-Tabelle); `fahrplan.md` (Status ERLEDIGT mit Verifikations-Block)
+- **Akzeptanzkriterien:**
+  - `alembic upgrade head` und `alembic downgrade -1` laufen ohne Datenverlust auf Phase-2-Daten
+  - Plattform-Admin kann via `POST /api/catalog/base` ein Item anlegen; Versuch durch Disponent → 403
+  - Disponent kann via `POST /api/catalog/tenant` eine Extension anlegen, **nur** für eigenen Tenant; Cross-Tenant-Versuch → 403
+  - Carer-Read-Pfad `GET /api/catalog` liefert effektiven Katalog gemäß S10-Filter (Regel-014)
+  - Anon-Pfad `GET /api/anon/{url}/catalog` liefert effektiven Katalog der Operation; ohne aktive Session → 401; bei aktivem AccessCode → 401 ohne Code
+  - **Override-Verhalten:** Tenant-Extension mit `override_name="X"` über `base_item_id` führt im effektiven Katalog dieses Tenants zu Name="X"; in anderen Tenants weiterhin Base-Name
+  - **Soft-Delete-Verhalten:** Base-Item mit `is_active=FALSE` erscheint cross-tenant nicht mehr; Tenant-Extension mit `is_disabled=TRUE` (über Base) erscheint im effektiven Katalog dieses Tenants nicht mehr
+  - Coverage `backend/catalog` ≥ 80 % Lines / 70 % Branches
+  - `dev-smoke.sh` Catalog-Stufe grün gegen Compose-Stack
+  - `mypy --strict`, `ruff check`, `ruff format --check`, `bandit`, `pre-commit run --all-files` alle grün
+- **Betroffene Module:** `backend/catalog` (zu befördern). Konsumenten in 4.1: `backend/auth` (Session-Validierung), `backend/auth_anonymous` (für `/api/anon/.../catalog`-Pfad), `backend/tenants` (S10).
+- **Reifegrad-Wirkung:**
+  - `backend/catalog`: `[VORLÄUFIG]` → `[BELASTBAR]`
+  - Schnittstelle S8-Sub-Surface `/api/catalog/*`: `[VORLÄUFIG]` → `[BELASTBAR]`
+  - Schnittstelle S2-Sub-Surface `/api/anon/{url}/catalog`: `[VORLÄUFIG]` → `[BELASTBAR]`
+  - Datenmodelle `catalog_category` + `catalog_item_base` + `catalog_item_tenant_extension`: neu, `[BELASTBAR]`
+- **Artefakte:**
+  - `backend/eb_digital/catalog/` (`__init__.py`, `models.py`, `schemas.py`, `repository.py`, `services.py`, `api.py`)
+  - `backend/migrations/versions/{hash}_add_catalog_tables.py`
+  - `backend/tests/catalog/...`
+  - `scripts/dev-smoke.sh` Erweiterung
+  - `docs/architecture.md` Updates (§3 / §4 / §7 / §9)
+  - `docs/fahrplan.md` Schritt-Status ERLEDIGT mit Verifikations-Block
+  - `docs/logbuch.md` (`[SCHRITT-START]`, `[REIFEGRAD-WECHSEL]`, `[SCHRITT-ABSCHLUSS]`)
+- **Notizen:**
+  - **Detail-Plan-Disziplin:** 7 Designfragen wurden am Sessionstart 2026-05-28 vorgelegt (siehe Logbuch-Eintrag 2026-05-28 `[BEOBACHTUNG]`); Patrick freigab als `0B/1D/2B/3A/4A/5A/6A/7A`.
+  - **ADR-019 / Regel-019** fixiert die Sonderregel — Modul darf trotz `[VORLÄUFIG]` starten, weil die Beförderung Output des Schritts ist.
+  - `catalog_category` ist neu (Frage 1-D) — Datenmodelländerung, freigabepflichtig nach CLAUDE.md §4, durch 1-D bereits freigegeben.
+  - `is_active`-Default `TRUE` und `is_disabled`-Default `FALSE`, damit neue Items per Default sichtbar sind.
+
+#### 4.2: backend/fleet — Fahrzeuge, Beladung, Versorgungs-Transporter-Modi
+
+- **Status:** OFFEN
+- **Phasentyp-Kontext:** UMSETZUNG
+- **Abhängigkeiten:** 4.1; Phase 2
+
+#### 4.3: backend/operations — Operations + Orders + Audit-Log + Bündelung + Plausibilität
+
+- **Status:** OFFEN
+- **Phasentyp-Kontext:** UMSETZUNG
+- **Abhängigkeiten:** 4.1, 4.2; ADR-006, ADR-008, ADR-009, ADR-017, ADR-018
+
+#### 4.4: backend/realtime — WebSocket-Hub + Pub/Sub via Valkey
+
+- **Status:** OFFEN
+- **Phasentyp-Kontext:** UMSETZUNG
+- **Abhängigkeiten:** 4.3
+
+#### 4.5: frontend-einsatzkraft — anonyme Bestell-PWA (F2 Hard-Path)
+
+- **Status:** OFFEN
+- **Phasentyp-Kontext:** UMSETZUNG
+- **Abhängigkeiten:** 4.1, 4.3, 4.4; 2.6 (AccessCode-UI bereits gebaut)
+
+#### 4.6: Tests + Coverage-Anker
+
+- **Status:** OFFEN
+- **Phasentyp-Kontext:** UMSETZUNG (Phase-2-Pattern: Coverage-Frischlauf für alle in Phase 4 belastbaren Module; `backend/operations` ≥ 90 %)
 
 ---
 

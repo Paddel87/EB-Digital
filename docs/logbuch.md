@@ -26,6 +26,57 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [SCHRITT-START] 4.1 `backend/catalog`
+
+- **Schritt 4.1** ist auf **IN ARBEIT** gesetzt (`fahrplan.md` Aktueller Stand + Phase-4-Block).
+- **Voraussetzungen erfüllt:**
+  - ADR-019 / Regel-019 (Phase-4-Sonderregel) angelegt — Modul darf trotz `[VORLÄUFIG]`-Reifegrad starten.
+  - Konsumierte `[BELASTBAR]`-Bestandteile vorhanden: `backend/auth` (2.2), `backend/auth_anonymous` (2.3), `backend/tenants` + S10 (2.4), Regel-013/014 (ADR-009), `get_db_session` (2.5b), Plumbing (1.4).
+  - Detail-Plan freigegeben (siehe `[BEOBACHTUNG]`-Eintrag unten).
+- **Plan-Übersicht (Detail im `fahrplan.md`-Voll-Format unter Schritt 4.1):**
+  1. Alembic-Migration mit drei Tabellen (`catalog_category`, `catalog_item_base`, `catalog_item_tenant_extension`) inkl. CHECK-Constraint und Partial-UNIQUE-Index.
+  2. SQLAlchemy-Modelle + Pydantic-Schemas.
+  3. Repository-Layer und Resolver-Query (`resolve_catalog_for_operation`).
+  4. Use-Cases (CreateCategory/CreateBaseItem/DeactivateBaseItem/CreateTenantExtension/UpdateTenantExtension/DisableTenantExtension/ResolveCatalogForOperation).
+  5. API-Endpunkte für Plattform-Admin, Disponent, Carer, Anon.
+  6. Tests (Unit + Integration mit DB-Fixture, Coverage ≥ 80 % Lines).
+  7. dev-smoke.sh-Erweiterung.
+  8. Doku-Updates `architecture.md` §3/§4/§7/§9 beim Schrittabschluss.
+- **Erwartete Reifegrad-Wirkung am Schrittende:** Modul `backend/catalog` `[VORLÄUFIG]` → `[BELASTBAR]`; S8-/S2-Sub-Surfaces für Catalog `[VORLÄUFIG]` → `[BELASTBAR]`; drei Datenmodelle neu, `[BELASTBAR]`.
+
+### 2026-05-28 – [BEOBACHTUNG] Detail-Plan 4.1 — Freigabe 0B/1D/2B/3A/4A/5A/6A/7A
+
+- **Detail-Plan-Disziplin** aus Phase 2 fortgeführt: 7 Designfragen (plus eine Methodik-Vorbemerkung Frage 0) zu Schritt 4.1 mit A/B/C/D-Optionen plus Empfehlungs-Zeile an Patrick vorgelegt; Freigabe als Buchstaben-Kombination **0B / 1D / 2B / 3A / 4A / 5A / 6A / 7A**.
+- **Aufschlüsselung:**
+  - **0-B:** Mini-ADR `[STRATEGISCH] [METHODIK]` für die Phase-4-Sonderregel statt nur Fahrplan-Hinweis. Patrick-Begründung: reproduzierbar im ADR-Index für künftige UMSETZUNG-Phasen (insbesondere Phase 6). Umgesetzt als **ADR-019** plus **Regel-019**.
+  - **1-D:** `catalog_item_base` mit `category_id`-FK auf neue Tabelle `catalog_category` — explizite Kategorien-Hierarchie ab Phase 1. Plus `name, unit, default_unit_label, description (NULL), is_active, audit-timestamps`.
+  - **2-B:** `catalog_item_tenant_extension` als Schalt-Tabelle mit `base_item_id` NULL-fähig (für eigene Tenant-Items) plus Override-Spalten (`override_name`, `override_unit_label`) plus `is_disabled` Flag. Tenant kann Basis-Items inhaltlich lokal überschreiben, eigene Items hinzufügen und Basis-Items deaktivieren.
+  - **3-A:** Resolver als reine SQL-Query (LEFT JOIN + Filter), kein Cache, kein Snapshot. S10/Regel-014 liefert Tenant-Zuordnung der Operation.
+  - **4-A:** Anonyme Schnittstelle `/api/anon/{operation_url}/catalog` setzt aktive anonyme Session voraus (analog `/session` aus 2.3); Rate-Limit IP+URL AND analog ADR-013 mit separatem Schlüsselraum.
+  - **5-A:** Soft-Delete via `is_active` (Base) / `is_disabled` (Tenant-Extension). Hard-Delete nur über Plattform-Admin-CLI in Edge-Cases.
+  - **6-A:** Pflege-Berechtigungen — Plattform-Admin: Base + Categories. Disponent: Tenant-Extension nur für eigenen Tenant. Carer: nur Read. Anon: Read über Session.
+  - **7-A:** Test-Strategie Phase-2-Pattern — Unit + Integration mit DB-Fixture + `dev-smoke.sh`-Catalog-Stufe.
+- **Folgeschritte (in dieser Session, vor Code-Eingriff):** ADR-019 + Regel-019 angelegt, Reaktiv-Quote-Fenster aktualisiert (1/10 = 10 %; Fenster wandert auf ADR-010 bis ADR-019), `fahrplan.md` mit Sonderregel-Hinweis vor Phase 4 + 4.1 in Voll-Format ergänzt. Code-Eingriff folgt nach Patrick-Bestätigung zur Implementierungs-Reihenfolge.
+
+### 2026-05-28 – [ADR-ANGELEGT] ADR-019: Phase-4-Sonderregel
+
+- **Tags:** `[STRATEGISCH] [METHODIK]`. Klassifikation `[STRATEGISCH]`, nicht `[REAKTIV]` → Reaktiv-Quote bleibt 1 / 10 = 10 % (Fenster wandert auf ADR-010 bis ADR-019).
+- **Entscheidungs-Kern:** UMSETZUNG-Eingangsdisziplin „alle berührten Bestandteile vor Schrittbeginn `[BELASTBAR]`" gilt **abgemildert** für Phasen, deren Hauptzweck die Beförderung berührter Module von `[VORLÄUFIG]` auf `[BELASTBAR]` ist (heute Phase 1, Phase 2, Phase 4, Phase 6). Voraussetzungen: (a) Modul-Schnitt strategisch fixiert, (b) konsumierte Bestandteile außerhalb der zu befördernden Module tatsächlich `[BELASTBAR]`, (c) Detail-Plan vor Code-Eingriff jeden berührten Bestandteil benennt.
+- **Abgeleitete Regel-019** in `decisions.md` Teil C ergänzt; Geltungsbereich generisch für alle künftigen UMSETZUNG-Phasen — keine erneute ADR-Pflicht in Phase 6.
+- **Anwendung Phase 4:** Phase-Header in `fahrplan.md` um „Hinweis Sonderregel"-Block mit ADR-019/Regel-019-Referenz ergänzt; Schritt 4.1 (`backend/catalog`) darf trotz `[VORLÄUFIG]`-Reifegrad starten.
+
+### 2026-05-28 – [SESSIONSTART]
+
+- **Sync-Schritt 0 (Lehre aus 2026-05-28-SESSIONENDE Stale-Base-Vorfall):** `git fetch && git log HEAD..origin/main --oneline` zu Sessionbeginn ausgeführt — kein Output, lokal `main` ist auf Höhe von `origin/main`. Kein Stale-Base-Risiko diese Session.
+- **Pflichtlektüre nach `CLAUDE.md` Abschnitt 2 vollständig durchlaufen:** `project-context.md` (Abschnitte 1–12 vollständig, inkl. Stack-Verifikations-Stempel, Constraints, Code-Standards Abschnitt 7, Triage-Stand 2026-05-07/2026-05-10, TomTom-Provider-Befunde 2026-05-17 und Glossar), `logbuch.md` (letzter `[SESSIONENDE]` 2026-05-28 zu Schritt 3.2 plus den umliegenden `[PHASEN-WECHSEL]`-/`[REIFEGRAD-WECHSEL]`-/`[ADR-ANGELEGT]`-/`[BEOBACHTUNG]`-Einträgen vom selben Tag), `fahrplan.md` „Aktueller Stand" + Phase 4 als nächste laufende Phase (Schritte 4.1–4.6 als gröbere Liste), `architecture.md` Abschnitte 1/2/9 (Reifegrad-Übersicht Stand 2026-05-18/2026-05-28 inkl. ADR-017- und ADR-018-Spalten), `decisions.md` Teil A (ADR-001 bis ADR-018, Reaktiv-Quote 1/10 = 10 %), `blockers.md` „Aktive Blocker" (leer; Blocker #001 als gelöste Referenz vermerkt).
+- **Stand vor Session:** Phase 3 (ERKUNDUNG, Spikes Wave 1) **abgeschlossen** — 3.1 [ERLEDIGT] 2026-05-18 (ADR-017), 3.2 [ERLEDIGT] 2026-05-28 (ADR-018). Phase 4 (UMSETZUNG, Operations Core + Realtime + Einsatzkraft-PWA) als nächste laufende Phase nominiert; kein aktiver Schritt. Keine offenen STOPP-Situationen, keine aktiven Blocker.
+- **Auftrag dieser Session:** **Schritt 4.1** `backend/catalog` — Basis-Artikelkatalog plus mandantenspezifische Erweiterung. Patrick-Vorgabe „start" nach kurzem Vorlauf zur Sync-Disziplin (impliziter Schritt 0 hat funktioniert).
+- **Geplanter Einstieg in 4.1 (vor Code-Eingriff):** Detail-Plan-Vorlage analog zur Phase-2-Disziplin (3–7 Designfragen mit A/B/C-Optionen plus Empfehlungs-Zeile) erarbeiten und Patrick zur Freigabe vorlegen. Vor dem Detail-Plan **Vertiefung** der Pflichtlektüre nach `CLAUDE.md` §2 (Vertiefung auf Anforderung):
+  - `architecture.md` §3 Modul-Eintrag `backend/catalog` (Zeile 145 ff.) vollständig lesen.
+  - `architecture.md` §7 Datenmodell-Abschnitt(e) zu Catalog-Entitäten lesen.
+  - Relevante ADRs durchgehen, soweit für Catalog-Design einschlägig: ADR-002 (Stack), ADR-006 (Aggregations-Schema — Catalog-Felder erscheinen nicht direkt, aber `bestellungen`-Aggregat referenziert), ADR-009 (Verbund-Invarianten — Catalog-Mandanten-Trennung relevant), ADR-018 (Bündelung — Catalog-Items werden durch `order`-Pfad bestellt). Plus etwaige Regeln in `decisions.md` Teil C, die Datenmodell- oder Mandanten-Filter-Disziplin betreffen (Regel-013/014).
+  - Sonderregel-Frage prüfen: gilt Phase-2-Sonderregel (Modul startet `[VORLÄUFIG]`, wird mit Funktionsschritt auf `[BELASTBAR]` befördert) auch für Phase 4 oder ist die volle UMSETZUNG-Eingangsdisziplin („alle berührten Architektur-Bestandteile vor Schrittbeginn `[BELASTBAR]`") anzuwenden? Klärung im Detail-Plan, ggf. als ADR.
+
 ### 2026-05-28 – [SESSIONENDE]
 
 - **Session-Dauer:** ca. 4 h netto (Sessionstart 2026-05-28 nach 8-tägiger Pause seit 2026-05-20; Patrick-Auftrag „neue Session" + „3.1 Spike I" + nach Stale-Base-Aufklärung „Option A: meine Commits zurücknehmen und Spike J neu auf Remote-Basis aufbauen"; Sessionende nach erfolgreichem Push).

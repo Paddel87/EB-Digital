@@ -33,10 +33,11 @@
 | 016 | 2026-05-17 | Aktiv  | STRATEGISCH    | MODUL, STACK, PERFORMANCE | Architekturänderungen      | Verzicht auf serverseitiges Caching vor externen Geo-Services                                 |
 | 017 | 2026-05-18 | Aktiv  | ERKENNTNIS     | PERFORMANCE, MODUL        | Architekturänderungen      | Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)          |
 | 018 | 2026-05-28 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodelländerungen      | Bündelungs-Trigger (Spike J): manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders   |
+| 019 | 2026-05-28 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Phase-4-Sonderregel — UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen (Regel-019)   |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-009 bis ADR-018).
+- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-010 bis ADR-019).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 - **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz).
@@ -742,6 +743,32 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
 
 ---
 
+#### ADR-019: Phase-4-Sonderregel — UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen
+
+- **Datum:** 2026-05-28
+- **Status:** Aktiv
+- **Tags:** `[STRATEGISCH]` `[METHODIK]`
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 4, vor Schritt 4.1)
+- **Reifegrad-Wirkung:** Keine direkten Architektur-Reifegrad-Beförderungen. Klärt die Eingangs-Disziplin für die UMSETZUNG-Schritte 4.1–4.6 als Voraussetzung dafür, dass diese Schritte ihre Module von `[VORLÄUFIG]` auf `[BELASTBAR]` befördern dürfen.
+- **Kategorie:** Methodik.
+- **Kontext:** Phase 4 (Operations Core + Realtime + Einsatzkraft-PWA, UMSETZUNG) berührt die Module `backend/catalog`, `backend/fleet`, `backend/operations`, `backend/realtime`, `frontend-einsatzkraft`. Alle fünf sind heute `[VORLÄUFIG]`; sie werden **durch** die Phase-4-Schritte erst zu `[BELASTBAR]` befördert (Phase-4-Reifegrad-Erwartung im Fahrplan-Kopf). Eine strikte Anwendung der UMSETZUNG-Eingangsdisziplin aus dem Schritt-Format (`fahrplan.md` „Schritt-Format": „bei UMSETZUNG: alle berührten Architektur-Bestandteile auf [BELASTBAR]") würde Phase 4 unmöglich machen, weil das Modul gleichzeitig Eingangsbedingung **und** Output des Schritts wäre. Phase 1 hatte für genau dieselbe Situation eine explizite Sonderregel im Phasen-Kopf (`fahrplan.md` Phase-1-Block, Zeile 136); Phase 2 hat dieselbe Sonderregel implizit in der Reflexion (2026-05-16) angewendet — aber nicht im Phasen-Kopf dokumentiert.
+- **Optionen:**
+  - **A:** Phase-2-Sonderregel sinngemäß übertragen + im `fahrplan.md` vor Phase 4 als „Hinweis Sonderregel" ergänzen (Schreibarbeit, kein ADR — analoge Anwendung eines etablierten Phasen-Patterns).
+  - **B:** Eigener Mini-ADR `[STRATEGISCH] [METHODIK]` (Phase-4-Sonderregel formal als Entscheidung; eine Spur mehr Formalismus, dafür reproduzierbar für künftige UMSETZUNG-Phasen, im ADR-Index auffindbar).
+  - **C:** Strikt anwenden, jeden berührten Bestandteil vor Schritt 4.1 separat per ADR auf `[BELASTBAR]` erklären — überdimensioniert, da kein Bestandteil ohne Funktion belastbar gemacht werden kann.
+- **Entscheidung:** **Option B – Mini-ADR**. Begründung Patrick (Detail-Plan-Freigabe 2026-05-28): reproduzierbare Methodik-Setzung für alle künftigen UMSETZUNG-Phasen, die Module von `[VORLÄUFIG]` auf `[BELASTBAR]` heben sollen — die Sonderregel ist damit auffindbar im ADR-Index statt nur im `fahrplan.md`-Kontext einer Phase versteckt.
+- **Konsequenzen:**
+  - **Regel-Formulierung (siehe Abgeleitete Regel unten):** Eine UMSETZUNG-Phase, deren Hauptzweck die Beförderung berührter Module von `[VORLÄUFIG]` auf `[BELASTBAR]` ist, gilt diese Module **am Schrittbeginn als hinreichend belastbar, um den Schritt starten zu lassen**, sofern (a) der Modul-Schnitt durch einen ADR strategisch fixiert ist (heute: ADR-002, ADR-003, ADR-009), (b) die **konsumierten** Bestandteile außerhalb der zu befördernden Module (Plumbing, andere Module, Schnittstellen) tatsächlich `[BELASTBAR]` sind, und (c) der Detail-Plan vor Code-Eingriff jeden berührten Bestandteil benennt.
+  - **Anwendung auf Phase 4:**
+    - Konsumierte `[BELASTBAR]`-Bestandteile vor 4.1 (Catalog): Plumbing (Schritt 1.4), `backend/auth` (2.2), `backend/auth_anonymous` (2.3), `backend/tenants` + S10 (2.4), Request-Scoped DB-Session-Dependency (2.5b), Regel-013/014 (Operation↔Tenant-Filter).
+    - Schrittweise Beförderung im Phasenverlauf: 4.1 → `backend/catalog` belastbar; 4.2 → `backend/fleet`; 4.3 → `backend/operations` + S3/S4 + I3 + ADR-017/ADR-018-Datenmodelle; 4.4 → `backend/realtime` + S9 + Pub/Sub via Valkey; 4.5 → `frontend-einsatzkraft` (funktional; Architektur-Pattern-Beförderung weiter ausstehend bis Phase 6); 4.6 → Tests/Coverage-Anker.
+  - **`fahrplan.md`:** Hinweis vor Phase 4 als „Hinweis Sonderregel" mit Verweis auf diesen ADR (analog Phase-1-Hinweis-Block).
+  - **Geltungsbereich über Phase 4 hinaus:** die abgeleitete Regel-019 gilt **generisch** für jede UMSETZUNG-Phase, die berührte Module von `[VORLÄUFIG]` auf `[BELASTBAR]` heben soll. Damit auch für Phase 6 (Geo + PWAs + Resilience + Retention + Export) anwendbar — keine erneute ADR-Pflicht in Phase 6.
+  - **Klassifikation `[STRATEGISCH]`, nicht `[REAKTIV]`:** planmäßige Methodik-Setzung vor Phase-Start, keine Reaktion auf einen Implementierungsbug. Reaktiv-Quote bleibt 1 / 10 (Fenster wandert auf ADR-010 bis ADR-019; ADR-015 weiterhin einziger reaktiver Eintrag).
+- **Abgeleitete Regel:** Regel-019 (UMSETZUNG-Sonderregel für Modul-Beförderungs-Phasen) – siehe Teil C.
+
+---
+
 ## Teil C: Entscheidungsregeln
 
 <!-- Regeln für wiederkehrende Fälle, damit die KI in ähnlichen Situationen
@@ -931,3 +958,11 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
           return session  # ← Bug: Session ist beim Endpoint bereits geschlossen
   ```
   Genau diese Form war der Lifecycle-Bug aus Schritt 2.5b (ADR-015).
+
+#### Regel-019: UMSETZUNG-Sonderregel für Modul-Beförderungs-Phasen
+
+- **Herkunft:** ADR-019
+- **Gilt für:** jede UMSETZUNG-Phase, deren Hauptzweck die Beförderung berührter Module von `[VORLÄUFIG]` auf `[BELASTBAR]` ist (Phase 1, Phase 2, Phase 4, Phase 6 sowie alle künftigen ähnlich gelagerten UMSETZUNG-Phasen, inkl. Phase X Verbund-Modus).
+- **Regel:** Die zu befördernden Module gelten **am Schrittbeginn als hinreichend belastbar, um den Schritt starten zu lassen**, wenn (a) der Modul-Schnitt durch einen ADR strategisch fixiert ist (Stack/Architektur-ADRs wie ADR-002/003/009), (b) alle **konsumierten** Bestandteile außerhalb der zu befördernden Module tatsächlich `[BELASTBAR]` sind, und (c) der Detail-Plan vor Code-Eingriff jeden berührten Bestandteil benennt. Die tatsächliche Beförderung des Moduls von `[VORLÄUFIG]` auf `[BELASTBAR]` erfolgt erst mit funktional erfülltem Schritt (Definition of Done aus CLAUDE.md §9 plus Coverage-Anker plus Smoke-Probe).
+- **Ausnahmen:** keine. UMSETZUNG-Phasen, die **nicht** primär Module befördern, sondern bereits belastbare Module erweitern (z. B. Phase 7 Stabilisierung — die ist allerdings STABILISIERUNG, kein UMSETZUNG, daher außerhalb des Geltungsbereichs), fallen unter die strikte Original-Eingangs-Disziplin.
+- **Gegenbeispiel:** Schritt 4.1 `backend/catalog` **nicht starten**, weil das Modul heute `[VORLÄUFIG]` ist und die strikte Eingangs-Disziplin „[BELASTBAR] vor Schrittbeginn" fordert — verboten, weil das das Schritt-Format-Patterndokument durch wörtliche Lektüre über den Phasen-Zweck stellt und Phase 4 unmöglich machen würde. Korrekt: Detail-Plan vorlegen (siehe Regel oben Punkt c), Patrick-Freigabe, Schritt starten.
