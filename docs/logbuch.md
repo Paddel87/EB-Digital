@@ -26,6 +26,30 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [SESSIONENDE]
+
+- **Session-Dauer:** ca. 6 h netto (Sessionstart 2026-05-28 nach Pflichtlektüre + Vertiefung; Patrick-Vorgaben „start" → „vertiefung" → Detail-Plan-Freigabe `0B/1D/2B/3A/4A/5A/6A/7A` → „direkt weiter" → Pause-Wahl „Doku-Commit jetzt, Code separat" + „Feature-Branch" + „Pause nach Modulskeleton, nächste Session für API-Tests + Smoke + Doku-Finalisierung").
+- **Bearbeitet:** **Schritt 4.1 (`backend/catalog`)** ist **IN ARBEIT** (nicht ERLEDIGT). Vorbereitung + Modulskeleton erledigt; API-Tests + dev-smoke.sh-Erweiterung + Coverage-Härtung auf ≥ 80 % + Doku-Updates (`architecture.md` §3/§4/§7/§9 + Schritt-Verifikations-Block in `fahrplan.md`) folgen in nächster Session.
+- **Erreicht in dieser Session:**
+  - **ADR-019** `[STRATEGISCH] [METHODIK]` angelegt: Phase-4-Sonderregel (UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen, generisch für künftige UMSETZUNG-Phasen). **Regel-019** in `decisions.md` Teil C abgeleitet. Reaktiv-Quote 1/10 = 10 % unverändert (Fenster wandert auf ADR-010 bis ADR-019).
+  - **`fahrplan.md`**: Aktueller-Stand-Block aktualisiert (Phase 4 LAUFEND, Schritt 4.1 IN ARBEIT), Phasenübersicht-Tabelle Phase 4 von „NÄCHSTE" auf „LÄUFT", Phase-4-Header um „Hinweis Sonderregel" mit ADR-019/Regel-019-Referenz, Schritt 4.1 von gröberer Zeile auf Voll-Format mit allen freigegebenen Antworten 1D/2B/3A/4A/5A/6A/7A (drei Tabellen-Migration mit CHECK + Partial-UNIQUE, Resolver-Drei-Query-Pattern, vier Rollen-Endpunkte, Soft-Delete), Schritte 4.2–4.6 als Stub-Schritte.
+  - **`logbuch.md`**: SCHRITT-START, BEOBACHTUNG (Detail-Plan-Freigabe-Aufschlüsselung), ADR-ANGELEGT als drei Einträge.
+  - **Doku-Commit** `153c3f3` auf `feat/4.1-backend-catalog` (pre-commit + commitlint grün): `docs(adr): ADR-019 Phase-4-Sonderregel + Detail-Plan 4.1 backend/catalog`.
+  - **Modul `backend/catalog`** angelegt (sechs Dateien: `__init__.py`, `models.py`, `schemas.py`, `repositories.py`, `use_cases.py`, `api.py`). Drei ORM-Tabellen mit `mode_constraint` und Partial-UNIQUE-Index. 12 Pydantic-Schemas. Resolver mit Drei-Query-Pattern (kein N+1), Override-Felder priorisiert. Zwei FastAPI-Router (authenticated `/api/catalog` + anon `/api/anon/{url}/catalog` mit Rate-Limit 60/15 min). Router-Wiring in `app.py`. Migration `b3a9c7e1f205` mit drei Tabellen, manuell ohne autogenerate geschrieben (Docker daemon nicht verfügbar — Round-Trip-Test verschoben auf dev-smoke.sh-Catalog-Stufe in 4.1-G).
+  - **28 grüne Unit-Tests** (`test_catalog_repositories.py` mit StubSession + IntegrityError-Mapping; `test_catalog_use_cases.py` mit monkeypatch + Vorbedingungs-Pfaden + Defense-in-depth Helper). `mypy --strict` und `ruff check`/`format` grün.
+  - **`README.md`** synchronisiert: Status-Block auf Phase 4 LAUFEND + 4.1 IN ARBEIT, ADR-Zähler 17 → 19, „Nächste Schritte" auf Phase 4 → Phase 5.
+  - **Feature-Branch-Commit** `5d1cc0d`: `feat(catalog): backend/catalog Modulskeleton + Migration + Repo-/Use-Case-Tests (Schritt 4.1 WIP)`.
+- **Reibungen:**
+  - **Docker daemon nicht verfügbar** während der Implementation. Konsequenz: Alembic-Migration manuell geschrieben (ohne `--autogenerate`), Round-Trip-Verifikation gegen echte DB verschoben auf dev-smoke.sh-Catalog-Stufe (4.1-G).
+  - **Drei `assert # noqa: S101`-Stellen** in `api.py` waren initial drin, weil mypy nicht durchsah, dass `_require_dispatcher_with_tenant` das `tenant_id`-Binding garantiert. Refaktoriert auf `tuple[SessionUser, uuid.UUID]`-Rückgabe — null `assert`s im Catalog-Modul-Endzustand, konsistent zum Phase-2-Repo-Pattern.
+  - **Pydantic-/Repo-Test-Bug**: `_update`-Stub in `test_update_base_item_unknown_id_raises_not_found` hatte nur `**_kw`, aber Use-Case ruft mit positional `session`. Einmaliger Test-Bug, sofort gefixed.
+  - **Ruff-Auto-Fix** lief mehrfach (Import-Sortierung, Format-Standardisierung) — keine inhaltlichen Eingriffe.
+- **Reifegrad-Wirkung:** keine Beförderungen in dieser Session. `backend/catalog` bleibt `[VORLÄUFIG]`, weil Schritt 4.1 noch IN ARBEIT (Coverage + dev-smoke.sh + Doku-Updates ausstehend).
+- **Reaktiv-Quote:** 1 / 10 = 10 % (unverändert; ADR-019 ist `[STRATEGISCH]`; Fenster ADR-010–019).
+- **Zusatz-Befund** für Phase 7 Stabilisierung: Coverage des Catalog-Moduls liegt nach den Repo-/Use-Case-Tests bei ~50 %. Erwartung: nach API-Tests + dev-smoke.sh-Catalog-Stufe ≥ 80 % (Standard-Schwelle). Falls nicht: Coverage-Härtung wird in Phase-7-Stabilisierung erfasst.
+- **Bekannter Stand:** Branch `feat/4.1-backend-catalog` mit zwei Commits: `153c3f3` (ADR-019 + Fahrplan-Voll-Format) und `5d1cc0d` (Modulskeleton + Migration + 28 Tests). Working-Tree clean. **Nicht gepusht** — Patrick-Entscheidung über Push-Zeitpunkt nach Schritt-Abschluss.
+- **Nächster Schritt:** API-Tests für vier Rollen (Pattern `test_tenants_api.py`: TestClient + dependency_overrides + fakeredis), dann dev-smoke.sh-Erweiterung um Catalog-Stufe (E2E: Plattform-Admin Base + Category → Disponent Tenant-Extension → Carer Read effektiv → Anon Read effektiv + Migration-Round-Trip), Coverage-Verifikation gegen ≥ 80 %-Schwelle, Doku-Updates `architecture.md` §3/§4/§7/§9 + Schritt-4.1-Status auf ERLEDIGT mit Verifikations-Block in `fahrplan.md`, Reifegrad-Beförderung `backend/catalog` auf `[BELASTBAR]`, Sessionende-Eintrag im Logbuch, abschließender Commit.
+
 ### 2026-05-28 – [SCHRITT-START] 4.1 `backend/catalog`
 
 - **Schritt 4.1** ist auf **IN ARBEIT** gesetzt (`fahrplan.md` Aktueller Stand + Phase-4-Block).
