@@ -15,6 +15,7 @@ from eb_digital.auth import models as _auth_models  # noqa: F401  # register ORM
 from eb_digital.auth_anonymous import (  # noqa: F401  # register ORM models
     models as _auth_anonymous_models,
 )
+from eb_digital.catalog import models as _catalog_models  # noqa: F401  # register ORM models
 from eb_digital.db import (
     Base,
     models,  # noqa: F401  # register ORM models with metadata
