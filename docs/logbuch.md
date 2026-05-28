@@ -26,6 +26,71 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [SESSIONENDE]
+
+- **Session-Dauer:** ca. 4 h netto (Sessionstart 2026-05-28 nach 8-tägiger Pause seit 2026-05-20; Patrick-Auftrag „neue Session" + „3.1 Spike I" + nach Stale-Base-Aufklärung „Option A: meine Commits zurücknehmen und Spike J neu auf Remote-Basis aufbauen"; Sessionende nach erfolgreichem Push).
+- **Bearbeitet:** **Phase 3 Schritt 3.2 (Spike J — Bündelungs-Trigger) ERLEDIGT.** Phase 3 ist mit 3.1 (2026-05-18 ADR-017, schon vor dieser Session) + 3.2 (heute ADR-018) **vollständig abgeschlossen**. Phase 4 (UMSETZUNG) ist als nächste laufende Phase nominiert.
+- **Vorgeschichte (wichtig für Methodik-Lehre):**
+  - **Stale-Base-Vorfall:** der lokale `main` zu Sessionbeginn war 11 Tage hinter `origin/main`. Mein erster Sessionstart-Eintrag (heute oberhalb dieser Erzählung mittlerweile gelöscht durch reset) behauptete „letzter Stand 2026-05-17"; faktisch hatte Patrick zwischen 2026-05-18 und 2026-05-20 drei PRs gemerged (PR #31 ADR-017 Spike I, PR #32 Methodik-Feedback-Auslagerung, PR #33 Sessionstart/Sessionende 2026-05-20 npm-Audit-Anfrage).
+  - **Spike-I-Doppelarbeit:** ich habe Spike I autonom mit Detail-Plan A/A/A/A/A durchgespielt, A/A/A/A/A freigegeben, und einen lokalen ADR-017 (Commit `496dbbb`) angelegt — mit **anderer Entscheidung** als der bereits auf Remote existierende ADR-017 (468394d, 2026-05-18). Insbesondere Designfrage 2 (GPS-Accuracy): meine Lokalvariante „accuracy ignorieren" vs. Remote-Variante „2·accuracy als 95%-Konfidenz + 500-m-Cell-Tower-Filter".
+  - **Spike-J-Erstversuch:** auf der falschen Basis als ADR-018 gebaut (Commit `de07d72`), ebenfalls mit Detail-Plan A/A/A/A/A und Patrick-Bestätigung „passt".
+  - **Aufgedeckt durch `git push origin main`-Reject** (non-fast-forward). `git fetch` + `git log` zeigte die Divergenz. STOPP nach CLAUDE.md §8 (Widerspruch + ADR-Nummernkonflikt).
+  - **Auflösung Option A (Patrick-Freigabe):** lokaler Stand in Sicherheits-Branch `wip/spike-i-j-stale-base` gerettet; `git reset --hard origin/main`; Spike-I-Arbeit verworfen (Remote-ADR-017 ist die kanonische Entscheidung); Spike-J-Arbeit auf Remote-Basis neu aufgebaut als ADR-018.
+- **Erreicht (Spike J, Schritt 3.2 auf sauberer Remote-Basis):**
+  - **ADR-018** in [`docs/decisions.md`](decisions.md) angelegt mit Tags `[ERKENNTNIS] [MODUL] [DATENMODELL]`. Entscheidung A/A/A/A/A: (1) Auslöser manuell durch Disponent, (2) eigene `order_bundle`-Entity + nullable `order.bundle_id` und `order_assignment.bundle_id` FKs, (3) Versorgungs-Transporter-Zwang mit `mode='large_order'`, (4) keine harte räumliche Backend-Validierung in Phase 1, (5) `bundling_count` = Aktionsanzahl plus additive ADR-006-Erweiterung um `bundled_order_count`. Zusatz-Constraint aus Spike-Analyse: **Minimum 2 Orders** pro Bündel.
+  - **`BundleOrders`-Use-Case-Vertrag** mit Schritt-für-Schritt-Logik (Berechtigung über S10/Regel-014, Vehicle-Validierung Versorgungs-Transporter + large_order-Mode, Order-Validierung pending + nicht-gebündelt, OrderBundle-Erzeugung, N OrderAssignment-Einträge mit identischer bundle_id, Audit-Log, Event-Publishing). 8 Fehlerklassen exakt definiert (`MinimumTwoOrders`, `EmptyBundle`, `VehicleNotSupplyTransporter`, `VehicleNotInLargeOrderMode`, `OrderNotInOperation`, `OrderNotPending`, `OrderAlreadyBundled`, `NotParticipant`).
+  - **Test-Datensatz** mit 11 Einträgen (B1–B11) inline im ADR.
+  - **Reifegrad-Wechsel:** `[OFFEN]`-Bereich „Bündelungs-Trigger" in `backend/operations` auf `[VORLÄUFIG]` per ADR-018; Reifegrad-Übersicht in [`architecture.md`](architecture.md) Abschnitt 9 entsprechend aktualisiert (2 Zeilen).
+  - **S4-Schnittstelle:** offene Frage „Verhalten bei Bündelung – Assignment-Aggregation" gelöst. **Bündel-Mapping:** N OrderAssignment-Einträge mit identischer `bundle_id` und identischem `vehicle_id`.
+  - **Phase-4.3-Vorgabe:** Migration ergänzt neue Entity `order_bundle` (id, operation_id FK, vehicle_id FK, created_by_dispatcher_id FK, created_at/updated_at, status CHECK IN active/completed/dissolved) plus zwei nullable FK-Spalten. **Phase-6.5-Vorgabe:** `operation_aggregate`-Schema-Migration nimmt additive Spalte `bundled_order_count` mit auf.
+  - **Lifecycle-Skizze (Phase-4.3-Implementierung):** `DissolveBundle` setzt bundle.status='dissolved', alle `order.bundle_id=NULL`, Assignments des Bündels storniert, Orders zurück pending mit Audit-Log. `CompleteBundle` implizit, wenn alle gebündelten Orders complete. **Stornierung einzelner Orders innerhalb aktivem Bündel in Phase 1 nicht erlaubt** — nur kompletter Bündel-Cancel oder Auflösung.
+- **Phase-3-Reflexion** ergänzt in [`docs/fahrplan.md`](fahrplan.md) (Detail-Plan-vor-ADR-Disziplin trägt auch für ERKUNDUNG; ADR-006 musste additiv erweitert werden, was als Lehre für künftige ADR-Schreib-Disziplin notiert ist; Phase-1-Scope-Disziplin in Spike-J durch explizite Re-Evaluation-Klauseln; **Stale-Base-Vorfall als Methodik-Lehre** für die Pflichtlektüre-Disziplin festgehalten; Phase 4.3 wird die schemataktisch dichteste UMSETZUNG-Phase).
+- **Reibungen:**
+  - **Stale-Base-Vorfall** (oben dokumentiert) — größte Reibung. Kein Datenverlust, kein PR-Konflikt, weil rechtzeitig durch Push-Reject aufgedeckt und sauber via Reset auf origin/main + Neu-Aufbau aufgelöst.
+  - **Prettier-Auto-Format-Cycles** zweimal beim Commit (einmal pro Re-Build-Versuch).
+  - Mehrere Edit-Reibungen wegen Whitespace-Drift in Tabellen-Alignment (Prettier normalisiert anders als von Hand geschrieben).
+- **Reaktiv-Quote:** **1 / 10 = 10 %** (Fenster wandert auf ADR-009 bis ADR-018). ADR-018 ist `[ERKENNTNIS]`, nicht `[REAKTIV]`. Unter 20 %-Schwellenwert Klasse G. Die Fenster-Wanderung hat ADR-008 (`[STRATEGISCH] [MODUL]`) aus dem 10er-Fenster geschoben, dafür ADR-018 (`[ERKENNTNIS]`) hinzugekommen — Reaktiv-Anteil unverändert.
+- **README-Sync-Check (CLAUDE.md §16 Trigger 2):** ADR-018 hat keine nutzersichtbare Wirkung (kein Produktiv-Code, keine API-Vertragsänderung, keine Setup-/Quick-Start-Änderung, kein Statuswechsel). Status-Block-Quellen geprüft: Phase 3 ist ERLEDIGT, Phase 4 NÄCHSTE — `README.md` formuliert das auf höherer Granularität (Status „Konzeption" unverändert; ADR-Zähler ist auf Remote bereits 17 — nach diesem Commit 18, in einem Folge-Sync ggf. aktualisieren falls nötig). Kein Pflicht-Sync in diesem Commit.
+- **Bekannter Stand:** vor Sessionende-Commit uncommitted Working-Tree-Edits in `docs/decisions.md`, `docs/architecture.md`, `docs/fahrplan.md`, `docs/logbuch.md`. Sicherheits-Branch `wip/spike-i-j-stale-base` lokal mit den verworfenen Commits aufbewahrt — kann nach erfolgreichem Push gelöscht werden (separate Bereinigungs-Aktion).
+- **Nächster Schritt:** **4.1** `backend/catalog` (UMSETZUNG-Phase 4). Basis-Artikelkatalog plus mandantenspezifische Erweiterung. Start mit Detail-Plan-Vorlage analog zur Phase-2-Disziplin.
+
+### 2026-05-28 – [PHASEN-WECHSEL]
+
+- **Phase 3** (Spikes Wave 1, ERKUNDUNG) **abgeschlossen** mit 3.1 (2026-05-18, ADR-017) + 3.2 (2026-05-28, ADR-018) ERLEDIGT.
+- **Phase 4** (Operations Core + Realtime + Einsatzkraft-PWA, UMSETZUNG) als nächste laufende Phase nominiert. Erster Schritt: 4.1 `backend/catalog`.
+- Phase-3-Reflexion in [`fahrplan.md`](fahrplan.md) ergänzt — neben den ADR-Gelernten enthält sie als wichtigen Methodik-Eintrag den **Stale-Base-Vorfall** (lokaler `main` 11 Tage hinter Remote zum Sessionbeginn, aufgedeckt erst durch Push-Reject; impliziert, dass Sessionstart-Pflichtlektüre einen `git fetch + git log`-Schritt enthalten sollte).
+- **Beförderungs-Pflicht** (`project-context.md` §6 Methodik-Schwellenwerte): in Phase 3 wurden zwei `[OFFEN]`-Bereiche der berührten Module auf `[VORLÄUFIG]` befördert. Pflicht erfüllt.
+- **Reaktiv-Quote:** 1/10 = 10 % (zählt jetzt ADR-009 bis ADR-018). Unter 20 %-Schwelle Klasse G.
+
+### 2026-05-28 – [REIFEGRAD-WECHSEL]
+
+- `[OFFEN]`-Bereich „Bündelungs-Trigger" in Modul `backend/operations` → `[VORLÄUFIG]` per **ADR-018** (Spike J ERLEDIGT).
+- Schnittstelle S4 (Vehicle Assignment) offene Frage „Bündel-Mapping" gelöst durch ADR-018: N Assignments mit identischer `bundle_id`.
+- Datenmodell-Vorgaben für Phase 4.3 fixiert: neue Entity `order_bundle` + zwei nullable FK-Spalten (`order.bundle_id`, `order_assignment.bundle_id`), Min-2-Orders-Constraint, Versorgungs-Transporter mit `mode='large_order'` Pflicht.
+- Datenmodell-Vorgabe für Phase 6.5 fixiert: additive Aggregat-Spalte `bundled_order_count` (ADR-006-Erweiterung ohne Re-Open).
+- Reifegrad-Übersicht in `architecture.md` Abschnitt 9 aktualisiert: zwei Tabellen-Zeilen geändert (`backend/operations`, „OFFEN-Bereich Spike J" → „VORLÄUFIG-Bereich Spike J").
+
+### 2026-05-28 – [ADR-ANGELEGT] ADR-018: Bündelungs-Trigger
+
+- Spike J als ERKUNDUNG-Schritt 3.2 mit Zeitbox 4 h (Schritt-Art Vergleichsstudie) durchlaufen.
+- Designfragen 1–5 (Auslöser-Initiative / Datenstruktur / Versorgungs-Transporter-Zwang / Räumliche Voraussetzung / Aggregat-Semantik) im Detail-Plan vorgelegt mit Optionen A/B/C/D; Patrick-Freigabe **A/A/A/A/A** (Empfehlungs-Kombination); ADR-Entwurf-Bestätigung „passt".
+- ADR-018 Tags `[ERKENNTNIS] [MODUL] [DATENMODELL]`; Klassifikation `[ERKENNTNIS]`, nicht `[REAKTIV]` → Reaktiv-Quote bleibt 1/10 = 10 %.
+- Implementierungs-Vorlage (`BundleOrders`-Use-Case-Vertrag + 8 Fehlerklassen + 11-Eintrag-Test-Datensatz) inline im ADR. Phase 4.3 nimmt das auf.
+- Additive Erweiterung von ADR-006 um `bundled_order_count` (Aggregat-Spalte), dokumentiert in ADR-018-Konsequenzen — kein Re-Open von ADR-006.
+- Keine neue Regel — ADR-018 nutzt vorhandene Regel-011 (Audit-Log) und Regel-014 (Teilnahme-Filter).
+
+### 2026-05-28 – [BEOBACHTUNG] Stale-Base-Vorfall — Methodik-Lehre für Pflichtlektüre
+
+- **Befund:** Sessionstart-Pflichtlektüre nach CLAUDE.md §2 prüft den lokalen Stand der Pflicht-Dokumente, **nicht aber den Sync-Stand des lokalen `main` gegen `origin/main`**. Wenn der lokale `main` aus einer früheren Session stammt und in der Zwischenzeit Remote-Merges erfolgt sind (z. B. weil der Mensch in einem anderen Worktree weitergearbeitet hat), entsteht ein false-positive „Stand ist aktuell"-Eindruck. Ich habe heute zunächst auf einem 11-Tage-stalen lokalen `main` angefangen, Spike I auf einer A/A/A/A/A-Empfehlungsbasis gebaut, und erst durch den `git push`-Reject festgestellt, dass auf Remote bereits ein ADR-017 mit **anderer** Spike-I-Entscheidung existiert. Konsequenz: zwei Commits (`496dbbb` Spike I, `de07d72` Spike J) verworfen, Spike-I-Inhalt vollständig zugunsten des Remote-ADR-017 aufgegeben, Spike-J neu auf Remote-Basis aufgebaut.
+- **Quer-Bezug:** analog zur Diagnose [Paddel87/Dev-Templates#6](https://github.com/Paddel87/Dev-Templates/issues/6) („Dokument-Hygiene: harte Trigger für Archivierung") betrifft das eine **Pflichtlektüre-Disziplin-Lücke** — die Pflichtlektüre hat ihren impliziten Sync-Schritt nicht. Vorschlag: einen analogen Issue an die Dev-Templates-Vorlage stellen mit der konkreten Forderung „CLAUDE.md §2 Mindest-Lektüre ergänzt um `git fetch origin && git log <local-head>..origin/<main-branch>` als impliziten Schritt, mit Stopp-Kriterium falls Remote-Commits seit letzter Session vorhanden sind, die Pflicht-Dokumente berühren". Erstellung des Issues ist **Phase-7-Stabilisierungs-Kandidat**, nicht akut.
+- **Kein Schritt-Wechsel, kein ADR, kein Code-Eingriff** durch diese Beobachtung in der laufenden Session. Klassifikation: Methodik-Beobachtung mit Output-Verzweigung in das Dev-Templates-Repo zu späterem Zeitpunkt.
+
+### 2026-05-28 – [SESSIONSTART]
+
+- **Letzter Stand (Erst-Lesung, später als unvollständig erkannt):** Sessionende 2026-05-17 nach Commit 2 von 2 (ADR-016 angelegt + Spike-G-Neuzuschnitt). Phase 2 vollständig **ERLEDIGT**; Phase 3 (ERKUNDUNG) als nächste Phase. Reaktiv-Quote 1/10 = 10 %. Keine aktiven Blocker.
+- **Auftrag dieser Session (initial):** „Neue Session" — auf Patrick-Vorgabe nach Pflichtlektüre. Patrick wählte direkt darauf **3.1 Spike I** als Auftrag.
+- **Korrektur 2026-05-28 nach Stale-Base-Aufklärung:** der oben genannte „Letzter Stand 2026-05-17" war faktisch falsch — der lokale `main` war 11 Tage hinter `origin/main`. Auf Remote existierte bereits ADR-017 (Hülle-Distanz + 2·accuracy, 2026-05-18) sowie Sessionstart/Sessionende 2026-05-20. Diese Lücke der Pflichtlektüre ist in einem `[BEOBACHTUNG]`-Eintrag oberhalb dokumentiert. Tatsächlicher Auftrag dieser Session nach Korrektur: **Schritt 3.2 (Spike J, Bündelungs-Trigger)** auf Basis des Remote-Stands.
+
 ### 2026-05-20 – [SESSIONENDE]
 
 - **Session-Dauer:** kurz (ca. 15 min).

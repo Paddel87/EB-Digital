@@ -32,10 +32,11 @@
 | 015 | 2026-05-15 | Aktiv  | REAKTIV        | STACK, SECURITY, METHODIK | Sicherheit und Datenschutz | `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b) |
 | 016 | 2026-05-17 | Aktiv  | STRATEGISCH    | MODUL, STACK, PERFORMANCE | Architekturänderungen      | Verzicht auf serverseitiges Caching vor externen Geo-Services                                 |
 | 017 | 2026-05-18 | Aktiv  | ERKENNTNIS     | PERFORMANCE, MODUL        | Architekturänderungen      | Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)          |
+| 018 | 2026-05-28 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodelländerungen      | Bündelungs-Trigger (Spike J): manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders   |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-008 bis ADR-017).
+- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-009 bis ADR-018).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 - **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz).
@@ -593,6 +594,151 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - `fahrplan.md` Schritt 3.1 auf `[ERLEDIGT]` plus Aktueller-Stand-Block.
   - `docs/spikes/spike-i-results.md` als Spike-Messprotokoll (neue Datei).
 - **Abgeleitete Regel:** keine neue allgemeine Regel. ADR-017 ist eine konkrete Algorithmus-Entscheidung mit Geltungsbereich „Plausibilitätsprüfung Einsatzkraft-Bestellungen in `backend/operations`/`backend/geo`".
+
+#### ADR-018: Bündelungs-Trigger (Spike J)
+
+- **Datum:** 2026-05-28
+- **Status:** Aktiv
+- **Tags:** `[ERKENNTNIS]` `[MODUL]` `[DATENMODELL]`
+- **Phasentyp-Kontext:** ERKUNDUNG (Spike J, Phase 3, Zeitbox 4 h)
+- **Reifegrad-Wirkung:** `[OFFEN]`-Bereich „Bündelungs-Trigger" in Modul `backend/operations` → `[VORLÄUFIG]`. Schnittstelle S4 offene Frage „Verhalten bei Bündelung" gelöst. Datenmodell-Vorgabe für Phase 4.3: neue Entity `order_bundle`, neue nullable Spalte `order.bundle_id`, neue nullable Spalte `order_assignment.bundle_id`. ADR-006 wird additiv um Aggregat-Spalte `bundled_order_count` ergänzt (kein Re-Open von ADR-006, sondern dokumentierte Spike-J-Erweiterung; Schema-Migration `operation_aggregate` in Phase 6 Schritt 6.5 nimmt das mit auf). Mit dieser Beförderung ist Phase 3 (Spikes Wave 1) vollständig abgeschlossen.
+- **Kategorie:** Datenmodelländerung (neue Entity + zwei neue FK-Spalten) + Methodik (Use-Case-Spec)
+- **Kontext:**
+  - Vision §3: Versorgungs-Transporter hat drei Modi inkl. „Großbestellungs-Modus = bedient gebündelte Bestellungen an grob gleicher Örtlichkeit".
+  - Vision §9 offener Punkt: „Bündelungs-Trigger – durch wen (System / Disponent / Versorgungs-Transporter-Crew), bei welchem Schwellenwert."
+  - `architecture.md` Modul `backend/operations` Use-Case `BundleOrders` (`[OFFEN]`).
+  - Schnittstelle S4 offene Frage: „Verhalten bei Bündelung – ob ein Bündelungs-Auftrag eine Assignment-Aggregation braucht, hängt von Spike J ab."
+  - ADR-006 Aggregat-Feld `bundling_count` ohne Semantik-Festlegung (Aktion-Anzahl vs. Order-Anzahl).
+  - Fahrplan §944 Vermutung: Phase-1-Wahl = manuell durch Disponent.
+  - Spike I (ADR-017, 2026-05-18) hatte die parallele `[OFFEN]`-Lücke in `backend/operations` geklärt. ADR-018 schließt die zweite Lücke und damit Phase 3.
+- **Optionen (je Designfrage):**
+  - **Auslöser-Initiative:**
+    - A: Manuell durch Disponent (UI-Aktion „Bündeln"). Phase-1-robust, keine Schwellenwert-Kalibrierung nötig.
+    - B: System-Heuristik (automatisch oder Vorschlag). Cluster-Algorithmus + Radius- + Zeitfenster-Schwelle erforderlich, ohne Pilot-Daten nicht sinnvoll kalibrierbar.
+    - C: Carer-Crew-Eingabe vor Ort. Verlangt Carer-PWA-UI (Phase ≥ 6); verschiebt Initiative vom strategischen Disponenten zum operativen Carer.
+    - D: Hybrid – System-Vorschlag + Disponent-Bestätigung.
+  - **Datenstruktur:**
+    - A: Eigene `order_bundle`-Entity + nullable `order.bundle_id` FK.
+    - B: Bündel-Order als konsolidierte neue Order (Original-Orders → `bundled_into`). Bricht 1:1-Beziehung Order↔Einsatzkraft.
+    - C: Implizit über gemeinsamen Versorgungs-Transporter-Assignment (keine Entity, Heuristik im Aggregat).
+  - **Versorgungs-Transporter-Zwang:**
+    - A: Ja – nur Versorgungs-Transporter mit `mode='large_order'`. Vision-konsistent.
+    - B: Nein – jedes Fahrzeug mit ausreichender Beladung. Lockerer, Vision-Intent verletzt.
+  - **Räumliche Voraussetzung backend-seitig:**
+    - A: Keine harte Validierung in Phase 1. Disponent prüft visuell.
+    - B: System-Validierung mit Radius-Constraint (z. B. `operation.bundle_radius_m`). Willkürlicher Default ohne Pilot-Daten.
+  - **`bundling_count`-Semantik:**
+    - A: Anzahl Bündel-Aktionen + zusätzliches Feld `bundled_order_count` (Summe Orders).
+    - B: Anzahl gebündelte Orders (verschiebt ADR-006-Semantik).
+    - C: Beides als zwei Felder, ohne Erweiterung von ADR-006 (nur `bundling_count` = Aktionen).
+- **Entscheidung:** **A / A / A / A / A** — Empfehlungs-Kombination. Patrick-Freigabe 2026-05-28 nach Detail-Plan-Vorlage in der Spike-J-Session.
+  1. **Auslöser:** Manuell durch Disponent. System-Heuristik und Carer-Crew-Eingabe explizit auf spätere Phase verschoben; Re-Evaluation per ADR, falls Pilot zeigt, dass manueller Workflow zu aufwändig wird.
+  2. **Datenstruktur:** Eigene `order_bundle`-Entity + nullable `order.bundle_id` FK + nullable `order_assignment.bundle_id` FK.
+  3. **Versorgungs-Transporter-Zwang:** Ja. `vehicle.mode='large_order'`-Pflichtprüfung im `BundleOrders`-Use-Case.
+  4. **Räumliche Voraussetzung:** Keine harte Backend-Validierung in Phase 1. „Grob gleicher Örtlichkeit" ist UI-Empfehlung.
+  5. **Aggregat-Semantik:** `bundling_count` = Bündel-Aktionsanzahl (ausgenommen `dissolved`). **Additive Erweiterung von ADR-006:** zusätzliches Feld `bundled_order_count` (Summe Orders).
+  6. **Zusatz-Constraint aus Spike-Analyse:** Minimum **2 Orders** pro Bündel. Bündel mit 0 oder 1 Order ist Validierungsfehler (`MinimumTwoOrders`/`EmptyBundle`).
+- **Konsequenzen:**
+  - **Datenmodell-Migration Phase 4.3:**
+
+    ```sql
+    CREATE TABLE order_bundle (
+        id UUID PRIMARY KEY,
+        operation_id UUID NOT NULL REFERENCES operation(id),
+        vehicle_id UUID NOT NULL REFERENCES vehicle(id),   -- Versorgungs-Transporter
+        created_by_dispatcher_id UUID NOT NULL REFERENCES dispatcher_user(id),
+        created_at TIMESTAMPTZ NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('active','completed','dissolved'))
+    );
+    ALTER TABLE "order" ADD COLUMN bundle_id UUID NULL REFERENCES order_bundle(id);
+    ALTER TABLE order_assignment ADD COLUMN bundle_id UUID NULL REFERENCES order_bundle(id);
+    ```
+
+    Endgültiger Tabellenname für `order` (SQL-reserved Wort) wird in Phase 4.3 final festgelegt.
+
+  - **`backend/operations.BundleOrders`-Use-Case-Vertrag:**
+
+    ```python
+    async def bundle_orders(
+        *,
+        order_ids: list[UUID],            # mindestens 2
+        vehicle_id: UUID,                  # Versorgungs-Transporter im Großbestellungs-Modus
+        dispatcher_id: UUID,               # Akteur, S10-Teilnahme geprüft
+        operation_id: UUID,                # Defense-in-depth
+        operation_repo: OperationRepository,
+        vehicle_repo: VehicleRepository,
+        order_repo: OrderRepository,
+        bundle_repo: OrderBundleRepository,
+        audit_logger: AuditLogger,
+    ) -> OrderBundle:
+        # (1) Berechtigung: dispatcher_id ist Teilnehmer der operation_id (Regel-014)
+        # (2) Minimum-Constraint: len(order_ids) >= 2 -> sonst MinimumTwoOrders
+        # (3) Vehicle-Validierung: Versorgungs-Transporter mit mode='large_order'
+        # (4) Order-Validierung: alle order_ids gehören zu operation_id,
+        #     Status 'pending', order.bundle_id IS NULL
+        # (5) Erzeuge OrderBundle(status='active'), setze order.bundle_id für alle Orders
+        # (6) Erzeuge N OrderAssignment-Einträge (eines pro Order) mit identischer bundle_id
+        #     und identischem vehicle_id (= Versorgungs-Transporter)
+        # (7) Audit-Log: action_type='orders_bundled',
+        #     payload={'bundle_id': ..., 'order_ids': [...], 'vehicle_id': ...}
+        # (8) Publish 'operation.{op}.orders_bundled' an backend/realtime
+    ```
+
+  - **Fehlerklassen:**
+    - `MinimumTwoOrders` (422) — `len(order_ids) < 2` (Sonderfall: leere Liste behandelt als `EmptyBundle`)
+    - `EmptyBundle` (422) — `order_ids == []`
+    - `VehicleNotSupplyTransporter` (422) — Fahrzeug ist reguläres Betreuungsfahrzeug
+    - `VehicleNotInLargeOrderMode` (422) — Versorgungs-Transporter, aber `mode != 'large_order'`
+    - `OrderNotInOperation` (422) — Order gehört zu anderer Operation
+    - `OrderNotPending` (422) — Order-Status ≠ pending
+    - `OrderAlreadyBundled` (422) — `order.bundle_id IS NOT NULL`
+    - `NotParticipant` (403) — Dispatcher nicht Teilnehmer (S10/Regel-014)
+
+  - **S4 (Vehicle Assignment) — Bündel-Mapping:** N OrderAssignment-Einträge mit identischer `bundle_id` und identischem `vehicle_id` (= Versorgungs-Transporter). Kein NULL-Constraint auf `order_id` nötig, Aggregations-Joins bleiben einheitlich. Offene Frage in S4 ist damit aufgelöst.
+
+  - **Lifecycle-Use-Cases in Phase 4.3 (skizziert):**
+    - `DissolveBundle`: bundle.status='dissolved', alle `order.bundle_id=NULL`, Assignments des Bündels storniert, Orders zurück Status `pending`. Audit-Log `action_type='bundle_dissolved'`.
+    - `CompleteBundle`: implizit, wenn alle gebündelten Orders Status `completed` erreichen → bundle.status='completed'.
+    - **Stornierung einzelner Orders innerhalb aktivem Bündel in Phase 1 nicht erlaubt** — nur kompletter Bündel-Cancel oder Auflösung. Reduziert Phase-1-Komplexität.
+
+  - **`operation_aggregate`-Erweiterung (additiv zu ADR-006):**
+    - `bundling_count` (de: `anzahl_buendelungen`): Anzahl `order_bundle` mit `status IN ('active','completed')` pro Operation. `dissolved` zählt nicht (sonst verzerrt durch Storno-Wellen).
+    - **Neu:** `bundled_order_count` (de: `anzahl_gebuendelte_bestellungen`): Summe Orders über alle gezählten Bündel.
+    - **Klarstellung zu ADR-006:** ADR-006-Metriken-Set bleibt gültig; `bundled_order_count` ist Spike-J-Ergänzung. Schema-Migration `operation_aggregate` in Phase 6.5 nimmt das mit auf.
+
+  - **Re-Evaluation per ADR**, falls Phase-7-Pilot zeigt: manueller Bündelungs-Workflow zu aufwändig → System-Heuristik (Option 1.B/1.D) nachziehen mit Pilot-Daten als Kalibrierungs-Basis.
+
+- **Test-Datensatz (Operation O mit Fahrzeugen + 5 Orders im pending-Status):**
+
+  Operation O:
+  - Versorgungs-Transporter `VT1` mit `mode='large_order'`
+  - Versorgungs-Transporter `VT2` mit `mode='off'`
+  - Reguläres Betreuungsfahrzeug `F1`
+  - Dispatchers `D1`, `D2` (Teilnehmer); `D_other` (Nicht-Teilnehmer)
+  - Orders `O1..O5` (alle Status `pending`, alle in Operation O)
+  - Order `OX` aus anderer Operation
+
+  | #   | Szenario                                 | Eingabe                                          | Erwartetes Ergebnis                                                                                |
+  | --- | ---------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+  | B1  | Standard-Bündelung                       | order_ids=[O1,O2,O3], vehicle=VT1, dispatcher=D1 | OrderBundle(status=active), O1/O2/O3.bundle_id=B, 3 Assignments mit bundle_id=B, Audit-Log-Eintrag |
+  | B2  | Versorgungs-Transporter falscher Modus   | vehicle=VT2 (mode='off')                         | 422 `VehicleNotInLargeOrderMode`                                                                   |
+  | B3  | Reguläres Fahrzeug statt Transporter     | vehicle=F1                                       | 422 `VehicleNotSupplyTransporter`                                                                  |
+  | B4  | Order bereits gebündelt                  | order_ids=[O1,O4] (O1 schon in B1)               | 422 `OrderAlreadyBundled`                                                                          |
+  | B5  | Order aus anderer Operation              | order_ids=[O1, OX]                               | 422 `OrderNotInOperation`                                                                          |
+  | B6  | Bündel mit 1 Order                       | order_ids=[O1]                                   | 422 `MinimumTwoOrders`                                                                             |
+  | B7  | Leeres Bündel                            | order_ids=[]                                     | 422 `EmptyBundle`                                                                                  |
+  | B8  | Dispatcher nicht Teilnehmer              | dispatcher=D_other                               | 403 `NotParticipant`                                                                               |
+  | B9  | Bündel-Auflösung                         | DissolveBundle(bundle_id=B nach B1)              | bundle.status=dissolved, O1/O2/O3.bundle_id=NULL, Orders zurück pending, Audit-Log                 |
+  | B10 | Aggregat: 2 Bündel mit 3+4 Orders        | nach Operation-Ende, 1 active, 1 completed       | operation_aggregate.bundling_count=2, bundled_order_count=7                                        |
+  | B11 | Aggregat: aufgelöstes Bündel zählt nicht | nach Operation-Ende, 1 active + 1 dissolved      | operation_aggregate.bundling_count=1, bundled_order_count=(nur die aktiven)                        |
+
+- **Wirkung auf bestehende ADRs:**
+  - **ADR-006 (Aggregations-Schema):** additiv erweitert um `bundled_order_count`. Aggregat-Felder-Anzahl wächst von 16 auf 17. Klarstellung: `bundling_count` ist Bündel-Aktionsanzahl, ausgenommen `dissolved`.
+  - **ADR-008 (Audit-Log):** Erweiterung um `action_type IN ('orders_bundled','bundle_dissolved','bundle_cancelled')`. Kein neuer ADR — Regel-011 deckt das Muster.
+  - **ADR-017** (Geo-Plausibilität): unberührt; ADR-018 schließt die zweite `[OFFEN]`-Lücke in `backend/operations` und damit Phase 3.
+  - **ADR-002, ADR-003, ADR-014, ADR-016:** unberührt.
+- **Abgeleitete Regel:** keine neue allgemeine Regel — Bündelungs-Trigger ist ein konkreter Use-Case-Mechanismus, kein wiederkehrendes Muster. Existierende Regeln (Regel-011 Audit-Log, Regel-014 Teilnahme-Filter) greifen.
 
 ---
 
