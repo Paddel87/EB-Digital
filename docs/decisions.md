@@ -34,13 +34,14 @@
 | 017 | 2026-05-18 | Aktiv  | ERKENNTNIS     | PERFORMANCE, MODUL        | Architekturänderungen      | Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)          |
 | 018 | 2026-05-28 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodelländerungen      | Bündelungs-Trigger (Spike J): manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders   |
 | 019 | 2026-05-28 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Phase-4-Sonderregel — UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen (Regel-019)   |
+| 020 | 2026-05-28 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert (Plausibility-/Geo-Pfad)         |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-010 bis ADR-019).
+- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-011 bis ADR-020).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
-- **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz).
+- **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz). Bleibt im Fenster bis ADR-025 (dann fällt ADR-015 aus dem 10er-Fenster).
 
 ---
 
@@ -766,6 +767,37 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - **Geltungsbereich über Phase 4 hinaus:** die abgeleitete Regel-019 gilt **generisch** für jede UMSETZUNG-Phase, die berührte Module von `[VORLÄUFIG]` auf `[BELASTBAR]` heben soll. Damit auch für Phase 6 (Geo + PWAs + Resilience + Retention + Export) anwendbar — keine erneute ADR-Pflicht in Phase 6.
   - **Klassifikation `[STRATEGISCH]`, nicht `[REAKTIV]`:** planmäßige Methodik-Setzung vor Phase-Start, keine Reaktion auf einen Implementierungsbug. Reaktiv-Quote bleibt 1 / 10 (Fenster wandert auf ADR-010 bis ADR-019; ADR-015 weiterhin einziger reaktiver Eintrag).
 - **Abgeleitete Regel:** Regel-019 (UMSETZUNG-Sonderregel für Modul-Beförderungs-Phasen) – siehe Teil C.
+
+---
+
+#### ADR-020: Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert
+
+- **Datum:** 2026-05-28
+- **Status:** Aktiv
+- **Tags:** `[OPERATIV]` `[STACK]` `[METHODIK]`
+- **Phasentyp-Kontext:** UMSETZUNG (Phase 4, Schritt 4.3a, Sub-Dep-Lizenz-Prüfung gemäß Regel-016 vor Aufnahme der Top-Level-Dependency `shapely`).
+- **Reifegrad-Wirkung:** Keine direkten Architektur-Beförderungen. Klärt die Lizenz-Zulässigkeit der Shapely-Aufnahme in `pyproject.toml` als Voraussetzung dafür, dass der ADR-017-Plausibility-Algorithmus mit Shapely implementiert werden kann (Schritt 4.3a).
+- **Kategorie:** Lizenz und Compliance.
+- **Kontext:**
+  - ADR-017 (Spike I) schreibt **Shapely 2.0+** als Backend-Dependency vor („Phase 4 nimmt Shapely 2.0+ als Backend-Dependency auf (BSD-3, ADR-002-kompatibel; GEOS dynamisch geladen, MIT)"). Die Lizenz-Angabe „GEOS … MIT" war faktisch falsch — GEOS ist seit Beginn LGPL-2.1.
+  - **Regel-016** (Herkunft ADR-011) fordert: Pflicht-Sub-Dependencies neuer Top-Level-Komponenten werden vor Aufnahme gegen die Erlaubt-/Ausschluss-Liste in `project-context.md` §6 geprüft.
+  - `project-context.md` §6 listet **GPL/LGPL** als Backend-Dependency ausgeschlossen ohne ADR. Aktive Ausnahme bisher: **psycopg 3 LGPL-3.0-only** durch **ADR-011** (Pflicht-Sub-Dep von `procrastinate`).
+  - Verifikation am **2026-05-28** auf offiziellen Quellen:
+    - **Shapely 2.1.2** (released 2025-09-24): **BSD 3-Clause**, Quelle [pypi.org/project/shapely](https://pypi.org/project/shapely/).
+    - **GEOS ≥ 3.9** (Pflicht-Runtime-Dep, im Binary-Wheel von Shapely mitgeliefert): **LGPL-2.1**, Quelle [libgeos.org](https://libgeos.org/) („GEOS is available under the terms of GNU Lesser General Public License (LGPL)" mit Link auf LGPL-2.1).
+    - `numpy ≥ 1.21` (Pflicht-Runtime-Dep): **BSD 3-Clause**.
+- **Optionen:**
+  - **A: Shapely + GEOS-LGPL-Ausnahme akzeptieren** (analog ADR-011 für psycopg). Geltungsbereich beschränken auf den Plausibility-/Geo-Pfad. — Konsequenzen: ADR-017 ist 1:1 umsetzbar; präzise und reproduzierbare Geometrie-Operationen; LGPL-Lizenz „verschmutzt" den extrahierbaren Umfang von `backend/geo`. Strategische Wahl gegen Cost (Lizenz-Ausnahme) zugunsten Nutzen (etablierte, geprüfte Geometrie-Bibliothek).
+  - **B: Eigenimplementierung point-to-polygon-distance in reinem Python** ohne Shapely (Closest-Point-on-Segment-Algorithmus pro Polygon-Kante, dann Minimum). — Konsequenzen: keine LGPL-Sub-Dep, keine zusätzliche externe Abhängigkeit; aber Eigenimplementierungs-Risiko bei Edge-Cases (degenerierte Polygone, exakte Vertex-Distanzen, numerische Stabilität bei sehr kleinen Polygonen). Würde ADR-017 widersprechen, das explizit Shapely vorsieht; bräuchte einen additiven ADR „Shapely-Verzicht zugunsten Eigenimplementierung".
+  - **C: Andere Geometrie-Bibliothek mit permissiver Lizenz.** Realistische Kandidaten: keine ausgereifte BSD-/MIT-Alternative mit vergleichbarer Reife. PyGEOS wurde 2022 in Shapely 2.0 zurückfusioniert; turfpy hat begrenzten Reifegrad und nutzt selbst Shapely indirekt. — Konsequenzen: kein gangbarer Kandidat ohne Re-Evaluation.
+- **Entscheidung:** **Option A** — Shapely 2.1.2 in `pyproject.toml` als Backend-Dependency aufnehmen; GEOS LGPL-2.1 ausnahmsweise akzeptiert.
+- **Konsequenzen:**
+  - **`pyproject.toml`-Eintrag:** `shapely>=2.1.2,<3` als Backend-Dep (`backend/pyproject.toml`), `Verifiziert: 2026-05-28` als Pflicht-Vermerk in `project-context.md` §3.
+  - **Geltungsbereich der LGPL-Ausnahme:** beschränkt auf den **Plausibility-/Geo-Pfad** (`backend/eb_digital/geo/plausibility.py`, `backend/eb_digital/operations/use_cases.py::PlaceOrder` als Konsument). Module ohne Geometrie-Bezug (`backend/auth`, `backend/auth_anonymous`, `backend/tenants`, `backend/catalog`, `backend/fleet`, `backend/operations`-Use-Cases ohne Plausibility-Aufruf, `backend/realtime`, `backend/resilience`, `backend/retention`, `backend/export`, `infra/tile-proxy`, `infra/reverse-proxy`) bleiben extraktions-fähig ohne LGPL-Verschmutzung.
+  - **Korrektur zu ADR-017:** Lizenz-Aussage „GEOS dynamisch geladen, MIT" wird durch ADR-020 als faktisch falsch markiert. GEOS ist LGPL-2.1 (verifiziert 2026-05-28 auf libgeos.org). Inhaltliche Spezifikation von ADR-017 (Algorithmus, Tolerance-Modell, dreistufige Konfigurations-Hierarchie) bleibt unverändert. **Folge-Edit in dieser Session:** ADR-017-Konsequenz „GEOS dynamisch geladen MIT" wird nicht inline gepatcht (ADRs sind chronologisch); ADR-020 fungiert als Lizenz-Korrektur.
+  - **Reaktiv-Quote:** ADR-020 ist `[OPERATIV]` (planmäßige Sub-Dep-Prüfung im Rahmen von Schritt 4.3a, keine Reaktion auf einen Bug). Fenster wandert auf ADR-011 bis ADR-020; ADR-015 bleibt einziger `[REAKTIV]`-Eintrag. Reaktiv-Quote bleibt 1 / 10 = 10 % unter dem 20 %-Schwellenwert (Klasse G).
+  - **Sub-Dependency-Disziplin:** Regel-016 wurde sauber durchlaufen (Top-Level-Komponente `shapely` mit ihren Pflicht-Sub-Dependencies `geos` + `numpy` gegen die Lizenz-Listen geprüft; ein Treffer auf eine ausgeschlossene Lizenz hat den ADR ausgelöst, keinen Verzicht).
+- **Abgeleitete Regel:** keine neue allgemeine Regel — Regel-016 (Sub-Dep-Lizenz-Prüfung) ist die Quell-Regel; ADR-020 ist konkrete Anwendung. Liste der akzeptierten LGPL-Ausnahmen in `project-context.md` §6 wird um Shapely/GEOS ergänzt (Pflege-Hinweis im Folge-Commit).
 
 ---
 

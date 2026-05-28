@@ -26,6 +26,16 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [ADR-ANGELEGT] ADR-020 — Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert
+
+- **Auslöser:** Sub-Task #2 (Schritt 4.3a Detail-Plan-Frage 3A) — Sub-Dep-Lizenz-Prüfung gemäß Regel-016 vor Aufnahme von Shapely als Backend-Dependency.
+- **Verifikation 2026-05-28:** [pypi.org/project/shapely](https://pypi.org/project/shapely/) liefert Shapely 2.1.2 als aktuelle Stable (released 2025-09-24), Lizenz BSD-3, Pflicht-Runtime-Deps `geos ≥ 3.9` und `numpy ≥ 1.21`. [libgeos.org](https://libgeos.org/) bestätigt GEOS-Lizenz als **LGPL-2.1**.
+- **Befund:** ADR-017 hatte „GEOS dynamisch geladen, MIT" angegeben — faktisch falsch. GEOS ist seit Beginn LGPL-2.1. ADR-020 korrigiert diese Angabe und akzeptiert die LGPL-Ausnahme im Pattern von ADR-011 (psycopg/procrastinate).
+- **Klassifikation:** `[OPERATIV]` `[STACK]` `[METHODIK]` — planmäßige Sub-Dep-Prüfung im Rahmen von Schritt 4.3a, keine Reaktion auf einen Bug. Reaktiv-Quote bleibt 1 / 10 = 10 % (Fenster wandert auf ADR-011 bis ADR-020).
+- **Geltungsbereich der LGPL-Ausnahme:** beschränkt auf `backend/eb_digital/geo/plausibility.py` und konsumierende Use-Cases in `backend/eb_digital/operations` (zentral: `PlaceOrder`). Module ohne Geometrie-Bezug bleiben extraktions-fähig.
+- **Folge-Edits in derselben Session:** `decisions.md` Teil A (ADR-020-Zeile + Reaktiv-Quote-Fenster), Teil B (ADR-020-Detailblock); `project-context.md` §3 (Verifikations-Stempel Shapely) + §6 (Aktive Ausnahmen-Liste um GEOS ergänzt).
+- **Reifegrad-Wirkung:** keine direkten Beförderungen. Klärt die Lizenz-Eingangsbedingung für die Aufnahme von Shapely in `pyproject.toml` als Voraussetzung für ADR-017-Implementation in 4.3a.
+
 ### 2026-05-28 – [SCHRITT-START] Schritt 4.3a `backend/operations` Teil 1 IN ARBEIT
 
 - **Eingangs-Disziplin (ADR-019 / Regel-019, Phase-4-Sonderregel):** Modul `backend/operations` startet `[VORLÄUFIG]`, wird durch 4.3a auf `[BELASTBAR]` befördert (ohne Bündelungs-Use-Cases — die kommen in 4.3b). Konsumierte `[BELASTBAR]`-Bestandteile geprüft: Plumbing (1.4), `backend/auth` (2.2), `backend/auth_anonymous` (2.3), `backend/tenants` + S10 (2.4), `backend/catalog` (4.1), `backend/fleet` (4.2), Regel-013/014, `get_db_session` (2.5b). Alle vorhanden.
