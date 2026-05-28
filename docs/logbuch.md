@@ -26,6 +26,19 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [SESSIONSTART] Neue Session — Vorbereitung Schritt 4.2 `backend/fleet`
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2) durchgeführt:** `project-context.md` (vollständig), `logbuch.md` (letzter SESSIONENDE-Block 2026-05-28 plus alle Einträge danach — keine späteren Einträge), `fahrplan.md` (Aktueller Stand + Phase 4 inkl. Schritte 4.1 ERLEDIGT-Block und 4.2-Stub), `architecture.md` Abschnitte 1+2+9, `decisions.md` Teil A (ADR-Übersicht inkl. ADR-019 + Reaktiv-Quote 1/10), `blockers.md` (Aktive Blocker: 0).
+- **Aufgenommener Stand:**
+  - **Phase 4** (UMSETZUNG) läuft seit 2026-05-28. **Schritt 4.1** (`backend/catalog`) ERLEDIGT 2026-05-28 — Modul + drei Tabellen + Repository + Use-Cases + Resolver + vier Rollen-API; 55 Catalog-Tests + 495 Gesamt-Tests grün; Coverage 88 %; dev-smoke.sh-Catalog-Stufe (9 Sub-Checks) E2E grün; Reifegrad `backend/catalog` → `[BELASTBAR]`, S8c + S2b neu `[BELASTBAR]`, drei Datenmodelle belastbar.
+  - **Nächster Schritt:** **4.2** `backend/fleet` (Fahrzeuge, Beladung, Versorgungs-Transporter-Modi). Fahrplan-Eintrag ist Stub (Status OFFEN, Abhängigkeiten 4.1+Phase 2). ADR-019 / Regel-019 (Phase-4-Sonderregel) gilt: Modul darf trotz `[VORLÄUFIG]`-Reifegrad starten, weil die Beförderung Output des Schritts ist.
+  - **Detail-Plan-Disziplin** wie 4.1: Designfragen mit Optionen vorlegen, Patrick-Freigabe als Buchstaben-Kombi einholen, **erst danach** Code-Eingriff.
+  - **Git-Stand (korrigiert nach `git status`-Check beim Sessionstart):** PR [#34](https://github.com/Paddel87/EB-Digital/pull/34) für `feat/4.1-backend-catalog` ist bereits **MERGED** (Merge-Commit `7f8b330` auf `main`). Der Sessionende-Vermerk „Nicht gepusht" aus dem 2026-05-28-Block war zum damaligen Zeitpunkt korrekt, ist aber zwischenzeitlich obsolet. Lokales `main` wurde via `git pull --ff-only` auf `7f8b330` gebracht; neuer Branch `feat/4.2-backend-fleet` ist von `main` abgezweigt und trägt diesen SESSIONSTART-Eintrag als ersten Commit.
+  - **Reaktiv-Quote** unverändert bei 1/10 = 10 % (Fenster ADR-010–019, ADR-019 STRATEGISCH).
+- **Aktive Blocker:** 0.
+- **Offene Stopp-Situationen:** keine.
+- **Vorgehensplan dieser Session:** (1) Sessionstart-Eintrag setzen ✅; (2) Branching-Strategie mit Patrick geklärt: Push+PR+Merge für 4.1 ✅ (PR #34 bereits gemergt vor Sessionstart); neuer Branch `feat/4.2-backend-fleet` von `main` abgezweigt ✅; (3) Detail-Plan-Vorlage für Schritt 4.2 ausarbeiten (Designfragen mit Optionen analog zu 4.1, inkl. Datenmodell-Skizze für `vehicle` + Versorgungs-Transporter-Modi, Beladungs-Buchung, S4-Skizze, Rollen-API); (4) Freigabe einholen, dann Implementierung.
+
 ### 2026-05-28 – [SESSIONENDE] Schritt 4.1 ERLEDIGT — `backend/catalog` produktiv
 
 - **Session-Dauer-Summe** seit Sessionstart 2026-05-28: ca. 8 h netto. Patrick-Direktive nach Pause-Sessionende-Eintrag: „docker ist nun verfügbar" → Migration-Sanity-Check → „API-Tests + dev-smoke.sh" → vollständiger Schritt-4.1-Abschluss in derselben Session.
