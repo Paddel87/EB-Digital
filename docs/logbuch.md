@@ -26,6 +26,38 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-05-28 – [SCHRITT-START] Schritt 4.3a `backend/operations` Teil 1 IN ARBEIT
+
+- **Eingangs-Disziplin (ADR-019 / Regel-019, Phase-4-Sonderregel):** Modul `backend/operations` startet `[VORLÄUFIG]`, wird durch 4.3a auf `[BELASTBAR]` befördert (ohne Bündelungs-Use-Cases — die kommen in 4.3b). Konsumierte `[BELASTBAR]`-Bestandteile geprüft: Plumbing (1.4), `backend/auth` (2.2), `backend/auth_anonymous` (2.3), `backend/tenants` + S10 (2.4), `backend/catalog` (4.1), `backend/fleet` (4.2), Regel-013/014, `get_db_session` (2.5b). Alle vorhanden.
+- **Detail-Plan-Disziplin (analog 4.1/4.2):** 11 Designfragen (0–10) wurden vorgelegt; Patrick-Freigabe `0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`.
+- **Aufteilung 4.3 → 4.3a + 4.3b** (Frage 0C): wegen Größe und der Tatsache, dass ADR-017 (Plausibility) und ADR-018 (Bündelung) zwei unabhängige Spike-Outputs sind. 4.3a bringt das Modul ohne Bündelung auf `[BELASTBAR]`; 4.3b ergänzt Bündelung mit additiver Migration (`order_bundle`-Tabelle + zwei nullable FK-Spalten).
+- **Geplante Reifegrad-Wirkung 4.3a:** `backend/operations` `[VORLÄUFIG]` → `[BELASTBAR]` (ausschließlich Bündelung); `backend/geo` Komponente `PlausibilityChecker` `[VORLÄUFIG]` → `[BELASTBAR]`; **S4** (Vehicle Assignment) und **I3** (Fahrzeug-Zuweisung über Einsatz-Kontext) `[VORLÄUFIG]` → `[BELASTBAR]`; **S8e** (Sub-Surface `/api/operations/*`) und **S2c** (Sub-Surface `/api/anon/{url}/order`) neu `[BELASTBAR]`; Spike-I-Bereich (Plausibility-Algorithmus) `[VORLÄUFIG]` → `[BELASTBAR]`. S3 (Event Bus) bleibt `[VORLÄUFIG]` bis 4.4 (Realtime-Konsument fehlt) — in 4.3a nur Stub-Adapter mit No-Op-Logger.
+- **Branch:** `feat/4.3-backend-operations` (von `main` nach 4.2-Merge `33df0f4` abgezweigt).
+- **Sub-Tasks** über TaskCreate angelegt (#1–#15): Doku-Vorlauf, Sub-Dep-Check (Shapely+GEOS), Migration, Modelle, PlausibilityChecker, Audit-Infrastruktur, Realtime-Stub, Repository, Use-Cases, API, Tests, Migration-Round-Trip, dev-smoke.sh-Erweiterung, Doku-Synchronisation, Schritt-Abschluss.
+
+### 2026-05-28 – [BEOBACHTUNG] Detail-Plan-Freigabe Schritt 4.3a `backend/operations` (Buchstaben-Kombi `0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`)
+
+- **Vorgehen analog Schritt 4.1/4.2:** 11 Designfragen (0–10) mit Optionen wurden vorgelegt; Patrick-Freigabe „alle Empfehlungen übernehmen" → ergibt Buchstaben-Kombi `0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`.
+- **Entscheidungen:**
+  - **0C** Scope-Aufteilung: 4.3 in **4.3a** (Operations + Orders + Plausibility + Audit-Log + Assignment + CancelOrder) + **4.3b** (Bündelung, ADR-018). Begründung: ADR-017 und ADR-018 sind zwei unabhängige Phase-3-Spike-Outputs; Bündelung ist semantisch isolierbar (eigene Entity + nullable FK-Spalten + eigener Use-Case-Cluster); zwei mittelgroße PRs statt ein riesiger; Modul-Beförderung in zwei Stufen.
+  - **1A** Datenmodell: 7 neue Tabellen + 2 additive ALTER (`tenant.plausibility_default_threshold_m`, `operation.plausibility_threshold_m`). Inkl. eigene `operation_dispatcher_participation`-Tabelle, damit `peak_active_dispatchers`-Aggregat (ADR-006) direkt ableitbar bleibt (statt Audit-Log-Aktor-Aggregation).
+  - **2A** Polygon-Storage als JSONB-GeoJSON (kein PostGIS — wäre freigabe- + ADR-pflichtige neue Abhängigkeit; ADR-017 hat explizit Shapely-App-Layer-Geometrie gewählt).
+  - **3A** Shapely 2.x als neue Backend-Dependency mit Sub-Dep-Lizenz-Prüfung (Regel-016); falls GEOS LGPL bestätigt: Mini-Folge-ADR analog ADR-011 als `[OPERATIV]` (Reaktiv-Quote bleibt unverändert).
+  - **4A** Order-Status-Maschine: `pending | needs_moderation | assigned | in_progress | completed | cancelled`. Bündelung ist `bundle_id`-Setzung ohne Status-Wechsel (ADR-018-konform).
+  - **5A** **Disponent-Manual-Assignment** in Phase 1 — Auto-Assignment-Heuristik wird auf Phase 6 (oder Spike vor Roll-out) verschoben. Vision-Punkt „automatisch" ist ohne Pilot-Daten nicht sinnvoll kalibrierbar; Disponenten-Manual ist Phase-1-pragmatisch.
+  - **6A** Realtime-Event-Publishing über Stub-Adapter (`realtime_adapter.publish(...)` als No-Op-Logger in 4.3a). In 4.4 wird die Adapter-Implementierung durch Valkey-Pub/Sub ersetzt; Aufrufstellen bleiben unverändert.
+  - **7A** Audit-Log über **expliziten Aufruf** am Ende jedes Use-Cases (kein Decorator-Magic). Konsistent mit 4.1/4.2-Stil.
+  - **8A** Anon-Order-Endpunkt `POST /api/anon/{url}/order` **in 4.3a aktiv** (Frontend-Integration kommt in 4.5). Damit ist 4.3a voll E2E im dev-smoke.sh prüfbar (kein Wartezustand bis 4.5).
+  - **9A** Rollen-Matrix Operations-API: Disponent R/W eigener Tenant via S10/Regel-014; PA R-only über alle Tenants via `?tenant_id=`-Query; Carer R + `CompleteOrder` eigener Tenant; Anon nur über `/api/anon/`-Sub-Surface S2c.
+  - **10A** Modul-Coverage `backend/operations` **≥ 90 % Lines / ≥ 80 % Branches** (project-context.md §7, kritischer Pfad). Audit-Coverage-Pflicht-Tests inkludiert.
+- **Freigabepflichtig** (CLAUDE.md §4): ja, wegen 7 neuer Tabellen + additive ALTER auf bestehenden + neue Backend-Dep Shapely. Patrick-Freigabe als ENTSCHEIDUNG-Block-Antwort gilt; ADR-Pflicht entfällt für die Designfragen analog zu 4.1/4.2 (Detail-Plan im Fahrplan dokumentiert). Shapely-Sub-Dep-Lizenz (GEOS): ggf. eigener Mini-ADR — siehe Sub-Task #2.
+- **Out-of-Scope-Vermerke:**
+  - Bündelungs-Use-Cases (BundleOrders, DissolveBundle, CompleteBundle), `order_bundle`-Tabelle, `bundle_id`-Spalten → **4.3b**.
+  - `RaiseHelpAlert`-Use-Case und Hilfe-Knopf-Pfad → Phase 5 (Spike K) + Phase 6 (UMSETZUNG).
+  - Auto-Assignment-Heuristik → Phase 6.
+  - Aggregat-Schreibung beim Operation-Ende (`backend/retention` + S5) → Phase 6.
+  - 30-Tage-Anonymisierung (`backend/retention`) → Phase 6.
+
 ### 2026-05-28 – [SESSIONSTART] Neue Session — Vorbereitung Schritt 4.3 `backend/operations`
 
 - **Sync-Schritt 0:** `git fetch origin main` + `git log HEAD..origin/main --oneline` → kein Output; lokales `main` ist bereits auf Stand (Merge-Commit `33df0f4` für 4.2-PR [#35](https://github.com/Paddel87/EB-Digital/pull/35) ist gemeinsamer HEAD). `git status` clean. Branch noch nicht abgezweigt — passiert nach Detail-Plan-Freigabe.
