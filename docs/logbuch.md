@@ -26,6 +26,15 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-06 – [SESSIONENDE] Abschluss-Session Schritt 4.3a — PR #36 abschlussbereit
+
+- **Session-Inhalt:** Parallel-Arbeit-Konflikt aufgelöst (Option A, PR #36 fortgesetzt), dann die sechs offenen Verifikations-Punkte aus dem 2026-05-28-`[SESSIONENDE]` abgearbeitet. Details siehe `[SCHRITT-ABSCHLUSS]`- und `[REIFEGRAD-WECHSEL]`-Einträge unten.
+- **Erreichter Stand:** Schritt **4.3a ERLEDIGT**. `backend/operations` `[BELASTBAR]` (ohne Bündelung). 676 Tests grün, Coverage 90,76 %, Migration-Round-Trip + dev-smoke E2E grün.
+- **Git:** Branch `feat/4.3-backend-operations` mit Abschluss-Commit `f13b89c` gepusht; **PR [#36](https://github.com/Paddel87/EB-Digital/pull/36) aus Draft → ready for review**, mergeable. **Merge steht aus (Patrick).**
+- **Offen / nächster Schritt:** PR #36 Merge durch Patrick; danach lokales `main` per `git pull --ff-only` synchronisieren. Dann **4.3b** (Bündelung, ADR-018) mit eigenem Detail-Plan-Vorlauf.
+- **README-Sync-Check (CLAUDE.md §16):** Status-Block, Architektur-Reife, Nächste-Schritte, „Letzte Änderung" auf 2026-06-06 / 4.3a ERLEDIGT synchronisiert.
+- **Methodik-Beobachtung:** ungemergte WIP-Branches müssen in `main`s Fahrplan/Logbuch sichtbar gemacht werden, sonst plant eine Folge-Session blind doppelt (heute passiert). Kandidat für `docs/methodik-feedback`.
+
 ### 2026-06-06 – [SCHRITT-ABSCHLUSS] Schritt 4.3a ERLEDIGT — Verifikation nachgezogen, PR #36 abschlussbereit
 
 - **Akzeptanzkriterien-Verifikation** (siehe `fahrplan.md` Schritt-4.3a-Verifikations-Block): alle sechs zur formalen ERLEDIGT-Markierung offenen Punkte aus dem 2026-05-28-`[SESSIONENDE]` abgearbeitet.
