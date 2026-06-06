@@ -7,13 +7,13 @@
 
 ## Aktueller Stand
 
-- **Stand vom:** 2026-05-28
+- **Stand vom:** 2026-06-06
 - **Laufende Phase:** **Phase 4 (UMSETZUNG)** läuft seit 2026-05-28. Schritte **4.1** (`backend/catalog`) und **4.2** (`backend/fleet`) **ERLEDIGT** am 2026-05-28 — 4.2 liefert fünf Tabellen (`vehicle` mit `type_mode_constraint`, `tenant_head_office` 1:1, `vehicle_loadout`+`vehicle_loadout_item` mit `exactly_one_ref`+Partial-UNIQUE-Indizes, `vehicle_loadout_history` Append-Only-Frozen-JSONB), Sub-Surface S8d (`/api/fleet/*`) mit Rollen-Matrix Disp/PA/Carer/Anon, Migration `04b8afcf67a7` Round-Trip-verifiziert, 47 Fleet-Tests + 542 Gesamt-Tests grün, Coverage 85,9 %, dev-smoke.sh-Fleet-Stufe mit 12 Sub-Checks E2E grün. Detail-Plan freigegeben 0A/1A/2A/3B/4B/5B/6A/7A/8A; Mode-Wechsel-Audit-Pflicht (ADR-008/Regel-011) wird in 4.3 durch `backend/operations`-Umhüllung erfüllt (Detail-Plan 3B). Schritt 4.1 (Catalog) lieferte drei Tabellen + Resolver-Drei-Query-Pattern; ADR-019 fixiert Phase-4-Sonderregel. Phase 3 (3.1 ERLEDIGT 2026-05-18 durch ADR-017; 3.2 ERLEDIGT 2026-05-28 durch ADR-018) **abgeschlossen**.
 - **Phasentyp:** **Phase 4** (UMSETZUNG) laufend. **Phase 3** (ERKUNDUNG) abgeschlossen.
 - **Erledigte Schritte Phase 2 (alle ERLEDIGT):** **2.7 [ERLEDIGT]** 2026-05-16 (Phase-2-Abschluss: Coverage-Frischlauf verifiziert die Modul-Schwellen aller belastbaren Module — Backend 95.84 % gesamt, `backend/auth` 96 %, `backend/auth_anonymous` 100 %, `backend/tenants` 95–100 %; Frontend-Disponent 96.61 % Lines / 93.33 % Branches, Frontend-Einsatzkraft 98.38 % Lines / 95.55 % Branches; GitHub-Issue `Paddel87/EB-Digital#26` für externe Security-Review Phase 7.2 mit Briefing-Form angelegt; keine Code-Änderung, keine ADR-Pflicht; Detail-Plan A/A/A/A/A freigegeben). **2.6 [ERLEDIGT]** 2026-05-16 (`frontend-einsatzkraft` AccessCode-Eingabe-UI produktiv gegen S2a; 47 Vitest-Tests grün). **2.5 [ERLEDIGT]** 2026-05-15 (`frontend-disponent` Login + Dashboard + Reset-Password-UI produktiv; 27 Vitest-Tests grün). **2.5b [ERLEDIGT]** 2026-05-16 (Hot-Stabilisierung `get_db_session()` als yield-Dependency mit Rollback, ADR-015, Regel-018). **2.4 [ERLEDIGT]** 2026-05-12 (`backend/tenants` produktiv mit S10). **2.3 [ERLEDIGT]** 2026-05-11 (`backend/auth_anonymous` produktiv). **2.2 [ERLEDIGT]** 2026-05-10 (Login + Cookie-Sessions + Rate-Limit produktiv, ADR-013). **2.1 [ERLEDIGT]** 2026-05-10 (Datenmodell-Skelett). Phase 1 vollständig **ERLEDIGT** (1.1–1.8).
-- **Aktiver Schritt:** keiner. Schritte **4.1** `backend/catalog` und **4.2** `backend/fleet` ERLEDIGT 2026-05-28; **4.3** `backend/operations` ist nächster.
+- **Aktiver Schritt:** keiner. **4.3a** `backend/operations` Teil 1 (Operations + Orders + Plausibility + Audit-Log + Assignment + CancelOrder) **ERLEDIGT** 2026-06-06 — 7 Tabellen (`operation_area`, `operation_dispatcher_participation`, `customer_order`, `customer_order_item`, `order_assignment` + additive Spalten `tenant.plausibility_default_threshold_m`, `operation.plausibility_threshold_m`), `PlausibilityChecker` (Shapely, ADR-017/ADR-020), 9 Use-Cases + Audit-Log, Sub-Surface S8e `/api/operations/*` + S2c `/api/anon/{url}/order`; Migration `c5e8d2f4a173` Round-Trip-verifiziert, 676 Tests grün (Modul-Coverage ≥ 90 %), dev-smoke-Operations-Stufe (13 Sub-Checks) E2E grün. Die Implementation entstand 2026-05-28, die DB-Verifikation + Test-Schicht + dev-smoke-Stufe wurden in der Abschluss-Session 2026-06-06 nachgezogen. Schritt 4.3 wurde am 2026-05-28 in **4.3a** + **4.3b** (Bündelung, ADR-018) aufgespalten (Detail-Plan-Frage 0C). Detail-Plan-Freigabe 4.3a: `0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`.
 - **Erledigte Schritte Phase 3 (alle ERLEDIGT):** **3.2 [ERLEDIGT]** 2026-05-28 — Spike J durch ADR-018 (manuell durch Disponent, eigene `order_bundle`-Entity + nullable FK-Spalten `order.bundle_id` und `order_assignment.bundle_id`, Versorgungs-Transporter `mode='large_order'` Pflicht, keine räumliche Backend-Validierung, Min-2-Orders-Constraint, `bundling_count` Aktion-Semantik plus additive ADR-006-Erweiterung `bundled_order_count`; Detail-Plan A/A/A/A/A freigegeben; 11-Eintrag-Test-Datensatz inline im ADR). **3.1 [ERLEDIGT]** 2026-05-18 — Spike I durch ADR-017 (Hülle-Distanz + dynamische GPS-Toleranz `2·accuracy_m`, 500-m-Moderationsfilter, Text-Standort als Moderation, dreistufige Konfigurations-Hierarchie). Reifegrad-Wirkung: zwei `[OFFEN]`-Bereiche in `backend/operations` und `backend/geo` (`PlausibilityChecker`) auf `[VORLÄUFIG]` befördert (3.1) plus `[OFFEN]`-Bereich „Bündelungs-Trigger" in `backend/operations` auf `[VORLÄUFIG]` (3.2). Reaktiv-Quote 1/10 = 10 % (jetzt ADR-009 bis ADR-018).
-- **Nächster Schritt:** **4.3** `backend/operations` (Operations + Orders + Audit-Log + Bündelung + Plausibilität, nutzt ADR-017 + ADR-018 als Phase-3-Outputs). Detail-Plan-Vorlage analog zur 4.1/4.2-Disziplin (Designfragen mit Optionen + Patrick-Freigabe als Buchstaben-Kombi vor Code-Eingriff). Sonder-Aspekt: Mode-Wechsel-Audit-Pflicht für `backend/fleet.UpdateSupplyTransporterMode` wird hier erfüllt (Umhüllung als `SwitchSupplyTransporterMode` mit Audit-Log-Schreibung).
+- **Nächster Schritt:** **4.3b** (Bündelung, ADR-018) mit eigenem Detail-Plan-Vorlauf, danach **4.4** (`backend/realtime`). **4.3a ERLEDIGT** 2026-06-06.
 - **Phase-3-Bilanz (Reifegrad-Beförderungen):** PlausibilityChecker in `backend/geo` und `backend/operations` `[OFFEN]` → `[VORLÄUFIG]` (3.1, ADR-017). Bündelungs-Trigger-Bereich in `backend/operations` `[OFFEN]` → `[VORLÄUFIG]` (3.2, ADR-018). Schnittstelle S4 offene Frage „Bündel-Mapping" gelöst durch ADR-018. Verbleibender `[OFFEN]`-Bereich in `backend/operations` ist nur Spike K (Hilfe-Knopf-Semantik, Phase 5), blockiert den Hilfe-Knopf-Pfad in Phase 6 — nicht Phase 4. Reaktiv-Quote 1/10 = 10 % (beide ADRs `[ERKENNTNIS]`, kein `[REAKTIV]`). Beförderungs-Pflicht (`project-context.md` §6 Methodik-Schwellenwerte) erfüllt: zwei `[OFFEN]`-Bereiche der berührten Module auf `[VORLÄUFIG]` befördert.
 - **Phase-2-Bilanz (Reifegrad-Beförderungen):** `backend/auth` → `[BELASTBAR]` (2.2), `backend/auth_anonymous` → `[BELASTBAR]` (2.3), `backend/tenants` → `[BELASTBAR]` (2.4), Request-Scoped DB-Session-Dependency → `[BELASTBAR]` (2.5b, cross-cutting). Schnittstellen: S2a, S8a, S8b → `[BELASTBAR]`; S10 → `[BELASTBAR]`. Datenmodelle: `anonymous_session` + `operation.url_token`-Widening → `[BELASTBAR]`. Invarianten I1, I2 → `[BELASTBAR]`. Frontends `frontend-disponent` und `frontend-einsatzkraft` funktional validiert (Reifegrad bleibt `[VORLÄUFIG]` bis Phase-6-Last-Test). Reaktiv-Quote 1 / 10 = 10 % (ADR-015 Hot-Stabilisierung 2.5b — unter 20 %-Schwellenwert Klasse G).
 - **Offene STOPP-Situationen:** keine.
@@ -95,7 +95,7 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 | 1     | Repository-Bootstrap & Tech-Foundations                                 | UMSETZUNG             | –                 | ERLEDIGT (1.1–1.8 erledigt 2026-05-10)                                                                                                                  |
 | 2     | Auth + Tenants + Verbund-Tauglichkeit                                   | UMSETZUNG             | –                 | ERLEDIGT (2.1+2.2 ERLEDIGT 2026-05-10, 2.3 ERLEDIGT 2026-05-11, 2.4 ERLEDIGT 2026-05-12, 2.5 ERLEDIGT 2026-05-15, 2.5b + 2.6 + 2.7 ERLEDIGT 2026-05-16) |
 | 3     | Spikes Wave 1 – Operations-Vorklärungen                                 | ERKUNDUNG             | I, J              | ERLEDIGT (3.1 ERLEDIGT 2026-05-18 / ADR-017, 3.2 ERLEDIGT 2026-05-28 / ADR-018)                                                                         |
-| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | LÄUFT (4.1 + 4.2 ERLEDIGT 2026-05-28; 4.3 nächster Schritt; ADR-019 Sonderregel)                                                                        |
+| 4     | Operations Core + Realtime + Einsatzkraft-PWA                           | UMSETZUNG             | –                 | LÄUFT (4.1 + 4.2 ERLEDIGT 2026-05-28; 4.3 in 4.3a + 4.3b aufgeteilt; 4.3a ERLEDIGT 2026-06-06; 4.3b nächster; ADR-019 Sonderregel)                      |
 | 5     | Spikes Wave 2 – Geo, Frontends, Resilience, Roll-out                    | ERKUNDUNG             | G, H, K, L, M     | OFFEN                                                                                                                                                   |
 | 6     | Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export        | UMSETZUNG             | –                 | OFFEN                                                                                                                                                   |
 | 7     | Stabilisierung, Roll-out-Vorbereitung, Validierung                      | STABILISIERUNG        | – (Roadmap N/O/P) | OFFEN                                                                                                                                                   |
@@ -1170,11 +1170,150 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
   5. ✅ `dev-smoke.sh`-Fleet-Stufe gegen den vollen Compose-Stack: **12 Sub-Checks grün** — Catalog-Kontext wiederverwendet (Tenant + Dispatcher + Base-Item + Tenant-Extension), `POST /api/fleet/vehicles` regular + supply_transporter (mit Default-Mode `off`), `POST /api/fleet/vehicles/{id}/mode` auf Transporter → 200 mit `large_order`, auf reguläres → 422, `PUT /api/fleet/vehicles/{id}/loadout` mit Base + Tenant-Extension → 200, zweites Set + History-Eintrag, `PUT/GET /api/fleet/head-office` Label-Round-Trip, `lat=91` → 422, `GET /api/fleet/vehicles` ohne Auth → 401, PA-Read mit `?tenant_id=` → 200 mit 2 Vehicles.
   6. ✅ Reifegrad-Wirkung **realisiert**: Modul `backend/fleet` `[VORLÄUFIG]` → `[BELASTBAR]` mit Datum 2026-05-28 (`architecture.md` §3 + §9). Schnittstelle S8d (`/api/fleet/*`) als neue belastbare Sub-Surface in §9 ergänzt. Fünf Datenmodelle (`vehicle`, `tenant_head_office`, `vehicle_loadout`, `vehicle_loadout_item`, `vehicle_loadout_history`) als belastbar geführt. S4 und I3 bleiben planmäßig `[VORLÄUFIG]` bis 4.3.
 
-#### 4.3: backend/operations — Operations + Orders + Audit-Log + Bündelung + Plausibilität
+#### 4.3 (aufgeteilt 2026-05-28): backend/operations in zwei Sub-Schritten 4.3a + 4.3b
+
+- **Begründung der Aufteilung (Detail-Plan-Freigabe 2026-05-28, Frage 0C):** Schritt 4.3 ist substantiell größer als 4.1/4.2 (mind. 8 neue + 2 additiv erweiterte Tabellen, ≥ 9 Use-Cases, Cross-Cutting Audit-Log, ADR-017 Plausibility und ADR-018 Bündelung als zwei unabhängige Komplexitäts-Schwerpunkte). ADR-017 und ADR-018 sind zwei unabhängige Phase-3-Spike-Outputs; die Aufteilung respektiert das. Bündelung ist semantisch isoliert (eigene Entity `order_bundle`, nullable FK-Spalten an `customer_order`/`order_assignment`, eigener Use-Case-Cluster). Modul-Beförderung in zwei Stufen: 4.3a → Modul `backend/operations` belastbar **ohne** Bündelung; 4.3b → Bündelung produktiv. Zwei mittelgroße PRs statt einem riesigen.
+
+#### 4.3a: backend/operations Teil 1 — Operations + Orders + Plausibility + Audit-Log + Assignment + CancelOrder
+
+- **Status:** ERLEDIGT (2026-06-06; Detail-Plan freigegeben 2026-05-28: 0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A)
+- **Verifikation (2026-06-06, Abschluss-Session):**
+  1. ✅ Migration `c5e8d2f4a173` Round-Trip gegen Postgres 17.9 (`upgrade head` → `downgrade -1` → `upgrade head`); `alembic check` vor und nach „No new upgrade operations detected" — ORM/Migration deckungsgleich. (Die in der Implementations-Session offen gebliebene DB-Verifikation ist damit nachgeholt.)
+  2. ✅ Test-Schicht ergänzt: `test_operations_use_cases.py`, `test_operations_api.py`, `test_operations_repository.py`, `test_operations_schemas.py`, `test_operations_audit.py` (plus bestehende `test_geo_plausibility.py`). Modul-Coverage `backend/operations` **91–100 % pro Datei** (api 91 %, use_cases 95 %, audit/exceptions/models/realtime_adapter/repository/schemas 100 %), `backend/geo/plausibility` 100 %. Gesamt-Suite **676 Tests grün**, Gesamt-Coverage 90,76 % (Detail-Plan-Frage 10A ≥ 90 % Lines / ≥ 80 % Branches erfüllt).
+  3. ✅ `ruff check`, `ruff format --check`, `mypy --strict` (57 Quelldateien), `bandit` grün.
+  4. ✅ `dev-smoke.sh`-Operations-Stufe (13 Sub-Checks, voller F2-Hard-Path) gegen Compose-Stack komplett grün: Open → AccessCode → anon `/info` active → anon `/session` → Order GPS-innen (ACCEPTED) → Order Text (MODERATION_NO_GPS) → Disponent-Order-Liste → Moderation-Approve → AssignVehicle (S4/I3) → Complete → Supply-Mode-Umhüllung (Audit) → Audit-Log-Prüfung aller Schlüssel-Aktionen → Anon-Order ohne Session 401 → Close → anon `/info` 404.
+  5. ✅ Abschluss-Fix im übernommenen Code: `OrderAssignmentOut` + `AuditLogEntryOut` um `from_attributes=True` ergänzt (ORM→Schema-`model_validate` der Assignment-/Audit-Endpunkte schlug ohne diese Konfig fehl — vom dev-smoke aufgedeckt).
+  6. ✅ Doku synchronisiert: `architecture.md` §3/§9, `README.md`, `fahrplan.md`, `logbuch.md`. ADR-020 (Shapely-Sub-Dep) bereits in der Implementations-Session angelegt.
+- **Phasentyp-Kontext:** UMSETZUNG
+- **Abhängigkeiten:** 4.1, 4.2; ADR-006, ADR-008, ADR-009, ADR-017, ADR-019 (Sonderregel)
+- **Freigabepflichtig:** ja — Datenmodelländerungen (7 neue Tabellen + additive ALTER auf 2 bestehenden); Detail-Plan vom 2026-05-28 freigegeben mit Buchstaben-Kombi 0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A; ADR-019 trägt Eingang trotz `[VORLÄUFIG]`-Modul-Reifegrad.
+- **Eingangskriterien:**
+  - Konsumierte `[BELASTBAR]`-Bestandteile: Plumbing (1.4), `backend/auth` (2.2), `backend/auth_anonymous` (2.3), `backend/tenants` + S10 (2.4), `backend/catalog` (4.1), `backend/fleet` (4.2), Regel-013/014, `get_db_session` (2.5b / ADR-015)
+  - Detail-Plan-Freigabe 2026-05-28: **0C** (Aufteilung 4.3a + 4.3b), **1A** (vollständiger Tabellen-Satz), **2A** (Polygon als JSONB-GeoJSON, kein PostGIS), **3A** (Shapely 2.x + Sub-Dep-Lizenz-Prüfung + ggf. GEOS-Folge-ADR analog ADR-011), **4A** (Order-Status `pending|needs_moderation|assigned|in_progress|completed|cancelled`), **5A** (Disponent-Manual-Assignment in Phase 1, Auto-Assignment auf Phase 6 verschoben), **6A** (Realtime-Stub-Adapter), **7A** (expliziter Audit-Log-Aufruf am Ende jedes Use-Cases), **8A** (Anon-Order-Endpunkt in 4.3a aktiv), **9A** (Rollen-Matrix Disp R/W eigener Tenant via S10 + PA R-only via `?tenant_id=` + Carer R+CompleteOrder eigener Tenant + Anon nur über `/api/anon/`), **10A** (Modul-Coverage ≥ 90 % Lines / ≥ 80 % Branches)
+- **Zu tun:**
+  - **Alembic-Migration** mit folgenden Änderungen:
+    - **ALTER** `tenant`: `plausibility_default_threshold_m INT NOT NULL DEFAULT 5000` + CHECK `50 ≤ x ≤ 50000`
+    - **ALTER** `operation`: `plausibility_threshold_m INT NULL` + CHECK `plausibility_threshold_m IS NULL OR (50 ≤ x ≤ 50000)`
+    - `operation_area(id UUID PK, operation_id FK→operation CASCADE NOT NULL, area_index INT NOT NULL, label TEXT NULL, polygon JSONB NOT NULL, audit)` mit Partial-UNIQUE `UNIQUE(operation_id, area_index)` und CHECK `polygon::TEXT LIKE '%"type":"Polygon"%'` zur Schema-Disziplin
+    - `operation_dispatcher_participation(operation_id+dispatcher_id PK, joined_at NOT NULL, left_at NULL, created_at NOT NULL)` — Teilnehmer-Tabelle pro Operation
+    - `customer_order(id UUID PK, operation_id FK→operation CASCADE NOT NULL, anonymous_session_id FK→anonymous_session SET NULL, placed_at TIMESTAMPTZ NOT NULL, status TEXT NOT NULL CHECK IN ('pending','needs_moderation','assigned','in_progress','completed','cancelled'), location_lat DOUBLE NULL, location_lng DOUBLE NULL, location_accuracy_m DOUBLE NULL, location_text TEXT NULL, plausibility_outcome TEXT NOT NULL, plausibility_distance_m DOUBLE NULL, plausibility_threshold_m INT NOT NULL, plausibility_variant TEXT NOT NULL, moderation_actor_dispatcher_id FK→dispatcher SET NULL, moderation_at TIMESTAMPTZ NULL, audit)` mit CHECK `(location_lat IS NULL) = (location_lng IS NULL)`, CHECK `location_lat IS NULL OR -90 ≤ location_lat ≤ 90`, CHECK `location_lng IS NULL OR -180 ≤ location_lng ≤ 180`, CHECK `location_text IS NOT NULL OR location_lat IS NOT NULL` (entweder Text-Standort oder GPS), Index `(operation_id, status)`
+    - `customer_order_item(id UUID PK, order_id FK→customer_order CASCADE NOT NULL, base_item_id NULL FK→catalog_item_base RESTRICT, tenant_extension_id NULL FK→catalog_item_tenant_extension RESTRICT, quantity INT NOT NULL CHECK quantity > 0, created_at)` mit CHECK `exactly_one_ref` (analog `vehicle_loadout_item` aus 4.2)
+    - `order_assignment(id UUID PK, order_id FK→customer_order CASCADE NOT NULL, vehicle_id FK→vehicle RESTRICT NOT NULL, dispatcher_id FK→dispatcher RESTRICT NOT NULL, status TEXT NOT NULL CHECK IN ('assigned','in_progress','completed','cancelled'), assigned_at TIMESTAMPTZ NOT NULL, completed_at TIMESTAMPTZ NULL, audit)` ohne `bundle_id` (kommt in 4.3b additiv), Partial-UNIQUE `UNIQUE(order_id) WHERE status IN ('assigned','in_progress')` für aktive Single-Assignment-Disziplin
+    - **`operation_audit_log` bleibt unverändert** (existiert seit 2.1 mit kompatiblem Schema; Action-Type-Whitelist erfolgt im App-Layer, nicht DB-CHECK)
+  - **Tabellenname `customer_order` statt `order`:** weil `order` SQL-reserved ist und `psql \d order` und Raw-Queries ohne Quoting brechen. Architektur-Diagramm benennt die Entity weiterhin als `Order`; der DB-Tabellenname ist `customer_order`. Dokumentiert in `architecture.md` §7 Datenmodell-Hinweis.
+  - **PlausibilityChecker** (`backend/eb_digital/geo/plausibility.py`) mit Shapely 2.x:
+    - Funktion `check_plausibility(*, location: OrderLocation, operation: Operation, areas: list[OperationArea], thresholds: PlausibilityThresholds) -> PlausibilityResult`
+    - Outcome-Enum: `ACCEPTED | MODERATION_NO_GPS | MODERATION_ACCURACY_TOO_LOW | MODERATION_OUT_OF_RANGE`
+    - Dreistufige Hierarchie: Plattform-Konstanten (Accuracy-Cutoff 500 m, Min-/Max-Threshold-Grenzen) → Tenant-Default (`tenant.plausibility_default_threshold_m`) → optionaler Operation-Override (`operation.plausibility_threshold_m`)
+    - Hülle-Distanz: Shapely-Polygon mit `shapely.geometry.Point.distance(polygon.exterior)` als Approximation, oder `polygon.distance(point)` für „Punkt innerhalb = 0".
+  - **SQLAlchemy-Modelle:** `backend/eb_digital/operations/models.py` ergänzen um `OperationArea`, `OperationDispatcherParticipation`, `CustomerOrder`, `CustomerOrderItem`, `OrderAssignment` plus Erweiterung `Operation.plausibility_threshold_m`; `backend/eb_digital/tenants/models.py` Erweiterung `Tenant.plausibility_default_threshold_m`. Pydantic-Schemas in `schemas.py`.
+  - **Repository-Layer:** `OperationRepository`, `OperationAreaRepository`, `OperationDispatcherParticipationRepository`, `CustomerOrderRepository`, `OrderAssignmentRepository`. Audit-Log-Schreiben wird über `AuditLogger` aus 2.1-Modul-Struktur erfolgen (Repository-Layer agnostisch).
+  - **Audit-Log-Infrastruktur** (`backend/eb_digital/operations/audit.py`):
+    - `AuditLogger.log(*, session, operation_id, actor_dispatcher_id, action_type, target_kind, target_id, payload)` — schreibt `OperationAuditLog` im selben Transaktions-Scope
+    - Action-Type-Whitelist als Python-Konstanten: `OPERATION_OPENED`, `OPERATION_CLOSED`, `OPERATION_AREA_CHANGED`, `ACCESS_CODE_TOGGLED`, `SUPPLY_TRANSPORTER_MODE_CHANGED`, `ORDER_PLACED`, `ORDER_ASSIGNED`, `ORDER_CANCELLED`, `ORDER_COMPLETED`, `ORDER_MODERATION_APPROVED`. Bündelungs-Aktionen kommen in 4.3b dazu.
+  - **Realtime-Stub-Adapter** (`backend/eb_digital/operations/realtime_adapter.py`):
+    - `async def publish(*, topic: str, payload: dict, tenant_scope: TenantId | None) -> None`
+    - 4.3a-Implementierung: Logger-Eintrag mit `topic`, `event_type` aus payload, `tenant_scope`. Kein WebSocket-Aufruf, kein Valkey-Pub/Sub.
+    - 4.4 ersetzt die Implementierung; Aufrufstellen in Use-Cases bleiben unverändert.
+  - **Use-Cases** (`backend/eb_digital/operations/use_cases.py`):
+    - `OpenOperation` (Disponent) — legt `Operation` (Status `planned`), `OperationTenantParticipation(role='owner')` (über `backend/tenants`-Funktion), `OperationDispatcherParticipation(self)` an; Audit-Log + Realtime-Publish
+    - `CloseOperation` (Disponent, Teilnehmer via S10) — Status `closed`, `closed_at` setzen; Audit-Log + Realtime-Publish + `realtime.publish('operation.{id}.lifecycle', {'event_type': 'closed'})`
+    - `ChangeOperationArea` (Disponent) — additiv neue `OperationArea`-Einträge anlegen oder existierende ersetzen (atomisch); Audit-Log + Realtime-Publish
+    - `ToggleAccessCode` (Disponent) — generiert neuen AccessCode + Hash, setzt `access_code_active=true|false`; Audit-Log + Realtime-Publish
+    - `SwitchSupplyTransporterMode` (Disponent) — umhüllt `backend/fleet.UpdateSupplyTransporterMode`-Use-Case (4.2 ohne Audit; 4.3 mit Audit-Log gemäß ADR-008/Regel-011); Realtime-Publish
+    - `PlaceOrder` (Anon-Session über `POST /api/anon/{url}/order`) — validiert Operation-Status `active`, ruft `PlausibilityChecker`, schreibt `CustomerOrder` mit Outcome (`pending` bei ACCEPTED, `needs_moderation` sonst), schreibt `CustomerOrderItem`; Audit-Log (kein PII-GPS, nur Outcome + Distanz + Accuracy + Threshold + Variant); Realtime-Publish `order_placed`
+    - `ApproveLowPlausibilityOrder` (Disponent über S10) — `customer_order.status` von `needs_moderation` → `pending`, setzt `moderation_actor_dispatcher_id` + `moderation_at`; Audit-Log + Realtime-Publish
+    - `AssignVehicle` (Disponent über S10) — erfüllt **S4** + **I3**: prüft `tenant_participates_in_operation(vehicle.tenant_id, order.operation_id)` (Regel-014), prüft Order-Status `pending`, prüft Vehicle aktiv, legt `OrderAssignment(status='assigned')` an, setzt Order-Status auf `assigned`; Audit-Log + Realtime-Publish
+    - `CancelOrder` (Disponent über S10) — Order-Status auf `cancelled`, falls Assignment aktiv → Assignment-Status auf `cancelled`; Audit-Log + Realtime-Publish
+    - `CompleteOrder` (Disponent ODER Carer eigener Tenant) — `OrderAssignment.status='completed'`, `Order.status='completed'`, `completed_at` setzen; Audit-Log + Realtime-Publish
+  - **API-Endpunkte in** `backend/eb_digital/operations/api.py`:
+    - Disponent eigener Tenant (über S10/Regel-014):
+      - `POST /api/operations` (OpenOperation)
+      - `GET /api/operations` (list eigener Tenant)
+      - `GET /api/operations/{id}` (Detail)
+      - `PATCH /api/operations/{id}` (ChangeOperationArea, ToggleAccessCode — Body-Felder)
+      - `POST /api/operations/{id}/close` (CloseOperation)
+      - `POST /api/operations/{id}/supply-transporter-mode` (umhüllt 4.2-Mode-Wechsel mit Audit)
+      - `GET /api/operations/{id}/orders` (Order-Liste)
+      - `GET /api/operations/{id}/orders/{order_id}` (Order-Detail)
+      - `POST /api/operations/{id}/orders/{order_id}/approve-moderated` (ApproveLowPlausibilityOrder)
+      - `POST /api/operations/{id}/orders/{order_id}/assignments` (AssignVehicle, Body `vehicle_id`)
+      - `POST /api/operations/{id}/orders/{order_id}/cancel` (CancelOrder)
+      - `POST /api/operations/{id}/orders/{order_id}/complete` (CompleteOrder)
+      - `GET /api/operations/{id}/audit-log` (Audit-Log-Stream, paginiert)
+    - Plattform-Admin (R-only via `?tenant_id=<uuid>`-Query):
+      - `GET /api/operations`, `GET /api/operations/{id}`, `GET /api/operations/{id}/orders`, `GET /api/operations/{id}/audit-log` (über alle Tenants oder gefiltert)
+    - Carer eigener Tenant (über S10):
+      - `GET /api/operations` (eigener Tenant), `GET /api/operations/{id}`, `GET /api/operations/{id}/orders`, `GET /api/operations/{id}/audit-log` (Read-only)
+      - `POST /api/operations/{id}/orders/{order_id}/complete` (Carer-Schreibrecht für Auftragsabschluss)
+    - Anon (über `/api/anon/{operation_url}/...`, eigener Sub-Surface S2c, Anon-Cookie aus 2.3):
+      - `POST /api/anon/{operation_url}/order` (PlaceOrder) — Rate-Limit IP+URL-AND, eigener Schlüsselraum `operations:ratelimit:anon_order`, Standard-Limit 5/15 min (Bestellungen sollen nicht spammable sein; großzügiger als Auth, strenger als Catalog-Read aus 4.1)
+  - **Tests** (`backend/tests/`):
+    - `test_geo_plausibility.py` — Unit-Tests gegen Spike-I-Test-Datensatz (Bremen Innenstadt + Osterdeich) inkl. accuracy-driven Outcomes
+    - `test_operations_models.py` (erweitern) — Migration + Constraint-Tests
+    - `test_operations_repositories.py` — CRUD + Tenant-Scope-Queries
+    - `test_operations_use_cases.py` — Audit-Log-Coverage-Pflicht (jeder destruktive Use-Case → genau ein Eintrag); Plausibility-Integration
+    - `test_operations_api.py` — Rollen-Matrix, Rate-Limit, Status-Codes
+    - Coverage-Override im `pyproject.toml` (oder Per-Modul-Konfiguration): `backend/eb_digital/operations` und `backend/eb_digital/geo/plausibility.py` auf 90 % Lines / 80 % Branches
+  - **dev-smoke.sh-Erweiterung:** neue Stufe „Operations-Smoke" — voller F2-Hard-Path E2E (siehe Akzeptanzkriterien), nutzt Tenants- und Catalog-Smoke-Kontext (Disponent-Cookie + Tenant), 4.2-Vehicles werden für Assignment wiederverwendet.
+  - **Doku-Updates** beim Schrittabschluss: `architecture.md` §3/§4/§5/§7/§9; `fahrplan.md` Status ERLEDIGT mit Verifikations-Block; `README.md` Status-Block + Nächste-Schritte.
+- **Akzeptanzkriterien:**
+  - `alembic upgrade head` + `alembic downgrade -1` + erneutes `upgrade head` Round-Trip-sauber; `alembic check` zweifach „No new upgrade operations detected".
+  - Disponent kann via `POST /api/operations` eine Operation mit OperationArea (Polygon) anlegen; Cross-Tenant 403; Anon 403; Carer-Schreibversuch 403.
+  - `POST /api/operations/{id}/close` als Nicht-Teilnehmer → 403; als Teilnehmer → 200, `closed_at` gesetzt.
+  - `POST /api/anon/{url}/order` mit GPS innerhalb Hülle → 201 mit `status=pending` und `plausibility_outcome=ACCEPTED`.
+  - `POST /api/anon/{url}/order` mit GPS außerhalb 5 km → 201 mit `status=needs_moderation` und `plausibility_outcome=MODERATION_OUT_OF_RANGE`.
+  - `POST /api/anon/{url}/order` ohne GPS (nur `location_text`) → 201 mit `status=needs_moderation` und `plausibility_outcome=MODERATION_NO_GPS`.
+  - `POST /api/anon/{url}/order` mit `location_accuracy_m=750` → 201 mit `status=needs_moderation` und `plausibility_outcome=MODERATION_ACCURACY_TOO_LOW`.
+  - `POST /api/operations/{id}/orders/{order_id}/approve-moderated` durch Disponent-Teilnehmer → 200, Status `pending`; durch Disponent eines fremden Tenants → 403.
+  - `POST /api/operations/{id}/orders/{order_id}/assignments` mit `vehicle_id` eines am Einsatz teilnehmenden Tenants → 201; mit Vehicle eines Nicht-Teilnehmers → 422 `VehicleNotEligible` (I3).
+  - `POST /api/operations/{id}/orders/{order_id}/cancel` durch Teilnehmer → 200, Status `cancelled`; Assignment ggf. mit-cancelled.
+  - `POST /api/operations/{id}/orders/{order_id}/complete` durch Carer eigener Tenant → 200.
+  - `GET /api/operations/{id}/audit-log` zeigt mind. einen Eintrag pro destruktivem/konfigurierendem Use-Case (Audit-Coverage-Test).
+  - `POST /api/operations/{id}/supply-transporter-mode` schreibt Audit-Log-Eintrag `supply_transporter_mode_changed` (4.2-Erfüllung 3B).
+  - Modul-Coverage `backend/operations` ≥ 90 % Lines / ≥ 80 % Branches; `backend/geo/plausibility.py` ≥ 90 % Lines / ≥ 80 % Branches.
+  - `dev-smoke.sh` Operations-Stufe grün gegen Compose-Stack.
+  - `mypy --strict`, `ruff check`, `ruff format --check`, `bandit`, `pre-commit run --all-files` alle grün.
+- **Betroffene Module:** `backend/operations` (zu befördern), `backend/geo` (PlausibilityChecker-Komponente zu befördern), `backend/tenants` (additive Spalte). Konsumenten: `backend/auth`, `backend/auth_anonymous`, `backend/catalog`, `backend/fleet`.
+- **Reifegrad-Wirkung:**
+  - `backend/operations`: `[VORLÄUFIG]` → `[BELASTBAR]` (mit Ausnahme der Bündelungs-Use-Cases, die kommen in 4.3b)
+  - `backend/geo` Komponente `PlausibilityChecker`: `[VORLÄUFIG]` → `[BELASTBAR]`
+  - Schnittstelle S4 (Vehicle Assignment): `[VORLÄUFIG]` → `[BELASTBAR]`
+  - Schnittstelle S8e (Sub-Surface `/api/operations/*`): neu, `[BELASTBAR]`
+  - Schnittstelle S2c (Sub-Surface `/api/anon/{url}/order`): neu, `[BELASTBAR]`
+  - Schnittstelle S3 (Event Bus → Realtime): bleibt `[VORLÄUFIG]` bis 4.4 (Konsument fehlt)
+  - Invariante I3 (Fahrzeug-Zuweisung über Einsatz-Kontext): `[VORLÄUFIG]` → `[BELASTBAR]`
+  - Datenmodelle `operation_area`, `operation_dispatcher_participation`, `customer_order`, `customer_order_item`, `order_assignment` (ohne `bundle_id`): neu, `[BELASTBAR]`
+  - Spike-I-Bereich (Plausibilitäts-Algorithmus) in `backend/operations` und `backend/geo`: `[VORLÄUFIG]` → `[BELASTBAR]`
+  - Spike-J-Bereich (Bündelungs-Trigger) bleibt `[VORLÄUFIG]` bis 4.3b
+- **Artefakte:**
+  - `backend/eb_digital/operations/` (`models.py` erweitert, `schemas.py`, `repository.py`, `services.py`/`use_cases.py`, `api.py`, `audit.py`, `realtime_adapter.py`, `exceptions.py`)
+  - `backend/eb_digital/geo/plausibility.py` (neu)
+  - `backend/eb_digital/tenants/models.py` (additive Spalte)
+  - `backend/migrations/versions/{hash}_add_operations_tables.py`
+  - `backend/tests/test_operations_*.py`, `backend/tests/test_geo_plausibility.py`
+  - `scripts/dev-smoke.sh` Erweiterung
+  - `docs/architecture.md` Updates (§3/§4/§5/§7/§9)
+  - `docs/decisions.md` ggf. Folge-ADR für GEOS LGPL-Ausnahme (analog ADR-011)
+  - `docs/fahrplan.md` Schritt-Status ERLEDIGT mit Verifikations-Block
+  - `docs/logbuch.md` (`[SCHRITT-START]`, ggf. `[ADR-ANGELEGT]`, `[REIFEGRAD-WECHSEL]`, `[SCHRITT-ABSCHLUSS]`)
+  - `README.md` Status-Block + Nächste-Schritte
+  - `pyproject.toml` (Shapely 2.x als Backend-Dep + Coverage-Override für `backend/eb_digital/operations`)
+- **Notizen:**
+  - **Detail-Plan-Disziplin:** 11 Designfragen (0–10) wurden am 2026-05-28 vorgelegt (siehe Logbuch `[BEOBACHTUNG]`); Patrick freigegeben als `0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`.
+  - **Tabellenname `customer_order`** statt `order` (SQL-reserved Wort) — Architektur-Diagramm-Entity bleibt „Order" benannt, DB-Name dokumentiert in `architecture.md` §7.
+  - **ADR-019** trägt die Sonderregel — `backend/operations` darf trotz `[VORLÄUFIG]` starten.
+  - **Bündelungs-Use-Cases (BundleOrders, DissolveBundle, CompleteBundle, ADR-018)** bleiben Phase 4.3b vorbehalten; in 4.3a wird `order_assignment.bundle_id` und `customer_order.bundle_id` **noch nicht angelegt** — additive Spalten kommen in der 4.3b-Migration.
+  - **Auto-Assignment-Heuristik:** Phase 1 nur Disponent-Manual (Frage 5A). Vision-Constraint „automatische Fahrzeugzuweisung" wird in Phase 6 als eigener Schritt oder Spike re-evaluiert.
+  - **Spike K (Hilfe-Knopf-Semantik):** bleibt `[OFFEN]` in `backend/operations`. `RaiseHelpAlert`-Use-Case wird **nicht** in 4.3 implementiert. Phase 5 schließt Spike K, Phase 6 implementiert den Hilfe-Knopf.
+
+#### 4.3b: backend/operations Teil 2 — Bündelung (ADR-018)
 
 - **Status:** OFFEN
 - **Phasentyp-Kontext:** UMSETZUNG
-- **Abhängigkeiten:** 4.1, 4.2; ADR-006, ADR-008, ADR-009, ADR-017, ADR-018
+- **Abhängigkeiten:** 4.3a; ADR-018
+- **Zu tun (Skizze):** Additive Migration mit `order_bundle`-Tabelle + nullable Spalten `customer_order.bundle_id` und `order_assignment.bundle_id`; `BundleOrders` / `DissolveBundle` / `CompleteBundle`-Use-Cases gemäß ADR-018 Use-Case-Vertrag + Test-Datensatz B1–B11; Audit-Action-Types `orders_bundled`/`bundle_dissolved`/`bundle_cancelled` zur Whitelist; API-Endpunkte `POST /api/operations/{id}/bundles` + `POST /api/operations/{id}/bundles/{bundle_id}/dissolve`; dev-smoke.sh-Bündel-Stufe.
+- **Detail-Plan-Disziplin:** eigene Designfragen-Vorlage zu 4.3b-Beginn (analog zu 4.3a-Disziplin) — z. B. Schema-Migrations-Reihenfolge, API-Pfad-Konvention, Test-Datensatz-Abdeckung.
 
 #### 4.4: backend/realtime — WebSocket-Hub + Pub/Sub via Valkey
 

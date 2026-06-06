@@ -26,6 +26,122 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-06 – [SESSIONENDE] Abschluss-Session Schritt 4.3a — PR #36 abschlussbereit
+
+- **Session-Inhalt:** Parallel-Arbeit-Konflikt aufgelöst (Option A, PR #36 fortgesetzt), dann die sechs offenen Verifikations-Punkte aus dem 2026-05-28-`[SESSIONENDE]` abgearbeitet. Details siehe `[SCHRITT-ABSCHLUSS]`- und `[REIFEGRAD-WECHSEL]`-Einträge unten.
+- **Erreichter Stand:** Schritt **4.3a ERLEDIGT**. `backend/operations` `[BELASTBAR]` (ohne Bündelung). 676 Tests grün, Coverage 90,76 %, Migration-Round-Trip + dev-smoke E2E grün.
+- **Git:** Branch `feat/4.3-backend-operations` mit Abschluss-Commit `f13b89c` gepusht; **PR [#36](https://github.com/Paddel87/EB-Digital/pull/36) aus Draft → ready for review**, mergeable. **Merge steht aus (Patrick).**
+- **Offen / nächster Schritt:** PR #36 Merge durch Patrick; danach lokales `main` per `git pull --ff-only` synchronisieren. Dann **4.3b** (Bündelung, ADR-018) mit eigenem Detail-Plan-Vorlauf.
+- **README-Sync-Check (CLAUDE.md §16):** Status-Block, Architektur-Reife, Nächste-Schritte, „Letzte Änderung" auf 2026-06-06 / 4.3a ERLEDIGT synchronisiert.
+- **Methodik-Beobachtung:** ungemergte WIP-Branches müssen in `main`s Fahrplan/Logbuch sichtbar gemacht werden, sonst plant eine Folge-Session blind doppelt (heute passiert). Kandidat für `docs/methodik-feedback`.
+
+### 2026-06-06 – [SCHRITT-ABSCHLUSS] Schritt 4.3a ERLEDIGT — Verifikation nachgezogen, PR #36 abschlussbereit
+
+- **Akzeptanzkriterien-Verifikation** (siehe `fahrplan.md` Schritt-4.3a-Verifikations-Block): alle sechs zur formalen ERLEDIGT-Markierung offenen Punkte aus dem 2026-05-28-`[SESSIONENDE]` abgearbeitet.
+  1. ✅ **Migration-Round-Trip** `c5e8d2f4a173` gegen Postgres 17.9 (`upgrade head` → `downgrade -1` → `upgrade head`); `alembic check` vor und nach „No new upgrade operations detected".
+  2. ✅ **Test-Schicht** ergänzt (`test_operations_use_cases.py`, `test_operations_api.py`, `test_operations_repository.py`, `test_operations_schemas.py`, `test_operations_audit.py`): Modul-Coverage `backend/operations` ≥ 90 % (api 91 %, übrige Dateien 100 %, use_cases 95 %), `geo/plausibility` 100 %. Gesamt-Suite **676 Tests grün**, Coverage 90,76 % (Detail-Plan 10A erfüllt).
+  3. ✅ `ruff`/`mypy --strict` (57 Dateien)/`bandit` grün.
+  4. ✅ **dev-smoke.sh-Operations-Stufe** (13 Sub-Checks, voller F2-Hard-Path) E2E grün.
+  5. ✅ **Reifegrad-Beförderung** (siehe [REIFEGRAD-WECHSEL]-Eintrag) + Doku-Sync (`architecture.md` §3/§9, `README.md`, `fahrplan.md`).
+- **Abschluss-Fix im übernommenen Code:** `OrderAssignmentOut` + `AuditLogEntryOut` brauchten `from_attributes=True` (ORM→Schema-`model_validate` der Assignment-/Audit-Endpunkte schlug ohne diese Konfig fehl). **Vom dev-smoke aufgedeckt** — Beleg, dass die in der Implementations-Session ausgelassene DB-/E2E-Verifikation real war.
+- **Klassifikation:** `[ERLEDIGT]` nach CLAUDE.md §9. CHANGELOG.md existiert projektweit nicht (Pre-Release-Tracking via README/Logbuch, konsistent mit 4.1/4.2).
+- **Reaktiv-Quote:** unverändert 1/10 = 10 % (kein neuer ADR; ADR-020 bereits in der Implementations-Session angelegt).
+
+### 2026-06-06 – [REIFEGRAD-WECHSEL] `backend/operations` → `[BELASTBAR]` (Schritt 4.3a, ohne Bündelung)
+
+- **`backend/operations`** `[VORLÄUFIG]` → `[BELASTBAR]` (2026-06-06, Schritt 4.3a). Verbleibend `[VORLÄUFIG]`: Bündelung (4.3b, ADR-018). Verbleibend `[OFFEN]`: Hilfe-Knopf (Spike K, Phase 5). Realtime-Publish-Port (S3) bleibt `[VORLÄUFIG]` bis 4.4 (No-Op-Stub).
+- **Mitbefördert auf `[BELASTBAR]`:** `backend/geo.PlausibilityChecker` (ADR-017, Shapely/ADR-020); Schnittstelle **S4** (Vehicle Assignment) + Invariante **I3**; Sub-Surfaces **S8e** (`/api/operations/*`) + **S2c** (`/api/anon/{url}/order`); fünf Datenmodelle (`operation_area`, `operation_dispatcher_participation`, `customer_order`, `customer_order_item`, `order_assignment`) + additive Spalten (`tenant.plausibility_default_threshold_m`, `operation.plausibility_threshold_m`). Spike-I-Bereich (Geo-Plausibilität) damit von `[VORLÄUFIG]` produktiv eingelöst.
+- **Methodik:** Beförderungs-Pflicht (`project-context.md` §6) erfüllt. Reaktiv-Quote 1/10 = 10 % (unter Schwelle Klasse G).
+
+### 2026-06-06 – [SESSIONSTART] Abschluss-Session Schritt 4.3a — PR #36 fortsetzen nach Parallel-Arbeit-Auflösung
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt; Git-Sync-Check ergab einen **unerwarteten Zustand**: ein gleichnamiger Remote-Branch `feat/4.3-backend-operations` mit offenem DRAFT-PR [#36](https://github.com/Paddel87/EB-Digital/pull/36) aus einer Vorgänger-Session (2026-05-28) existierte, war aber **nie nach `main` gemergt** und daher in `main`s Logbuch/Fahrplan unsichtbar. Diese Session hatte deshalb zunächst blind ein eigenes (schmaleres) 4.3a neu geplant und implementiert.
+- **STOPP + Entscheidung (CLAUDE.md §8 Widerspruch):** Konflikt Patrick vorgelegt (zwei parallele 4.3a-Linien). Patrick wählte **Option A** — PR #36 fortsetzen, die heutige Neu-Implementierung verwerfen. Lokaler Branch hart auf den Remote-WIP-Stand (`31f59f4`) zurückgesetzt; die ~4.000 Zeilen freigegebene Arbeit (Operations + Orders + Plausibilität + ADR-020) bleiben erhalten und werden hier nur noch verifiziert/abgeschlossen.
+- **Methodik-Lehre:** WIP-Arbeit, die nicht nach `main` gemergt ist, muss in `main`s Fahrplan/Logbuch als „in Arbeit auf Branch X" sichtbar gemacht werden, sonst plant eine Folge-Session blind doppelt. (Kandidat für `methodik-feedback`.)
+- **Nächste Aktion:** sechs offene Abschluss-Punkte des 2026-05-28-`[SESSIONENDE]` abarbeiten (Tests, Migration-Round-Trip, dev-smoke, Reifegrad, Doku, PR).
+
+### 2026-05-28 – [SESSIONENDE] Schritt 4.3a IN ARBEIT — Implementation produktiv, Verifikation offen
+
+- **Session-Dauer-Summe** seit `[SESSIONSTART]`-Eintrag 2026-05-28: ca. 5–6 h netto (Pflichtlektüre + Detail-Plan-Vorbereitung + ADR-020-Sub-Dep-Check + Implementation + Plausibility-Tests + Doku-Sync). Dritte Session des Tages nach 4.1- und 4.2-Abschluss.
+- **Bearbeitet:** **Schritt 4.3a** `backend/operations` — Operations + Orders + Plausibility + Audit-Log + Assignment + CancelOrder. Status: **IN ARBEIT** (Implementation produktiv, statische Gates grün, aber DB-Verifikation und Modul-Tests fehlen für formale ERLEDIGT-Markierung).
+- **Erreicht:**
+  - **Doku-Vorlauf:** Fahrplan-Schritt 4.3 in **4.3a + 4.3b** aufgeteilt (Frage 0C); Detail-Plan 4.3a vollständig dokumentiert mit 11 Designfragen + Freigabe-Kombi `0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`. Commits `5934608` (Fahrplan) + `89b4fc1` (SESSIONSTART).
+  - **ADR-020 angelegt:** Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert (analog ADR-011 für psycopg). Verifikation am 2026-05-28 auf pypi.org und libgeos.org. ADR-017-Lizenz-Aussage „GEOS dynamisch geladen MIT" als faktisch falsch markiert. Reaktiv-Quote bleibt 1 / 10 = 10 % (Fenster wandert auf ADR-011 bis ADR-020). Commit `afc1b65`.
+  - **Implementation (Commit `12881ad`):** 7 neue Tabellen (`operation_area`, `operation_dispatcher_participation`, `customer_order`, `customer_order_item`, `order_assignment`) + 2 additive Spalten (`tenant.plausibility_default_threshold_m`, `operation.plausibility_threshold_m`); Migration `c5e8d2f4a173` (350 Zeilen); SQLAlchemy-Modelle + Pydantic-Schemas (Polygon-Validator, OrderItem-`exactly_one_ref`, GPS-vs-Text-Constraint); 17 Domain-Exceptions; `AuditLogger` mit 10er-Action-Whitelist; `RealtimeAdapter` als No-Op-Stub (4.4 ersetzt); `PlausibilityChecker` mit Shapely 2.x, dreistufiger Konfigurations-Hierarchie und vier Outcomes (ADR-017); 6 Repository-Klassen; 9 Use-Cases (`OpenOperation`, `CloseOperation`, `ChangeOperationAreas`, `ToggleAccessCode`, `SwitchSupplyTransporterMode` umhüllt Fleet-Use-Case + erfüllt Audit-Pflicht ADR-008/Regel-011, `PlaceOrder` anonym mit Plausibility, `ApproveLowPlausibilityOrder`, `AssignVehicle` mit S4/I3, `CancelOrder`, `CompleteOrder`); 13 API-Endpunkte unter `/api/operations/*` (Sub-Surface S8e) + 1 Anon-Endpunkt `/api/anon/{url}/order` (Sub-Surface S2c) mit Rate-Limit IP+URL-AND 5/15 min; Router-Registrierung in `app.py`. Tabellenname **`customer_order`** statt `order` (SQL-reserved).
+  - **Verifikation statische Gates:** `ruff check + format` grün, `mypy --strict` für 11 Quelldateien grün (Shapely-Override für untyped-Modul akzeptiert), `bandit` 0 issues, 542 bestehende Tests grün, App boot + Route-Liste produktiv (13 Operations- + 1 Anon-Order-Endpunkt registriert).
+  - **Tests (Commit `8e5bd48`):** `test_geo_plausibility.py` mit 18 Tests — Coverage `backend/eb_digital/geo/plausibility.py` **100 % Lines / 100 % Branches**. Spike-I-Testdatensatz (Bremen Innenstadt + Osterdeich), alle Outcome-Pfade, dynamische Toleranz, Multi-Polygon-Minimum, Empty-Polygon-Edge-Case.
+  - **README synchronisiert** (Commit `b98e3e6`): Status-Block + ADR-Liste + Reaktiv-Quote-Fenster auf 4.3a IN ARBEIT.
+- **Was offen ist (für Folge-Session zur formalen ERLEDIGT-Markierung):**
+  1. **Use-Case- + API-Tests** für `backend/operations` mit Coverage ≥ 90 % Lines / ≥ 80 % Branches (Detail-Plan-Frage 10A). Pattern: Fleet-Use-Case-Tests aus 4.2 als Vorlage; sind ~300–500 Zeilen Test-Code pro Sub-Modul.
+  2. **Migration-Round-Trip + `alembic check`** gegen Compose-Stack (Postgres 17.9): `alembic upgrade head`, `alembic downgrade -1`, `alembic upgrade head` jeweils „No new upgrade operations detected" (analog 4.1/4.2-Disziplin).
+  3. **dev-smoke.sh-Operations-Stufe** (Detail-Plan-Spec im Logbuch-`[BEOBACHTUNG]`-Eintrag): voller F2-Hard-Path E2E (Operation eröffnen → Area + AccessCode → Anon-Session → Order mit GPS innerhalb/außerhalb/Text-Standort → Moderation-Approve → AssignVehicle → Carer Complete → Audit-Log-Liste prüfen → Operation closes).
+  4. **Reifegrad-Wechsel + SCHRITT-ABSCHLUSS-Eintrag**: `backend/operations` `[VORLÄUFIG]` → `[BELASTBAR]` (ohne Bündelung), `backend/geo` Komponente `PlausibilityChecker` → `[BELASTBAR]`, S4 → `[BELASTBAR]`, I3 → `[BELASTBAR]`, S8e + S2c neu `[BELASTBAR]`, 5 Datenmodelle neu `[BELASTBAR]`, Spike-I-Bereich → `[BELASTBAR]`.
+  5. **Doku-Synchronisation** (architecture.md §3/§4/§5/§7/§9, fahrplan.md Status ERLEDIGT mit Verifikations-Block, README Architektur-Reife-Block).
+  6. **PR erstellen + mergen** zum `main`. **PR-Body bereits durch SESSIONENDE-Block vorbereitet**.
+- **Reaktiv-Quote:** 1 / 10 = 10 % (unverändert; Fenster ADR-011 bis ADR-020). ADR-020 ist `[OPERATIV]` (planmäßige Sub-Dep-Prüfung im Rahmen von 4.3a).
+- **README-Sync-Check (CLAUDE.md §16 Trigger 2):** Status-Block + ADR-Liste synchronisiert (Commit `b98e3e6`). Architektur-Reife-Block bleibt mit Stand 4.2 (24 + 8 = 32 `[BELASTBAR]`) — wird in der Folge-Session beim Schritt-Abschluss aktualisiert (Modul + 5 Datenmodelle + 2 Sub-Surfaces + I3 + Plausibility-Komponente = +10 weitere `[BELASTBAR]`).
+- **Bekannter Stand:** Branch `feat/4.3-backend-operations` mit 5 Commits (`89b4fc1` Sessionstart, `5934608` Fahrplan-Detail-Plan, `afc1b65` ADR-020, `12881ad` Implementation produktiv, `8e5bd48` Plausibility-Tests, `b98e3e6` README-Sync). Lokal, **noch nicht gepusht** (push + DRAFT-PR sind die nächsten Aktionen in dieser Session vor Sessionende-Commit).
+- **Nächster Schritt:** Folge-Session öffnet das Modul `backend/operations` für die Test-Schicht + Compose-Stack-Verifikation. Detail-Plan-Vorgabe bleibt unverändert (alle 11 Designfragen schon freigegeben); kein erneuter Buchstaben-Kombi-Vorlauf nötig. Erwartetes Ende der Folge-Session: `backend/operations` `[BELASTBAR]`, PR gemergt, **dann 4.3b (Bündelung)** als nächster Detail-Plan-Vorlauf.
+
+### 2026-05-28 – [ADR-ANGELEGT] ADR-020 — Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert
+
+- **Auslöser:** Sub-Task #2 (Schritt 4.3a Detail-Plan-Frage 3A) — Sub-Dep-Lizenz-Prüfung gemäß Regel-016 vor Aufnahme von Shapely als Backend-Dependency.
+- **Verifikation 2026-05-28:** [pypi.org/project/shapely](https://pypi.org/project/shapely/) liefert Shapely 2.1.2 als aktuelle Stable (released 2025-09-24), Lizenz BSD-3, Pflicht-Runtime-Deps `geos ≥ 3.9` und `numpy ≥ 1.21`. [libgeos.org](https://libgeos.org/) bestätigt GEOS-Lizenz als **LGPL-2.1**.
+- **Befund:** ADR-017 hatte „GEOS dynamisch geladen, MIT" angegeben — faktisch falsch. GEOS ist seit Beginn LGPL-2.1. ADR-020 korrigiert diese Angabe und akzeptiert die LGPL-Ausnahme im Pattern von ADR-011 (psycopg/procrastinate).
+- **Klassifikation:** `[OPERATIV]` `[STACK]` `[METHODIK]` — planmäßige Sub-Dep-Prüfung im Rahmen von Schritt 4.3a, keine Reaktion auf einen Bug. Reaktiv-Quote bleibt 1 / 10 = 10 % (Fenster wandert auf ADR-011 bis ADR-020).
+- **Geltungsbereich der LGPL-Ausnahme:** beschränkt auf `backend/eb_digital/geo/plausibility.py` und konsumierende Use-Cases in `backend/eb_digital/operations` (zentral: `PlaceOrder`). Module ohne Geometrie-Bezug bleiben extraktions-fähig.
+- **Folge-Edits in derselben Session:** `decisions.md` Teil A (ADR-020-Zeile + Reaktiv-Quote-Fenster), Teil B (ADR-020-Detailblock); `project-context.md` §3 (Verifikations-Stempel Shapely) + §6 (Aktive Ausnahmen-Liste um GEOS ergänzt).
+- **Reifegrad-Wirkung:** keine direkten Beförderungen. Klärt die Lizenz-Eingangsbedingung für die Aufnahme von Shapely in `pyproject.toml` als Voraussetzung für ADR-017-Implementation in 4.3a.
+
+### 2026-05-28 – [SCHRITT-START] Schritt 4.3a `backend/operations` Teil 1 IN ARBEIT
+
+- **Eingangs-Disziplin (ADR-019 / Regel-019, Phase-4-Sonderregel):** Modul `backend/operations` startet `[VORLÄUFIG]`, wird durch 4.3a auf `[BELASTBAR]` befördert (ohne Bündelungs-Use-Cases — die kommen in 4.3b). Konsumierte `[BELASTBAR]`-Bestandteile geprüft: Plumbing (1.4), `backend/auth` (2.2), `backend/auth_anonymous` (2.3), `backend/tenants` + S10 (2.4), `backend/catalog` (4.1), `backend/fleet` (4.2), Regel-013/014, `get_db_session` (2.5b). Alle vorhanden.
+- **Detail-Plan-Disziplin (analog 4.1/4.2):** 11 Designfragen (0–10) wurden vorgelegt; Patrick-Freigabe `0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`.
+- **Aufteilung 4.3 → 4.3a + 4.3b** (Frage 0C): wegen Größe und der Tatsache, dass ADR-017 (Plausibility) und ADR-018 (Bündelung) zwei unabhängige Spike-Outputs sind. 4.3a bringt das Modul ohne Bündelung auf `[BELASTBAR]`; 4.3b ergänzt Bündelung mit additiver Migration (`order_bundle`-Tabelle + zwei nullable FK-Spalten).
+- **Geplante Reifegrad-Wirkung 4.3a:** `backend/operations` `[VORLÄUFIG]` → `[BELASTBAR]` (ausschließlich Bündelung); `backend/geo` Komponente `PlausibilityChecker` `[VORLÄUFIG]` → `[BELASTBAR]`; **S4** (Vehicle Assignment) und **I3** (Fahrzeug-Zuweisung über Einsatz-Kontext) `[VORLÄUFIG]` → `[BELASTBAR]`; **S8e** (Sub-Surface `/api/operations/*`) und **S2c** (Sub-Surface `/api/anon/{url}/order`) neu `[BELASTBAR]`; Spike-I-Bereich (Plausibility-Algorithmus) `[VORLÄUFIG]` → `[BELASTBAR]`. S3 (Event Bus) bleibt `[VORLÄUFIG]` bis 4.4 (Realtime-Konsument fehlt) — in 4.3a nur Stub-Adapter mit No-Op-Logger.
+- **Branch:** `feat/4.3-backend-operations` (von `main` nach 4.2-Merge `33df0f4` abgezweigt).
+- **Sub-Tasks** über TaskCreate angelegt (#1–#15): Doku-Vorlauf, Sub-Dep-Check (Shapely+GEOS), Migration, Modelle, PlausibilityChecker, Audit-Infrastruktur, Realtime-Stub, Repository, Use-Cases, API, Tests, Migration-Round-Trip, dev-smoke.sh-Erweiterung, Doku-Synchronisation, Schritt-Abschluss.
+
+### 2026-05-28 – [BEOBACHTUNG] Detail-Plan-Freigabe Schritt 4.3a `backend/operations` (Buchstaben-Kombi `0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`)
+
+- **Vorgehen analog Schritt 4.1/4.2:** 11 Designfragen (0–10) mit Optionen wurden vorgelegt; Patrick-Freigabe „alle Empfehlungen übernehmen" → ergibt Buchstaben-Kombi `0C/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`.
+- **Entscheidungen:**
+  - **0C** Scope-Aufteilung: 4.3 in **4.3a** (Operations + Orders + Plausibility + Audit-Log + Assignment + CancelOrder) + **4.3b** (Bündelung, ADR-018). Begründung: ADR-017 und ADR-018 sind zwei unabhängige Phase-3-Spike-Outputs; Bündelung ist semantisch isolierbar (eigene Entity + nullable FK-Spalten + eigener Use-Case-Cluster); zwei mittelgroße PRs statt ein riesiger; Modul-Beförderung in zwei Stufen.
+  - **1A** Datenmodell: 7 neue Tabellen + 2 additive ALTER (`tenant.plausibility_default_threshold_m`, `operation.plausibility_threshold_m`). Inkl. eigene `operation_dispatcher_participation`-Tabelle, damit `peak_active_dispatchers`-Aggregat (ADR-006) direkt ableitbar bleibt (statt Audit-Log-Aktor-Aggregation).
+  - **2A** Polygon-Storage als JSONB-GeoJSON (kein PostGIS — wäre freigabe- + ADR-pflichtige neue Abhängigkeit; ADR-017 hat explizit Shapely-App-Layer-Geometrie gewählt).
+  - **3A** Shapely 2.x als neue Backend-Dependency mit Sub-Dep-Lizenz-Prüfung (Regel-016); falls GEOS LGPL bestätigt: Mini-Folge-ADR analog ADR-011 als `[OPERATIV]` (Reaktiv-Quote bleibt unverändert).
+  - **4A** Order-Status-Maschine: `pending | needs_moderation | assigned | in_progress | completed | cancelled`. Bündelung ist `bundle_id`-Setzung ohne Status-Wechsel (ADR-018-konform).
+  - **5A** **Disponent-Manual-Assignment** in Phase 1 — Auto-Assignment-Heuristik wird auf Phase 6 (oder Spike vor Roll-out) verschoben. Vision-Punkt „automatisch" ist ohne Pilot-Daten nicht sinnvoll kalibrierbar; Disponenten-Manual ist Phase-1-pragmatisch.
+  - **6A** Realtime-Event-Publishing über Stub-Adapter (`realtime_adapter.publish(...)` als No-Op-Logger in 4.3a). In 4.4 wird die Adapter-Implementierung durch Valkey-Pub/Sub ersetzt; Aufrufstellen bleiben unverändert.
+  - **7A** Audit-Log über **expliziten Aufruf** am Ende jedes Use-Cases (kein Decorator-Magic). Konsistent mit 4.1/4.2-Stil.
+  - **8A** Anon-Order-Endpunkt `POST /api/anon/{url}/order` **in 4.3a aktiv** (Frontend-Integration kommt in 4.5). Damit ist 4.3a voll E2E im dev-smoke.sh prüfbar (kein Wartezustand bis 4.5).
+  - **9A** Rollen-Matrix Operations-API: Disponent R/W eigener Tenant via S10/Regel-014; PA R-only über alle Tenants via `?tenant_id=`-Query; Carer R + `CompleteOrder` eigener Tenant; Anon nur über `/api/anon/`-Sub-Surface S2c.
+  - **10A** Modul-Coverage `backend/operations` **≥ 90 % Lines / ≥ 80 % Branches** (project-context.md §7, kritischer Pfad). Audit-Coverage-Pflicht-Tests inkludiert.
+- **Freigabepflichtig** (CLAUDE.md §4): ja, wegen 7 neuer Tabellen + additive ALTER auf bestehenden + neue Backend-Dep Shapely. Patrick-Freigabe als ENTSCHEIDUNG-Block-Antwort gilt; ADR-Pflicht entfällt für die Designfragen analog zu 4.1/4.2 (Detail-Plan im Fahrplan dokumentiert). Shapely-Sub-Dep-Lizenz (GEOS): ggf. eigener Mini-ADR — siehe Sub-Task #2.
+- **Out-of-Scope-Vermerke:**
+  - Bündelungs-Use-Cases (BundleOrders, DissolveBundle, CompleteBundle), `order_bundle`-Tabelle, `bundle_id`-Spalten → **4.3b**.
+  - `RaiseHelpAlert`-Use-Case und Hilfe-Knopf-Pfad → Phase 5 (Spike K) + Phase 6 (UMSETZUNG).
+  - Auto-Assignment-Heuristik → Phase 6.
+  - Aggregat-Schreibung beim Operation-Ende (`backend/retention` + S5) → Phase 6.
+  - 30-Tage-Anonymisierung (`backend/retention`) → Phase 6.
+
+### 2026-05-28 – [SESSIONSTART] Neue Session — Vorbereitung Schritt 4.3 `backend/operations`
+
+- **Sync-Schritt 0:** `git fetch origin main` + `git log HEAD..origin/main --oneline` → kein Output; lokales `main` ist bereits auf Stand (Merge-Commit `33df0f4` für 4.2-PR [#35](https://github.com/Paddel87/EB-Digital/pull/35) ist gemeinsamer HEAD). `git status` clean. Branch noch nicht abgezweigt — passiert nach Detail-Plan-Freigabe.
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2) durchgeführt:**
+  - `project-context.md` vollständig (Abschnitte 1–12 inkl. Stack/Versions-Stempel, Constraints — vor allem §6 Datenschutz „30-Tage-Anonymisierung individueller Bestell- und Standortdaten" + Sicherheit „Geo-Plausibilität mit Disponenten-Moderation", Code-Standards §7 mit Modul-Coverage-Pflicht `backend/operations` ≥ 90 % Lines, §10 Repo-Regeln, §11 Triage-Stand 2026-05-07/2026-05-10/2026-05-17 inkl. Glossar).
+  - `logbuch.md` letzter `[SESSIONENDE]`-Block 2026-05-28 (4.2 ERLEDIGT) plus die umliegenden `[REIFEGRAD-WECHSEL]`-/`[SCHRITT-ABSCHLUSS]`-/`[SCHRITT-START]`-/`[BEOBACHTUNG]`-/`[SESSIONSTART]`-Einträge desselben Tages — keine späteren Einträge.
+  - `fahrplan.md` „Aktueller Stand" + Phasen-Übersicht-Tabelle + Phase 4 (Schritte 4.1 ERLEDIGT mit Voll-Verifikations-Block, 4.2 ERLEDIGT mit Voll-Verifikations-Block, 4.3 als OFFEN-Stub, 4.4–4.6 als OFFEN-Stub).
+  - `architecture.md` §1 (Überblick mit Modular-Monolith-Pattern), §2 (Modul-Karte mit Diagramm und erlaubten Beziehungen), §3 für `backend/operations` (`[VORLÄUFIG]` mit eingebetteten `[VORLÄUFIG]`/`[OFFEN]`-Bereichen) + `backend/fleet` (jetzt `[BELASTBAR]`); §4 für S3, S4, S5, S8, S9, S10 (alle relevant für 4.3); §5 Flow F2 (Hard-Path) + F3 (Audit-Log); §7 Datenmodell (ER-Diagramm + Fleet-Spezifika); §9 Reifegrad-Übersicht (alle 4.2-Zeilen `[BELASTBAR]` Stand 2026-05-28).
+  - `decisions.md` Teil A (ADR-001 bis ADR-019, Reaktiv-Quote 1/10 = 10 % über ADR-010 bis ADR-019); für 4.3 zusätzlich vertieft: ADR-006 (Aggregations-Schema), ADR-008 (Multi-Disponent + Audit-Log), ADR-009 (Verbund-Invarianten I1–I5), ADR-017 (Geo-Plausibilität), ADR-018 (Bündelung), ADR-019 (Phase-4-Sonderregel).
+  - `blockers.md` „Aktive Blocker": **0** (Stand 2026-05-10; Blocker #001 als gelöste Referenz).
+- **Aufgenommener Stand:**
+  - **Phase 4** (UMSETZUNG) läuft seit 2026-05-28. **Schritte 4.1 + 4.2 ERLEDIGT** am 2026-05-28. **Nächster Schritt 4.3:** `backend/operations` — Operations + Orders + Audit-Log + Bündelung + Plausibilität. Detail-Plan ist Stub im Fahrplan; ADR-019/Regel-019 (Phase-4-Sonderregel) gilt.
+  - **Konsumierte `[BELASTBAR]`-Bestandteile für 4.3:** Plumbing (1.4), `backend/auth` (2.2), `backend/auth_anonymous` (2.3), `backend/tenants` + S10 (2.4), `backend/catalog` (4.1), `backend/fleet` (4.2), Regel-013/014, `get_db_session` (2.5b/ADR-015).
+  - **Geplante Reifegrad-Wirkung 4.3:** `backend/operations` `[VORLÄUFIG]` → `[BELASTBAR]`. S3 (Event Bus → Realtime) bleibt `[VORLÄUFIG]` bis 4.4 (Realtime-Konsument). S4 (Vehicle Assignment) und I3 (Fahrzeug-Zuweisung über Einsatz-Kontext) → `[BELASTBAR]`. S5 (Retention Aggregat-Trigger) bleibt `[VORLÄUFIG]` bis Phase 6 (Retention). Spike-I-Bereich + Spike-J-Bereich in `backend/operations` von `[VORLÄUFIG]` (durch ADR-017/018 spezifiziert) → `[BELASTBAR]` (produktiv implementiert). Eingebetteter `[OFFEN]`-Bereich Spike K (Hilfe-Knopf-Semantik) bleibt `[OFFEN]` — Hilfe-Knopf wird in 4.3 **nicht** umgesetzt, dafür ist Spike K (Phase 5) zuständig. Spike-I-Bereich in `backend/geo` (`PlausibilityChecker`-Komponente) → `[BELASTBAR]`.
+  - **Reaktiv-Quote:** 1/10 = 10 % (Fenster ADR-010 bis ADR-019). Unverändert solange dieser Schritt keinen `[REAKTIV]`-ADR erzeugt.
+- **Nächster Arbeitsschritt in dieser Session:** Detail-Plan-Vorlage für 4.3 analog zu 4.1/4.2: Designfragen mit Optionen vorlegen, Patrick-Freigabe als Buchstaben-Kombi einholen, **erst danach** Code-Eingriff und Branch-Anlage. Sub-Tasks werden über TaskCreate erst nach Freigabe angelegt.
+
 ### 2026-05-28 – [SESSIONENDE] Schritt 4.2 ERLEDIGT — `backend/fleet` produktiv
 
 - **Session-Dauer-Summe** seit Sessionstart 2026-05-28 (zweite Session des Tages, nach 4.1-Abschluss): ca. 4 h netto. Patrick-Freigabe `0A/1A/2A/3B/4B/5B/6A/7A/8A` für 9 Designfragen analog 4.1-Disziplin; dann vollständiger Schritt-4.2-Abschluss in derselben Session.
