@@ -26,6 +26,31 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-06 – [SCHRITT-ABSCHLUSS] Schritt 4.3a ERLEDIGT — Verifikation nachgezogen, PR #36 abschlussbereit
+
+- **Akzeptanzkriterien-Verifikation** (siehe `fahrplan.md` Schritt-4.3a-Verifikations-Block): alle sechs zur formalen ERLEDIGT-Markierung offenen Punkte aus dem 2026-05-28-`[SESSIONENDE]` abgearbeitet.
+  1. ✅ **Migration-Round-Trip** `c5e8d2f4a173` gegen Postgres 17.9 (`upgrade head` → `downgrade -1` → `upgrade head`); `alembic check` vor und nach „No new upgrade operations detected".
+  2. ✅ **Test-Schicht** ergänzt (`test_operations_use_cases.py`, `test_operations_api.py`, `test_operations_repository.py`, `test_operations_schemas.py`, `test_operations_audit.py`): Modul-Coverage `backend/operations` ≥ 90 % (api 91 %, übrige Dateien 100 %, use_cases 95 %), `geo/plausibility` 100 %. Gesamt-Suite **676 Tests grün**, Coverage 90,76 % (Detail-Plan 10A erfüllt).
+  3. ✅ `ruff`/`mypy --strict` (57 Dateien)/`bandit` grün.
+  4. ✅ **dev-smoke.sh-Operations-Stufe** (13 Sub-Checks, voller F2-Hard-Path) E2E grün.
+  5. ✅ **Reifegrad-Beförderung** (siehe [REIFEGRAD-WECHSEL]-Eintrag) + Doku-Sync (`architecture.md` §3/§9, `README.md`, `fahrplan.md`).
+- **Abschluss-Fix im übernommenen Code:** `OrderAssignmentOut` + `AuditLogEntryOut` brauchten `from_attributes=True` (ORM→Schema-`model_validate` der Assignment-/Audit-Endpunkte schlug ohne diese Konfig fehl). **Vom dev-smoke aufgedeckt** — Beleg, dass die in der Implementations-Session ausgelassene DB-/E2E-Verifikation real war.
+- **Klassifikation:** `[ERLEDIGT]` nach CLAUDE.md §9. CHANGELOG.md existiert projektweit nicht (Pre-Release-Tracking via README/Logbuch, konsistent mit 4.1/4.2).
+- **Reaktiv-Quote:** unverändert 1/10 = 10 % (kein neuer ADR; ADR-020 bereits in der Implementations-Session angelegt).
+
+### 2026-06-06 – [REIFEGRAD-WECHSEL] `backend/operations` → `[BELASTBAR]` (Schritt 4.3a, ohne Bündelung)
+
+- **`backend/operations`** `[VORLÄUFIG]` → `[BELASTBAR]` (2026-06-06, Schritt 4.3a). Verbleibend `[VORLÄUFIG]`: Bündelung (4.3b, ADR-018). Verbleibend `[OFFEN]`: Hilfe-Knopf (Spike K, Phase 5). Realtime-Publish-Port (S3) bleibt `[VORLÄUFIG]` bis 4.4 (No-Op-Stub).
+- **Mitbefördert auf `[BELASTBAR]`:** `backend/geo.PlausibilityChecker` (ADR-017, Shapely/ADR-020); Schnittstelle **S4** (Vehicle Assignment) + Invariante **I3**; Sub-Surfaces **S8e** (`/api/operations/*`) + **S2c** (`/api/anon/{url}/order`); fünf Datenmodelle (`operation_area`, `operation_dispatcher_participation`, `customer_order`, `customer_order_item`, `order_assignment`) + additive Spalten (`tenant.plausibility_default_threshold_m`, `operation.plausibility_threshold_m`). Spike-I-Bereich (Geo-Plausibilität) damit von `[VORLÄUFIG]` produktiv eingelöst.
+- **Methodik:** Beförderungs-Pflicht (`project-context.md` §6) erfüllt. Reaktiv-Quote 1/10 = 10 % (unter Schwelle Klasse G).
+
+### 2026-06-06 – [SESSIONSTART] Abschluss-Session Schritt 4.3a — PR #36 fortsetzen nach Parallel-Arbeit-Auflösung
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt; Git-Sync-Check ergab einen **unerwarteten Zustand**: ein gleichnamiger Remote-Branch `feat/4.3-backend-operations` mit offenem DRAFT-PR [#36](https://github.com/Paddel87/EB-Digital/pull/36) aus einer Vorgänger-Session (2026-05-28) existierte, war aber **nie nach `main` gemergt** und daher in `main`s Logbuch/Fahrplan unsichtbar. Diese Session hatte deshalb zunächst blind ein eigenes (schmaleres) 4.3a neu geplant und implementiert.
+- **STOPP + Entscheidung (CLAUDE.md §8 Widerspruch):** Konflikt Patrick vorgelegt (zwei parallele 4.3a-Linien). Patrick wählte **Option A** — PR #36 fortsetzen, die heutige Neu-Implementierung verwerfen. Lokaler Branch hart auf den Remote-WIP-Stand (`31f59f4`) zurückgesetzt; die ~4.000 Zeilen freigegebene Arbeit (Operations + Orders + Plausibilität + ADR-020) bleiben erhalten und werden hier nur noch verifiziert/abgeschlossen.
+- **Methodik-Lehre:** WIP-Arbeit, die nicht nach `main` gemergt ist, muss in `main`s Fahrplan/Logbuch als „in Arbeit auf Branch X" sichtbar gemacht werden, sonst plant eine Folge-Session blind doppelt. (Kandidat für `methodik-feedback`.)
+- **Nächste Aktion:** sechs offene Abschluss-Punkte des 2026-05-28-`[SESSIONENDE]` abarbeiten (Tests, Migration-Round-Trip, dev-smoke, Reifegrad, Doku, PR).
+
 ### 2026-05-28 – [SESSIONENDE] Schritt 4.3a IN ARBEIT — Implementation produktiv, Verifikation offen
 
 - **Session-Dauer-Summe** seit `[SESSIONSTART]`-Eintrag 2026-05-28: ca. 5–6 h netto (Pflichtlektüre + Detail-Plan-Vorbereitung + ADR-020-Sub-Dep-Check + Implementation + Plausibility-Tests + Doku-Sync). Dritte Session des Tages nach 4.1- und 4.2-Abschluss.

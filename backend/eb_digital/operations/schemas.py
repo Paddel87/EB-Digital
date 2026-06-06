@@ -255,7 +255,7 @@ class AssignVehicleRequest(BaseModel):
 
 
 class OrderAssignmentOut(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
 
     id: uuid.UUID
     order_id: uuid.UUID
@@ -272,7 +272,7 @@ class OrderAssignmentOut(BaseModel):
 
 
 class AuditLogEntryOut(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", from_attributes=True)
 
     id: uuid.UUID
     operation_id: uuid.UUID

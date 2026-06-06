@@ -915,6 +915,182 @@ else
 	exit 1
 fi
 
+step "Operations-Smoke (Schritt 4.3a): F2-Hard-Path Open→Order→Moderation→Assign→Complete→Audit→Close"
+
+# Reuse: Catalog-Dispatcher-Cookie ($CATALOG_DISP_JAR), Base-Item
+# ($CATALOG_BASE_ID), Supply-Transporter ($FLEET_TRANSPORTER_ID) und reguläres
+# Fahrzeug ($FLEET_REGULAR_ID) aus den vorherigen Stages. Polygon: Box um
+# Bremen Innenstadt; „Innen"-Punkt liegt darin → ACCEPTED.
+OPS_POLY='{"type":"Polygon","coordinates":[[[8.79,53.07],[8.82,53.07],[8.82,53.09],[8.79,53.09],[8.79,53.07]]]}'
+
+# 1. Disponent eröffnet Operation mit Einsatzraum + AccessCode.
+ops_open=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-open.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"city_label\":\"Bremen Smoke\",\"access_code_active\":true,\"areas\":[{\"area_index\":1,\"label\":\"Innenstadt\",\"polygon\":$OPS_POLY}]}" \
+	https://localhost/api/operations)
+if [[ "$ops_open" == "201" ]]; then
+	OPS_ID=$(jq -r .id /tmp/dev-smoke-ops-open.json)
+	OPS_TOKEN=$(jq -r .url_token /tmp/dev-smoke-ops-open.json)
+	ok "POST /api/operations 201 — operation_id=$OPS_ID"
+else
+	fail "POST /api/operations Status $ops_open (body: $(cat /tmp/dev-smoke-ops-open.json))"
+	exit 1
+fi
+
+# AccessCode-Klartext über separaten Toggle holen (Open-Response liefert ihn
+# in der WIP-Variante nicht zurück — Toggle deaktiviert+aktiviert für Klartext).
+ops_code_resp=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-code.json \
+	-H 'Content-Type: application/json' \
+	-d '{"activate":true}' \
+	"https://localhost/api/operations/$OPS_ID/access-code")
+[[ "$ops_code_resp" == "200" ]] || { fail "POST access-code Status $ops_code_resp"; exit 1; }
+OPS_CODE=$(jq -r .access_code /tmp/dev-smoke-ops-code.json)
+[[ "$OPS_CODE" != "null" && -n "$OPS_CODE" ]] || { fail "AccessCode-Klartext fehlt"; exit 1; }
+ok "POST /api/operations/{id}/access-code 200 — Klartext-Code einmalig geliefert"
+
+# 2. Anon /info zeigt active.
+ops_info=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-info.json \
+	"https://localhost/api/anon/$OPS_TOKEN/info")
+[[ "$ops_info" == "200" && "$(jq -r .status /tmp/dev-smoke-ops-info.json)" == "active" ]] ||
+	{ fail "anon /info Status $ops_info (body: $(cat /tmp/dev-smoke-ops-info.json))"; exit 1; }
+ok "GET /api/anon/{token}/info 200 — status=active"
+
+# 3. Anon-Session mit Code anlegen.
+OPS_ANON_JAR=$(mktemp)
+ops_sess=$(curl --silent --insecure --max-time 10 \
+	-c "$OPS_ANON_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-sess.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"access_code\":\"$OPS_CODE\"}" \
+	"https://localhost/api/anon/$OPS_TOKEN/session")
+[[ "$ops_sess" == "201" ]] || { fail "anon /session Status $ops_sess (body: $(cat /tmp/dev-smoke-ops-sess.json))"; exit 1; }
+ok "POST /api/anon/{token}/session 201 — Anon-Cookie gesetzt"
+
+# 4. Anon-Order mit GPS innerhalb des Polygons → ACCEPTED (pending).
+ops_order_in=$(curl --silent --insecure --max-time 10 \
+	-b "$OPS_ANON_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-order-in.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"items\":[{\"base_item_id\":\"$CATALOG_BASE_ID\",\"quantity\":2}],\"location_lat\":53.08,\"location_lng\":8.80,\"location_accuracy_m\":10.0}" \
+	"https://localhost/api/anon/$OPS_TOKEN/order")
+if [[ "$ops_order_in" == "201" ]]; then
+	OPS_ORDER_OK=$(jq -r .id /tmp/dev-smoke-ops-order-in.json)
+	in_outcome=$(jq -r .plausibility_outcome /tmp/dev-smoke-ops-order-in.json)
+	[[ "$in_outcome" == "ACCEPTED" ]] || { fail "Order-GPS-innen outcome=$in_outcome (erwartet ACCEPTED)"; exit 1; }
+	ok "POST /api/anon/{token}/order (GPS innen) 201 — ACCEPTED, order_id=$OPS_ORDER_OK"
+else
+	fail "anon order (GPS innen) Status $ops_order_in (body: $(cat /tmp/dev-smoke-ops-order-in.json))"
+	exit 1
+fi
+
+# 5. Anon-Order mit Text-Standort → MODERATION_NO_GPS (needs_moderation).
+ops_order_txt=$(curl --silent --insecure --max-time 10 \
+	-b "$OPS_ANON_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-order-txt.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"items\":[{\"base_item_id\":\"$CATALOG_BASE_ID\",\"quantity\":1}],\"location_text\":\"Hauptbahnhof Nordausgang\"}" \
+	"https://localhost/api/anon/$OPS_TOKEN/order")
+if [[ "$ops_order_txt" == "201" ]]; then
+	OPS_ORDER_MOD=$(jq -r .id /tmp/dev-smoke-ops-order-txt.json)
+	txt_outcome=$(jq -r .plausibility_outcome /tmp/dev-smoke-ops-order-txt.json)
+	[[ "$txt_outcome" == "MODERATION_NO_GPS" ]] || { fail "Order-Text outcome=$txt_outcome (erwartet MODERATION_NO_GPS)"; exit 1; }
+	ok "POST /api/anon/{token}/order (Text) 201 — MODERATION_NO_GPS, order_id=$OPS_ORDER_MOD"
+else
+	fail "anon order (Text) Status $ops_order_txt (body: $(cat /tmp/dev-smoke-ops-order-txt.json))"
+	exit 1
+fi
+
+# 6. Disponent listet Orders → mindestens 2.
+ops_orders=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-orders.json \
+	"https://localhost/api/operations/$OPS_ID/orders")
+[[ "$ops_orders" == "200" && "$(jq 'length' /tmp/dev-smoke-ops-orders.json)" -ge 2 ]] ||
+	{ fail "GET orders Status $ops_orders (count $(jq 'length' /tmp/dev-smoke-ops-orders.json 2>/dev/null))"; exit 1; }
+ok "GET /api/operations/{id}/orders 200 — 2 Bestellungen sichtbar"
+
+# 7. Disponent moderiert die Text-Order frei → pending.
+ops_appr=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-appr.json \
+	-X POST "https://localhost/api/operations/$OPS_ID/orders/$OPS_ORDER_MOD/approve-moderated")
+[[ "$ops_appr" == "200" && "$(jq -r .status /tmp/dev-smoke-ops-appr.json)" == "pending" ]] ||
+	{ fail "approve-moderated Status $ops_appr (body: $(cat /tmp/dev-smoke-ops-appr.json))"; exit 1; }
+ok "POST .../approve-moderated 200 — Moderations-Order auf pending befördert"
+
+# 8. Disponent weist den Versorgungs-Transporter der ACCEPTED-Order zu.
+ops_assign=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-assign.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"vehicle_id\":\"$FLEET_TRANSPORTER_ID\"}" \
+	"https://localhost/api/operations/$OPS_ID/orders/$OPS_ORDER_OK/assignments")
+[[ "$ops_assign" == "201" ]] || { fail "assign Status $ops_assign (body: $(cat /tmp/dev-smoke-ops-assign.json))"; exit 1; }
+ok "POST .../assignments 201 — Fahrzeug zugewiesen (S4/I3)"
+
+# 9. Disponent schließt die zugewiesene Order ab.
+ops_complete=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-complete.json \
+	-X POST "https://localhost/api/operations/$OPS_ID/orders/$OPS_ORDER_OK/complete")
+[[ "$ops_complete" == "200" && "$(jq -r .status /tmp/dev-smoke-ops-complete.json)" == "completed" ]] ||
+	{ fail "complete Status $ops_complete (body: $(cat /tmp/dev-smoke-ops-complete.json))"; exit 1; }
+ok "POST .../complete 200 — Order completed"
+
+# 10. Versorgungs-Transporter-Modus über Operations-Endpoint (Audit-Pflicht ADR-008/Regel-011).
+ops_mode=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-mode.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"vehicle_id\":\"$FLEET_TRANSPORTER_ID\",\"mode\":\"mobile_supply\"}" \
+	"https://localhost/api/operations/$OPS_ID/supply-transporter-mode")
+[[ "$ops_mode" == "200" && "$(jq -r .mode /tmp/dev-smoke-ops-mode.json)" == "mobile_supply" ]] ||
+	{ fail "supply-transporter-mode Status $ops_mode (body: $(cat /tmp/dev-smoke-ops-mode.json))"; exit 1; }
+ok "POST .../supply-transporter-mode 200 — Mode=mobile_supply via Operations-Umhüllung"
+
+# 11. Audit-Log enthält die Schlüssel-Aktionen.
+ops_audit=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-audit.json \
+	"https://localhost/api/operations/$OPS_ID/audit-log")
+if [[ "$ops_audit" == "200" ]]; then
+	for action in operation_opened order_placed order_assigned order_completed supply_transporter_mode_changed; do
+		cnt=$(jq "[.[] | select(.action_type == \"$action\")] | length" /tmp/dev-smoke-ops-audit.json)
+		[[ "$cnt" -ge 1 ]] || { fail "Audit-Log: Aktion '$action' fehlt"; exit 1; }
+	done
+	ok "GET /api/operations/{id}/audit-log 200 — alle Schlüssel-Aktionen protokolliert"
+else
+	fail "GET audit-log Status $ops_audit"
+	exit 1
+fi
+
+# 12. Auth-Check: anon /order ohne Session-Cookie → 401.
+ops_order_noauth=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /dev/null \
+	-H 'Content-Type: application/json' \
+	-d "{\"items\":[{\"base_item_id\":\"$CATALOG_BASE_ID\",\"quantity\":1}],\"location_text\":\"x\"}" \
+	"https://localhost/api/anon/$OPS_TOKEN/order")
+[[ "$ops_order_noauth" == "401" ]] || { fail "anon order ohne Session Status $ops_order_noauth (erwartet 401)"; exit 1; }
+ok "POST /api/anon/{token}/order ohne Session 401 — Anon-Session-Pflicht durchgesetzt"
+
+# 13. Operation beenden → anon /info danach 404.
+ops_close=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-close.json \
+	-X POST "https://localhost/api/operations/$OPS_ID/close")
+[[ "$ops_close" == "200" && "$(jq -r .status /tmp/dev-smoke-ops-close.json)" == "closed" ]] ||
+	{ fail "close Status $ops_close (body: $(cat /tmp/dev-smoke-ops-close.json))"; exit 1; }
+ops_info_closed=$(curl --silent --insecure --max-time 10 \
+	-w '%{http_code}' -o /dev/null \
+	"https://localhost/api/anon/$OPS_TOKEN/info")
+[[ "$ops_info_closed" == "404" ]] || { fail "anon /info nach Close Status $ops_info_closed (erwartet 404)"; exit 1; }
+ok "POST /api/operations/{id}/close 200 + anon /info danach 404 — Lebenszyklus konsistent"
+
 step "Frontend-Disponent — statischer Build + Cookie-Round-Trip (Schritt 2.5)"
 
 # 1. Statischer Build der frontend-disponent-App via pnpm. Build-Fehler fallen
