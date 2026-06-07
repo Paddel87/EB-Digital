@@ -30,8 +30,8 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 - **Session-Inhalt:** Schritt 4.3b (Bündelung, ADR-018) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf, Implementation, Test-Schicht (B1–B11), Migration-Round-Trip, dev-smoke-Bündel-Stufe, Doku-Sync. Session über den Tageswechsel 2026-06-06 → 2026-06-07.
 - **Erreichter Stand:** **4.3b ERLEDIGT**. `backend/operations` jetzt **vollständig `[BELASTBAR]`** (verbleibend `[OFFEN]` nur Spike K/Hilfe-Knopf, Phase 5). 726 Tests grün, Modul-Coverage ≥ 90 % Lines / ≥ 80 % Branches; Migration `d4f1a9b8c2e6` Round-Trip + dev-smoke-Bündel-Stufe (9 Sub-Checks) grün.
-- **Git:** Branch `feat/4.3b-bundling`; Commits Doku-Vorlauf + Implementation + Verifikation/Doku-Sync. **PR + Merge stehen aus (Patrick).**
-- **Offen / nächster Schritt:** PR-Merge durch Patrick; danach lokales `main` per `git pull --ff-only` synchronisieren. Dann **4.4** (`backend/realtime` — WebSocket-Hub + Pub/Sub via Valkey, ersetzt den No-Op-Realtime-Stub-Adapter) mit eigenem Detail-Plan-Vorlauf.
+- **Git:** Branch `feat/4.3b-bundling` gepusht (Commits `b5809d7` Doku-Vorlauf, `84b303d` feat, `2341fca` test, `24b63c1` docs). **PR [#37](https://github.com/Paddel87/EB-Digital/pull/37)** eröffnet — **Merge steht aus (Patrick).**
+- **Offen / nächster Schritt:** PR #37 Merge durch Patrick; danach lokales `main` per `git pull --ff-only` synchronisieren. Dann **4.4** (`backend/realtime` — WebSocket-Hub + Pub/Sub via Valkey, ersetzt den No-Op-Realtime-Stub-Adapter) mit eigenem Detail-Plan-Vorlauf.
 - **README-Sync-Check (CLAUDE.md §16):** Status-Block, Architektur-Reife (~49 `[BELASTBAR]`, 7 `[OFFEN]`), Nächste-Schritte, „Letzte Änderung" auf 2026-06-07 / 4.3b ERLEDIGT synchronisiert.
 
 ### 2026-06-07 – [SCHRITT-ABSCHLUSS] Schritt 4.3b ERLEDIGT — Bündelung (ADR-018) verifiziert
