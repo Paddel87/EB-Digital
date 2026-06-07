@@ -85,6 +85,18 @@ ALLOWED_ASSIGNMENT_STATUS: Final[frozenset[str]] = frozenset(
     }
 )
 
+# OrderBundle-Status (ADR-018, Spike J). Bündel werden manuell vom
+# Disponenten erzeugt; ``dissolved`` macht die Bündelung rückgängig
+# (Orders zurück auf ``pending``), ``completed`` wird implizit gesetzt,
+# sobald alle gebündelten Orders abgeschlossen sind (Detail-Plan 4.3b-2A).
+# Ein ``cancelled``-Status ist Phase 1 bewusst nicht vorgesehen (4.3b-3A).
+BUNDLE_STATUS_ACTIVE: Final[str] = "active"
+BUNDLE_STATUS_COMPLETED: Final[str] = "completed"
+BUNDLE_STATUS_DISSOLVED: Final[str] = "dissolved"
+ALLOWED_BUNDLE_STATUS: Final[frozenset[str]] = frozenset(
+    {BUNDLE_STATUS_ACTIVE, BUNDLE_STATUS_COMPLETED, BUNDLE_STATUS_DISSOLVED}
+)
+
 # Plausibility-Outcome (ADR-017). Wird im ``customer_order.plausibility_outcome``
 # persistiert sowie in Audit-Log + Realtime-Payload referenziert.
 PLAUSIBILITY_ACCEPTED: Final[str] = "ACCEPTED"
@@ -344,6 +356,11 @@ class CustomerOrder(Base, TimestampMixin):
             "operation_id",
             "placed_at",
         ),
+        # Spike-J (4.3b): Lookup „Orders eines Bündels".
+        Index(
+            "ix_customer_order_bundle_id",
+            "bundle_id",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -385,6 +402,14 @@ class CustomerOrder(Base, TimestampMixin):
     )
     moderation_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
+        nullable=True,
+    )
+    # Spike-J (4.3b): nullable FK auf ``order_bundle``. ``NULL`` ⇒ Order ist
+    # nicht gebündelt. Kein ondelete-Cascade — Bündel werden nie zeilenweise
+    # gelöscht (ADR-018 / Detail-Plan 4.3b-1A).
+    bundle_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("order_bundle.id"),
         nullable=True,
     )
 
@@ -478,6 +503,10 @@ class OrderAssignment(Base, TimestampMixin):
             "ix_order_assignment_vehicle_id",
             "vehicle_id",
         ),
+        Index(
+            "ix_order_assignment_bundle_id",
+            "bundle_id",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -510,6 +539,68 @@ class OrderAssignment(Base, TimestampMixin):
         DateTime(timezone=True),
         nullable=True,
     )
+    # Spike-J (4.3b): nullable FK auf ``order_bundle``. Bei Bündel-Assignment
+    # tragen alle N Assignments dieselbe ``bundle_id`` und dasselbe
+    # ``vehicle_id`` (= Versorgungs-Transporter). ``NULL`` bei
+    # nicht-gebündelten Assignments (ADR-018 S4-Bündel-Mapping).
+    bundle_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("order_bundle.id"),
+        nullable=True,
+    )
+
+
+class OrderBundle(Base, TimestampMixin):
+    """Bündel mehrerer Bestellungen für einen Versorgungs-Transporter (ADR-018).
+
+    Großbestellungs-Modus: ein Disponent bündelt manuell ≥ 2 ``pending``-
+    Orders auf einen Versorgungs-Transporter mit ``mode='large_order'``
+    (Detail-Plan 4.3b). Jede gebündelte Order bekommt ein eigenes
+    ``OrderAssignment`` mit identischer ``bundle_id`` und identischem
+    ``vehicle_id``.
+
+    ``status`` durchläuft ``active → completed`` (implizit, wenn alle
+    Orders abgeschlossen sind) bzw. ``active → dissolved`` (Disponent löst
+    auf; Orders zurück auf ``pending``). Bündel werden nie zeilenweise
+    gelöscht — nur Status-Übergänge.
+
+    ``created_by_dispatcher_id`` ist die Audit-Spur des anlegenden
+    Disponenten (``RESTRICT``).
+    """
+
+    __tablename__ = "order_bundle"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('active', 'completed', 'dissolved')",
+            name="status_allowed",
+        ),
+        Index(
+            "ix_order_bundle_operation_id",
+            "operation_id",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    operation_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("operation.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    vehicle_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("vehicle.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    created_by_dispatcher_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("dispatcher.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    status: Mapped[str] = mapped_column(String(16), nullable=False)
 
 
 class OperationAuditLog(Base):
@@ -567,6 +658,7 @@ class OperationAuditLog(Base):
 
 __all__ = [
     "ALLOWED_ASSIGNMENT_STATUS",
+    "ALLOWED_BUNDLE_STATUS",
     "ALLOWED_OPERATION_STATUS",
     "ALLOWED_ORDER_STATUS",
     "ALLOWED_PLAUSIBILITY_OUTCOMES",
@@ -575,6 +667,9 @@ __all__ = [
     "ASSIGNMENT_STATUS_CANCELLED",
     "ASSIGNMENT_STATUS_COMPLETED",
     "ASSIGNMENT_STATUS_IN_PROGRESS",
+    "BUNDLE_STATUS_ACTIVE",
+    "BUNDLE_STATUS_COMPLETED",
+    "BUNDLE_STATUS_DISSOLVED",
     "OPERATION_STATUS_ACTIVE",
     "OPERATION_STATUS_CLOSED",
     "OPERATION_STATUS_PLANNED",
@@ -596,4 +691,5 @@ __all__ = [
     "OperationAuditLog",
     "OperationDispatcherParticipation",
     "OrderAssignment",
+    "OrderBundle",
 ]

@@ -5,8 +5,14 @@ Cases (Detail-Plan 4.3a-Frage 7A) — kein Decorator-Magic. Audit-Schreiben
 läuft im selben Transaktions-Scope wie der Use-Case-Effekt.
 
 Die Action-Type-Whitelist wird hier als ``Final[str]``-Konstanten gepflegt;
-4.3b erweitert das Vokabular um die Bündelungs-Aktionen
-(``orders_bundled``, ``bundle_dissolved``, ``bundle_cancelled``).
+4.3b erweitert das Vokabular um die produktiven Bündelungs-Aktionen
+(``orders_bundled``, ``bundle_dissolved``, ``bundle_completed``). ADR-018
+nannte zusätzlich ``bundle_cancelled``; das wird in 4.3b **nicht** produziert
+(Detail-Plan 4.3b-3A: kein CancelBundle in Phase 1, Dissolve-first-Workflow)
+und daher bewusst nicht in die Whitelist aufgenommen — der „unbekannte
+Aktion = Bug"-Guard bleibt damit scharf. ``bundle_completed`` ist eine
+additive Ergänzung zu ADR-018s illustrativer Aufzählung (Regel-011 deckt
+das Audit-Muster, kein neuer ADR).
 """
 
 from __future__ import annotations
@@ -31,6 +37,11 @@ ACTION_ORDER_ASSIGNED: Final[str] = "order_assigned"
 ACTION_ORDER_CANCELLED: Final[str] = "order_cancelled"
 ACTION_ORDER_COMPLETED: Final[str] = "order_completed"
 
+# Bündelungs-Aktionen (Schritt 4.3b, ADR-018).
+ACTION_ORDERS_BUNDLED: Final[str] = "orders_bundled"
+ACTION_BUNDLE_DISSOLVED: Final[str] = "bundle_dissolved"
+ACTION_BUNDLE_COMPLETED: Final[str] = "bundle_completed"
+
 ALLOWED_ACTION_TYPES_4_3A: Final[frozenset[str]] = frozenset(
     {
         ACTION_OPERATION_OPENED,
@@ -46,12 +57,22 @@ ALLOWED_ACTION_TYPES_4_3A: Final[frozenset[str]] = frozenset(
     }
 )
 
+# Whitelist ab Schritt 4.3b: 4.3a-Vokabular plus Bündelungs-Aktionen.
+ALLOWED_ACTION_TYPES_4_3B: Final[frozenset[str]] = ALLOWED_ACTION_TYPES_4_3A | frozenset(
+    {
+        ACTION_ORDERS_BUNDLED,
+        ACTION_BUNDLE_DISSOLVED,
+        ACTION_BUNDLE_COMPLETED,
+    }
+)
+
 # Target-Kind-Whitelist. Convention aus ADR-008: bei Operation-Level-
 # Aktionen ist ``target_id = operation_id`` und ``target_kind = 'operation'``.
 TARGET_OPERATION: Final[str] = "operation"
 TARGET_OPERATION_AREA: Final[str] = "operation_area"
 TARGET_ORDER: Final[str] = "customer_order"
 TARGET_VEHICLE: Final[str] = "vehicle"
+TARGET_BUNDLE: Final[str] = "order_bundle"
 
 
 class AuditLogger:
@@ -66,7 +87,7 @@ class AuditLogger:
     kein Daten-Bug, und wird hart abgewiesen.
     """
 
-    def __init__(self, *, allowed_actions: frozenset[str] = ALLOWED_ACTION_TYPES_4_3A) -> None:
+    def __init__(self, *, allowed_actions: frozenset[str] = ALLOWED_ACTION_TYPES_4_3B) -> None:
         self._allowed_actions = allowed_actions
 
     async def log(
@@ -105,9 +126,12 @@ class AuditLogger:
 
 __all__ = [
     "ACTION_ACCESS_CODE_TOGGLED",
+    "ACTION_BUNDLE_COMPLETED",
+    "ACTION_BUNDLE_DISSOLVED",
     "ACTION_OPERATION_AREA_CHANGED",
     "ACTION_OPERATION_CLOSED",
     "ACTION_OPERATION_OPENED",
+    "ACTION_ORDERS_BUNDLED",
     "ACTION_ORDER_ASSIGNED",
     "ACTION_ORDER_CANCELLED",
     "ACTION_ORDER_COMPLETED",
@@ -115,6 +139,8 @@ __all__ = [
     "ACTION_ORDER_PLACED",
     "ACTION_SUPPLY_TRANSPORTER_MODE_CHANGED",
     "ALLOWED_ACTION_TYPES_4_3A",
+    "ALLOWED_ACTION_TYPES_4_3B",
+    "TARGET_BUNDLE",
     "TARGET_OPERATION",
     "TARGET_OPERATION_AREA",
     "TARGET_ORDER",
