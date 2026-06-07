@@ -34,12 +34,18 @@ from eb_digital.operations import api as ops_api
 from eb_digital.operations import use_cases as uc
 from eb_digital.operations.exceptions import (
     AnonymousSessionInvalidError,
+    BundleNotActiveError,
+    BundleNotFoundError,
+    MinimumTwoOrdersError,
     NotParticipantError,
     OperationAlreadyClosedError,
     OperationNotFoundError,
+    OrderAlreadyBundledError,
+    OrderInActiveBundleError,
     OrderNotInModerationError,
     OrderNotPendingError,
     VehicleNotEligibleError,
+    VehicleNotInLargeOrderModeError,
 )
 from eb_digital.operations.models import (
     OPERATION_STATUS_ACTIVE,
@@ -52,6 +58,7 @@ from eb_digital.operations.repository import (
     OperationAreaRepository,
     OperationAuditLogRepository,
     OperationRepository,
+    OrderBundleRepository,
 )
 
 _GEOMETRY: dict[str, Any] = {
@@ -181,9 +188,24 @@ def make_client(monkeypatch: pytest.MonkeyPatch, fake_valkey: fakeredis.aioredis
         )
         monkeypatch.setattr(CustomerOrderRepository, "items_for_order", AsyncMock(return_value=[]))
         monkeypatch.setattr(
+            CustomerOrderRepository,
+            "list_for_bundle",
+            AsyncMock(return_value=behavior.get("bundle_orders_list", [])),
+        )
+        monkeypatch.setattr(
             OperationAuditLogRepository,
             "list_for_operation",
             AsyncMock(return_value=behavior.get("audit_entries", [])),
+        )
+        monkeypatch.setattr(
+            OrderBundleRepository,
+            "find_by_id",
+            AsyncMock(return_value=behavior.get("bundle")),
+        )
+        monkeypatch.setattr(
+            OrderBundleRepository,
+            "list_for_operation",
+            AsyncMock(return_value=behavior.get("bundles_list", [])),
         )
 
         # Use-Case-Stubs (Resultat oder Exception)
@@ -209,6 +231,8 @@ def make_client(monkeypatch: pytest.MonkeyPatch, fake_valkey: fakeredis.aioredis
             "cancel_order",
             "complete_order",
             "place_order",
+            "bundle_orders",
+            "dissolve_bundle",
         ):
             monkeypatch.setattr(uc, name, _uc_stub(name))
 
@@ -774,3 +798,242 @@ def test_anon_order_happy_201(make_client: Any) -> None:
         r = client.post(f"/api/anon/{op.url_token}/order", json=_anon_payload())
     assert r.status_code == 201
     assert r.json()["plausibility_outcome"] == PLAUSIBILITY_ACCEPTED
+
+
+# ─── Bündelung (S8e, Schritt 4.3b) ─────────────────────────────────────────────
+
+
+def _bundle_ns(*, operation_id: uuid.UUID, status: str = "active") -> Any:
+    return SimpleNamespace(
+        id=uuid.uuid4(),
+        operation_id=operation_id,
+        vehicle_id=uuid.uuid4(),
+        created_by_dispatcher_id=uuid.uuid4(),
+        status=status,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+    )
+
+
+def test_create_bundle_without_auth_401(make_client: Any) -> None:
+    with make_client({}) as client:
+        r = client.post(
+            f"/api/operations/{uuid.uuid4()}/bundles",
+            json={
+                "order_ids": [str(uuid.uuid4()), str(uuid.uuid4())],
+                "vehicle_id": str(uuid.uuid4()),
+            },
+        )
+    assert r.status_code == 401
+
+
+def test_create_bundle_as_carer_403(make_client: Any) -> None:
+    with make_client({"subjects": {"c": _subject(kind=KIND_CARER, username="c")}}) as client:
+        _login(client, username="c")
+        r = client.post(
+            f"/api/operations/{uuid.uuid4()}/bundles",
+            json={
+                "order_ids": [str(uuid.uuid4()), str(uuid.uuid4())],
+                "vehicle_id": str(uuid.uuid4()),
+            },
+        )
+    assert r.status_code == 403
+
+
+def test_create_bundle_happy_201(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    bundle = _bundle_ns(operation_id=op.id)
+    orders = [_order_ns(operation_id=op.id), _order_ns(operation_id=op.id)]
+    behavior = {
+        "subjects": {"d": disp},
+        "use_case_result": {"bundle_orders": bundle},
+        "bundle_orders_list": orders,
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.post(
+            f"/api/operations/{op.id}/bundles",
+            json={
+                "order_ids": [str(o.id) for o in orders],
+                "vehicle_id": str(bundle.vehicle_id),
+            },
+        )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["status"] == "active"
+    assert len(body["order_ids"]) == 2
+
+
+def test_create_bundle_minimum_two_422(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    behavior = {
+        "subjects": {"d": disp},
+        "use_case_result": {"bundle_orders": MinimumTwoOrdersError("min 2")},
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.post(
+            f"/api/operations/{op.id}/bundles",
+            json={"order_ids": [str(uuid.uuid4())], "vehicle_id": str(uuid.uuid4())},
+        )
+    assert r.status_code == 422
+
+
+def test_create_bundle_wrong_mode_422(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    behavior = {
+        "subjects": {"d": disp},
+        "use_case_result": {"bundle_orders": VehicleNotInLargeOrderModeError("mode")},
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.post(
+            f"/api/operations/{op.id}/bundles",
+            json={
+                "order_ids": [str(uuid.uuid4()), str(uuid.uuid4())],
+                "vehicle_id": str(uuid.uuid4()),
+            },
+        )
+    assert r.status_code == 422
+
+
+def test_create_bundle_already_bundled_422(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    behavior = {
+        "subjects": {"d": disp},
+        "use_case_result": {"bundle_orders": OrderAlreadyBundledError("dup")},
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.post(
+            f"/api/operations/{op.id}/bundles",
+            json={
+                "order_ids": [str(uuid.uuid4()), str(uuid.uuid4())],
+                "vehicle_id": str(uuid.uuid4()),
+            },
+        )
+    assert r.status_code == 422
+
+
+def test_dissolve_bundle_happy_200(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    bundle = _bundle_ns(operation_id=op.id, status="dissolved")
+    behavior = {
+        "subjects": {"d": disp},
+        "use_case_result": {"dissolve_bundle": bundle},
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.post(f"/api/operations/{op.id}/bundles/{bundle.id}/dissolve")
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "dissolved"
+
+
+def test_dissolve_bundle_not_found_404(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    behavior = {
+        "subjects": {"d": disp},
+        "use_case_result": {"dissolve_bundle": BundleNotFoundError("nope")},
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.post(f"/api/operations/{uuid.uuid4()}/bundles/{uuid.uuid4()}/dissolve")
+    assert r.status_code == 404
+
+
+def test_dissolve_bundle_not_active_409(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    behavior = {
+        "subjects": {"d": disp},
+        "use_case_result": {"dissolve_bundle": BundleNotActiveError("done")},
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.post(f"/api/operations/{uuid.uuid4()}/bundles/{uuid.uuid4()}/dissolve")
+    assert r.status_code == 409
+
+
+def test_cancel_order_in_active_bundle_409(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    behavior = {
+        "subjects": {"d": disp},
+        "use_case_result": {"cancel_order": OrderInActiveBundleError("locked")},
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.post(f"/api/operations/{op.id}/orders/{uuid.uuid4()}/cancel")
+    assert r.status_code == 409
+
+
+def test_list_bundles_as_dispatcher_200(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    bundle = _bundle_ns(operation_id=op.id)
+    behavior = {
+        "subjects": {"d": disp},
+        "operation": op,
+        "owner_tenant_id": disp.tenant_id,
+        "bundles_list": [bundle],
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.get(f"/api/operations/{op.id}/bundles")
+    assert r.status_code == 200, r.text
+    assert len(r.json()) == 1
+
+
+def test_list_bundles_foreign_tenant_403(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    behavior = {
+        "subjects": {"d": disp},
+        "operation": op,
+        "owner_tenant_id": uuid.uuid4(),  # fremder Tenant
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.get(f"/api/operations/{op.id}/bundles")
+    assert r.status_code == 403
+
+
+def test_get_bundle_detail_200(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    bundle = _bundle_ns(operation_id=op.id)
+    behavior = {
+        "subjects": {"d": disp},
+        "bundle": bundle,
+        "owner_tenant_id": disp.tenant_id,
+    }
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.get(f"/api/operations/{op.id}/bundles/{bundle.id}")
+    assert r.status_code == 200, r.text
+    assert r.json()["id"] == str(bundle.id)
+
+
+def test_get_bundle_detail_not_found_404(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    behavior = {"subjects": {"d": disp}, "bundle": None}
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.get(f"/api/operations/{op.id}/bundles/{uuid.uuid4()}")
+    assert r.status_code == 404
+
+
+def test_get_bundle_detail_wrong_operation_404(make_client: Any) -> None:
+    disp = _subject(kind=KIND_DISPATCHER, username="d")
+    op = _operation()
+    bundle = _bundle_ns(operation_id=uuid.uuid4())  # andere Operation
+    behavior = {"subjects": {"d": disp}, "bundle": bundle, "owner_tenant_id": disp.tenant_id}
+    with make_client(behavior) as client:
+        _login(client, username="d")
+        r = client.get(f"/api/operations/{op.id}/bundles/{bundle.id}")
+    assert r.status_code == 404

@@ -99,15 +99,59 @@ class InvalidLocationError(OperationsError):
     weder GPS noch Text)."""
 
 
+# ─── Bündelung (Schritt 4.3b, ADR-018) ───────────────────────────────────
+
+
+class MinimumTwoOrdersError(OperationsError):
+    """422 — Bündel braucht mindestens 2 Orders (ADR-018 B6)."""
+
+
+class EmptyBundleError(OperationsError):
+    """422 — Bündel mit leerer Order-Liste (ADR-018 B7)."""
+
+
+class VehicleNotInLargeOrderModeError(OperationsError):
+    """422 — Versorgungs-Transporter, aber ``mode != 'large_order'``
+    (ADR-018 B2)."""
+
+
+class OrderNotInOperationError(OperationsError):
+    """422 — Order gehört zu einer anderen Operation als der Bündel-
+    Operation (ADR-018 B5)."""
+
+
+class OrderAlreadyBundledError(OperationsError):
+    """422 — Order ist bereits Teil eines Bündels (``bundle_id IS NOT NULL``,
+    ADR-018 B4)."""
+
+
+class OrderInActiveBundleError(OperationsError):
+    """409 — Einzel-Order-Storno in einem aktiven Bündel ist Phase 1 nicht
+    erlaubt (Detail-Plan 4.3b-3A / ADR-018 §705). Bündel zuerst auflösen
+    (``DissolveBundle``)."""
+
+
+class BundleNotFoundError(OperationsError):
+    """404 — Bündel existiert nicht oder gehört zu anderer Operation."""
+
+
+class BundleNotActiveError(OperationsError):
+    """409 — Aktion (Auflösen) verlangt Bündel-Status ``active``."""
+
+
 __all__ = [
     "AnonymousSessionInvalidError",
     "AnonymousSessionOperationMismatchError",
+    "BundleNotActiveError",
+    "BundleNotFoundError",
     "CarerNotEligibleError",
     "CatalogItemNotAvailableError",
     "CrossTenantExtensionError",
+    "EmptyBundleError",
     "EmptyOrderError",
     "InvalidLocationError",
     "InvalidPolygonError",
+    "MinimumTwoOrdersError",
     "NotParticipantError",
     "OperationAlreadyClosedError",
     "OperationAreaNotFoundError",
@@ -115,10 +159,14 @@ __all__ = [
     "OperationNotFoundError",
     "OperationsError",
     "OrderAlreadyAssignedError",
+    "OrderAlreadyBundledError",
+    "OrderInActiveBundleError",
     "OrderNotAssignedError",
     "OrderNotFoundError",
     "OrderNotInModerationError",
+    "OrderNotInOperationError",
     "OrderNotPendingError",
     "VehicleNotEligibleError",
     "VehicleNotFoundError",
+    "VehicleNotInLargeOrderModeError",
 ]

@@ -11,10 +11,12 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from eb_digital.operations.models import (
+    BUNDLE_STATUS_ACTIVE,
+    BUNDLE_STATUS_COMPLETED,
     CustomerOrder,
     CustomerOrderItem,
     Operation,
@@ -22,6 +24,7 @@ from eb_digital.operations.models import (
     OperationAuditLog,
     OperationDispatcherParticipation,
     OrderAssignment,
+    OrderBundle,
 )
 from eb_digital.tenants.models import (
     PARTICIPATION_ROLE_OWNER,
@@ -225,6 +228,20 @@ class CustomerOrderRepository:
         return list(result.scalars().all())
 
     @staticmethod
+    async def find_by_ids(session: AsyncSession, order_ids: list[uuid.UUID]) -> list[CustomerOrder]:
+        if not order_ids:
+            return []
+        result = await session.execute(select(CustomerOrder).where(CustomerOrder.id.in_(order_ids)))
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def list_for_bundle(session: AsyncSession, bundle_id: uuid.UUID) -> list[CustomerOrder]:
+        result = await session.execute(
+            select(CustomerOrder).where(CustomerOrder.bundle_id == bundle_id)
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
     async def add_item(
         session: AsyncSession,
         *,
@@ -252,16 +269,25 @@ class OrderAssignmentRepository:
         order_id: uuid.UUID,
         vehicle_id: uuid.UUID,
         dispatcher_id: uuid.UUID,
+        bundle_id: uuid.UUID | None = None,
     ) -> OrderAssignment:
         assignment = OrderAssignment(
             order_id=order_id,
             vehicle_id=vehicle_id,
             dispatcher_id=dispatcher_id,
             status="assigned",
+            bundle_id=bundle_id,
         )
         session.add(assignment)
         await session.flush()
         return assignment
+
+    @staticmethod
+    async def list_for_bundle(session: AsyncSession, bundle_id: uuid.UUID) -> list[OrderAssignment]:
+        result = await session.execute(
+            select(OrderAssignment).where(OrderAssignment.bundle_id == bundle_id)
+        )
+        return list(result.scalars().all())
 
     @staticmethod
     async def find_active_for_order(
@@ -285,6 +311,75 @@ class OrderAssignmentRepository:
             .where(CustomerOrder.operation_id == operation_id)
         )
         return list(result.scalars().all())
+
+
+class OrderBundleRepository:
+    @staticmethod
+    async def create(
+        session: AsyncSession,
+        *,
+        operation_id: uuid.UUID,
+        vehicle_id: uuid.UUID,
+        created_by_dispatcher_id: uuid.UUID,
+    ) -> OrderBundle:
+        bundle = OrderBundle(
+            operation_id=operation_id,
+            vehicle_id=vehicle_id,
+            created_by_dispatcher_id=created_by_dispatcher_id,
+            status=BUNDLE_STATUS_ACTIVE,
+        )
+        session.add(bundle)
+        await session.flush()
+        return bundle
+
+    @staticmethod
+    async def find_by_id(session: AsyncSession, bundle_id: uuid.UUID) -> OrderBundle | None:
+        return await session.get(OrderBundle, bundle_id)
+
+    @staticmethod
+    async def list_for_operation(
+        session: AsyncSession, operation_id: uuid.UUID
+    ) -> list[OrderBundle]:
+        result = await session.execute(
+            select(OrderBundle)
+            .where(OrderBundle.operation_id == operation_id)
+            .order_by(OrderBundle.created_at.desc())
+        )
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def count_for_operation(
+        session: AsyncSession, operation_id: uuid.UUID
+    ) -> tuple[int, int]:
+        """Liefert ``(bundling_count, bundled_order_count)`` für das ADR-006-
+        Aggregat (additive Spike-J-Erweiterung, ADR-018 §708).
+
+        ``bundling_count`` = Anzahl ``order_bundle`` mit Status
+        ``active``/``completed`` (``dissolved`` zählt nicht). ``bundled_order_count``
+        = Summe der ``customer_order`` über diese gezählten Bündel.
+
+        Die produktive Aggregat-Schema-Migration kommt erst in Phase 6.5;
+        diese Funktion liefert die Zähl-Logik vorab (Detail-Plan 4.3b-6A)
+        und wird durch B10/B11 verifiziert.
+        """
+        counted_statuses = (BUNDLE_STATUS_ACTIVE, BUNDLE_STATUS_COMPLETED)
+        bundling_count_result = await session.execute(
+            select(func.count(OrderBundle.id)).where(
+                OrderBundle.operation_id == operation_id,
+                OrderBundle.status.in_(counted_statuses),
+            )
+        )
+        bundling_count = int(bundling_count_result.scalar_one())
+        bundled_order_count_result = await session.execute(
+            select(func.count(CustomerOrder.id))
+            .join(OrderBundle, OrderBundle.id == CustomerOrder.bundle_id)
+            .where(
+                OrderBundle.operation_id == operation_id,
+                OrderBundle.status.in_(counted_statuses),
+            )
+        )
+        bundled_order_count = int(bundled_order_count_result.scalar_one())
+        return bundling_count, bundled_order_count
 
 
 class OperationAuditLogRepository:
@@ -311,4 +406,5 @@ __all__ = [
     "OperationDispatcherParticipationRepository",
     "OperationRepository",
     "OrderAssignmentRepository",
+    "OrderBundleRepository",
 ]

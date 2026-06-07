@@ -26,9 +26,16 @@ from eb_digital.auth_anonymous.access_code import generate_access_code, hash_acc
 from eb_digital.auth_anonymous.tokens import generate_url_token
 from eb_digital.catalog import repositories as catalog_repo
 from eb_digital.fleet import repositories as fleet_repo
-from eb_digital.fleet.models import Vehicle
+from eb_digital.fleet.models import (
+    SUPPLY_MODE_LARGE_ORDER,
+    VEHICLE_TYPE_SUPPLY_TRANSPORTER,
+    Vehicle,
+)
 from eb_digital.fleet.use_cases import (
     VehicleNotFoundError as FleetVehicleNotFoundError,
+)
+from eb_digital.fleet.use_cases import (
+    VehicleNotSupplyTransporterError,
 )
 from eb_digital.fleet.use_cases import (
     update_supply_transporter_mode as fleet_update_supply_transporter_mode,
@@ -43,6 +50,8 @@ from eb_digital.geo.plausibility import (
 from eb_digital.operations import models as ops_models
 from eb_digital.operations.audit import (
     ACTION_ACCESS_CODE_TOGGLED,
+    ACTION_BUNDLE_COMPLETED,
+    ACTION_BUNDLE_DISSOLVED,
     ACTION_OPERATION_AREA_CHANGED,
     ACTION_OPERATION_CLOSED,
     ACTION_OPERATION_OPENED,
@@ -51,7 +60,9 @@ from eb_digital.operations.audit import (
     ACTION_ORDER_COMPLETED,
     ACTION_ORDER_MODERATION_APPROVED,
     ACTION_ORDER_PLACED,
+    ACTION_ORDERS_BUNDLED,
     ACTION_SUPPLY_TRANSPORTER_MODE_CHANGED,
+    TARGET_BUNDLE,
     TARGET_OPERATION,
     TARGET_OPERATION_AREA,
     TARGET_ORDER,
@@ -61,20 +72,28 @@ from eb_digital.operations.audit import (
 from eb_digital.operations.exceptions import (
     AnonymousSessionInvalidError,
     AnonymousSessionOperationMismatchError,
+    BundleNotActiveError,
+    BundleNotFoundError,
     CatalogItemNotAvailableError,
     CrossTenantExtensionError,
+    EmptyBundleError,
     EmptyOrderError,
+    MinimumTwoOrdersError,
     NotParticipantError,
     OperationAlreadyClosedError,
     OperationNotActiveError,
     OperationNotFoundError,
     OrderAlreadyAssignedError,
+    OrderAlreadyBundledError,
+    OrderInActiveBundleError,
     OrderNotAssignedError,
     OrderNotFoundError,
     OrderNotInModerationError,
+    OrderNotInOperationError,
     OrderNotPendingError,
     VehicleNotEligibleError,
     VehicleNotFoundError,
+    VehicleNotInLargeOrderModeError,
 )
 from eb_digital.operations.realtime_adapter import RealtimeAdapter
 from eb_digital.operations.repository import (
@@ -83,6 +102,7 @@ from eb_digital.operations.repository import (
     OperationDispatcherParticipationRepository,
     OperationRepository,
     OrderAssignmentRepository,
+    OrderBundleRepository,
 )
 from eb_digital.settings import get_settings
 from eb_digital.tenants.models import (
@@ -107,6 +127,10 @@ def _topic_assignment(operation_id: uuid.UUID) -> str:
 
 def _topic_audit_log(operation_id: uuid.UUID) -> str:
     return f"operation.{operation_id}.audit_log"
+
+
+def _topic_bundle(operation_id: uuid.UUID) -> str:
+    return f"operation.{operation_id}.bundle"
 
 
 async def _require_tenant_participates(
@@ -724,6 +748,12 @@ async def cancel_order(
     order = await CustomerOrderRepository.find_by_id(session, order_id)
     if order is None or order.operation_id != operation_id:
         raise OrderNotFoundError(str(order_id))
+    # Einzel-Order-Storno in aktivem Bündel ist Phase 1 nicht erlaubt
+    # (Detail-Plan 4.3b-3A / ADR-018 §705) — Bündel zuerst auflösen.
+    if order.bundle_id is not None:
+        bundle = await OrderBundleRepository.find_by_id(session, order.bundle_id)
+        if bundle is not None and bundle.status == ops_models.BUNDLE_STATUS_ACTIVE:
+            raise OrderInActiveBundleError(str(order_id))
     if order.status in (
         ops_models.ORDER_STATUS_COMPLETED,
         ops_models.ORDER_STATUS_CANCELLED,
@@ -818,17 +848,262 @@ async def complete_order(
         },
         tenant_scope=tenant_id,
     )
+
+    # Implizite Bündel-Vervollständigung (Detail-Plan 4.3b-2A): wenn die
+    # abgeschlossene Order Teil eines aktiven Bündels ist und nun alle
+    # Geschwister-Orders abgeschlossen sind → Bündel auf ``completed``.
+    if order.bundle_id is not None:
+        await _maybe_complete_bundle(
+            session=session,
+            operation_id=operation_id,
+            bundle_id=order.bundle_id,
+            actor_dispatcher_id=actor_dispatcher_id,
+            tenant_id=tenant_id,
+            audit_logger=audit_logger,
+            realtime=realtime,
+        )
     return order
+
+
+async def _maybe_complete_bundle(
+    *,
+    session: AsyncSession,
+    operation_id: uuid.UUID,
+    bundle_id: uuid.UUID,
+    actor_dispatcher_id: uuid.UUID | None,
+    tenant_id: uuid.UUID,
+    audit_logger: AuditLogger,
+    realtime: RealtimeAdapter,
+) -> None:
+    bundle = await OrderBundleRepository.find_by_id(session, bundle_id)
+    if bundle is None or bundle.status != ops_models.BUNDLE_STATUS_ACTIVE:
+        return
+    bundle_orders = await CustomerOrderRepository.list_for_bundle(session, bundle_id)
+    if not bundle_orders or any(
+        o.status != ops_models.ORDER_STATUS_COMPLETED for o in bundle_orders
+    ):
+        return
+
+    bundle.status = ops_models.BUNDLE_STATUS_COMPLETED
+    await session.flush()
+
+    await audit_logger.log(
+        session=session,
+        operation_id=operation_id,
+        actor_dispatcher_id=actor_dispatcher_id,
+        action_type=ACTION_BUNDLE_COMPLETED,
+        target_kind=TARGET_BUNDLE,
+        target_id=bundle.id,
+        payload={"order_count": len(bundle_orders)},
+    )
+    await realtime.publish(
+        topic=_topic_bundle(operation_id),
+        payload={
+            "event_type": "bundle_completed",
+            "bundle_id": str(bundle.id),
+        },
+        tenant_scope=tenant_id,
+    )
+
+
+# ─── BundleOrders (ADR-018) ──────────────────────────────────────────────
+
+
+async def bundle_orders(
+    *,
+    session: AsyncSession,
+    operation_id: uuid.UUID,
+    order_ids: list[uuid.UUID],
+    vehicle_id: uuid.UUID,
+    dispatcher_id: uuid.UUID,
+    tenant_id: uuid.UUID,
+    audit_logger: AuditLogger,
+    realtime: RealtimeAdapter,
+) -> ops_models.OrderBundle:
+    """Bündelt ≥ 2 ``pending``-Orders auf einen Versorgungs-Transporter im
+    ``large_order``-Modus (ADR-018 Use-Case-Vertrag).
+
+    Schritte (ADR-018 §662-688):
+      (1) Berechtigung: Tenant nimmt am Einsatz teil (Regel-014).
+      (2) Minimum-Constraint: ≥ 2 (eindeutige) Orders.
+      (3) Vehicle-Validierung: Versorgungs-Transporter mit ``mode='large_order'``,
+          dessen Tenant teilnimmt (I3).
+      (4) Order-Validierung: alle gehören zur Operation, Status ``pending``,
+          noch nicht gebündelt.
+      (5) Erzeuge ``OrderBundle(active)``, setze ``bundle_id`` + Status
+          ``assigned`` für alle Orders.
+      (6) Erzeuge N ``OrderAssignment`` (eines pro Order) mit identischer
+          ``bundle_id`` und identischem ``vehicle_id``.
+      (7) Audit-Log ``orders_bundled``.
+      (8) Realtime-Publish ``operation.{op}.bundle``.
+    """
+    operation = await OperationRepository.find_by_id(session, operation_id)
+    if operation is None:
+        raise OperationNotFoundError(str(operation_id))
+    await _require_tenant_participates(session, tenant_id=tenant_id, operation_id=operation_id)
+    if operation.status == ops_models.OPERATION_STATUS_CLOSED:
+        raise OperationAlreadyClosedError(str(operation_id))
+
+    # (2) Minimum-Constraint auf eindeutigen IDs.
+    if not order_ids:
+        raise EmptyBundleError("Bundle needs at least one order")
+    unique_order_ids = list(dict.fromkeys(order_ids))
+    if len(unique_order_ids) < 2:
+        raise MinimumTwoOrdersError("Bundle needs at least 2 distinct orders")
+
+    # (3) Vehicle-Validierung.
+    vehicle = await fleet_repo.find_vehicle_by_id(session, vehicle_id)
+    if vehicle is None:
+        raise VehicleNotFoundError(str(vehicle_id))
+    if vehicle.type != VEHICLE_TYPE_SUPPLY_TRANSPORTER:
+        raise VehicleNotSupplyTransporterError(vehicle_id)
+    if vehicle.mode != SUPPLY_MODE_LARGE_ORDER:
+        raise VehicleNotInLargeOrderModeError(str(vehicle_id))
+    vehicle_tenant_participates = await tenant_participates_in_operation(
+        session, tenant_id=vehicle.tenant_id, operation_id=operation_id
+    )
+    if not vehicle_tenant_participates:
+        raise VehicleNotEligibleError(str(vehicle_id))
+
+    # (4) Order-Validierung.
+    orders = await CustomerOrderRepository.find_by_ids(session, unique_order_ids)
+    orders_by_id = {o.id: o for o in orders}
+    for oid in unique_order_ids:
+        order = orders_by_id.get(oid)
+        if order is None:
+            raise OrderNotFoundError(str(oid))
+        if order.operation_id != operation_id:
+            raise OrderNotInOperationError(str(oid))
+        if order.bundle_id is not None:
+            raise OrderAlreadyBundledError(str(oid))
+        if order.status != ops_models.ORDER_STATUS_PENDING:
+            raise OrderNotPendingError(str(oid))
+
+    # (5) Bündel anlegen, Orders zuordnen.
+    bundle = await OrderBundleRepository.create(
+        session,
+        operation_id=operation_id,
+        vehicle_id=vehicle_id,
+        created_by_dispatcher_id=dispatcher_id,
+    )
+    for oid in unique_order_ids:
+        order = orders_by_id[oid]
+        order.bundle_id = bundle.id
+        order.status = ops_models.ORDER_STATUS_ASSIGNED
+        # (6) Ein Assignment pro Order mit gemeinsamer bundle_id + VT.
+        await OrderAssignmentRepository.create(
+            session,
+            order_id=oid,
+            vehicle_id=vehicle_id,
+            dispatcher_id=dispatcher_id,
+            bundle_id=bundle.id,
+        )
+    await session.flush()
+
+    # (7) Audit-Log.
+    await audit_logger.log(
+        session=session,
+        operation_id=operation_id,
+        actor_dispatcher_id=dispatcher_id,
+        action_type=ACTION_ORDERS_BUNDLED,
+        target_kind=TARGET_BUNDLE,
+        target_id=bundle.id,
+        payload={
+            "bundle_id": str(bundle.id),
+            "order_ids": [str(oid) for oid in unique_order_ids],
+            "vehicle_id": str(vehicle_id),
+        },
+    )
+    # (8) Realtime-Publish.
+    await realtime.publish(
+        topic=_topic_bundle(operation_id),
+        payload={
+            "event_type": "orders_bundled",
+            "bundle_id": str(bundle.id),
+            "order_count": len(unique_order_ids),
+            "vehicle_id": str(vehicle_id),
+        },
+        tenant_scope=tenant_id,
+    )
+    return bundle
+
+
+# ─── DissolveBundle (ADR-018) ────────────────────────────────────────────
+
+
+async def dissolve_bundle(
+    *,
+    session: AsyncSession,
+    operation_id: uuid.UUID,
+    bundle_id: uuid.UUID,
+    dispatcher_id: uuid.UUID,
+    tenant_id: uuid.UUID,
+    audit_logger: AuditLogger,
+    realtime: RealtimeAdapter,
+) -> ops_models.OrderBundle:
+    """Löst ein aktives Bündel auf (ADR-018 §703).
+
+    Aktive Assignments des Bündels → ``cancelled``; gebündelte Orders, die
+    noch nicht abgeschlossen sind, → ``pending`` zurück; ``bundle_id`` aller
+    Orders → ``NULL``; Bündel-Status → ``dissolved``.
+    """
+    await _require_tenant_participates(session, tenant_id=tenant_id, operation_id=operation_id)
+    bundle = await OrderBundleRepository.find_by_id(session, bundle_id)
+    if bundle is None or bundle.operation_id != operation_id:
+        raise BundleNotFoundError(str(bundle_id))
+    if bundle.status != ops_models.BUNDLE_STATUS_ACTIVE:
+        raise BundleNotActiveError(str(bundle_id))
+
+    assignments = await OrderAssignmentRepository.list_for_bundle(session, bundle_id)
+    for assignment in assignments:
+        if assignment.status in (
+            ops_models.ASSIGNMENT_STATUS_ASSIGNED,
+            ops_models.ASSIGNMENT_STATUS_IN_PROGRESS,
+        ):
+            assignment.status = ops_models.ASSIGNMENT_STATUS_CANCELLED
+
+    bundle_order_list = await CustomerOrderRepository.list_for_bundle(session, bundle_id)
+    for order in bundle_order_list:
+        order.bundle_id = None
+        if order.status in (
+            ops_models.ORDER_STATUS_ASSIGNED,
+            ops_models.ORDER_STATUS_IN_PROGRESS,
+        ):
+            order.status = ops_models.ORDER_STATUS_PENDING
+
+    bundle.status = ops_models.BUNDLE_STATUS_DISSOLVED
+    await session.flush()
+
+    await audit_logger.log(
+        session=session,
+        operation_id=operation_id,
+        actor_dispatcher_id=dispatcher_id,
+        action_type=ACTION_BUNDLE_DISSOLVED,
+        target_kind=TARGET_BUNDLE,
+        target_id=bundle.id,
+        payload={"order_count": len(bundle_order_list)},
+    )
+    await realtime.publish(
+        topic=_topic_bundle(operation_id),
+        payload={
+            "event_type": "bundle_dissolved",
+            "bundle_id": str(bundle.id),
+        },
+        tenant_scope=tenant_id,
+    )
+    return bundle
 
 
 # Re-Exports zur API-Konsumierung.
 __all__ = [
     "approve_low_plausibility_order",
     "assign_vehicle",
+    "bundle_orders",
     "cancel_order",
     "change_operation_areas",
     "close_operation",
     "complete_order",
+    "dissolve_bundle",
     "open_operation",
     "ops_thresholds",
     "place_order",

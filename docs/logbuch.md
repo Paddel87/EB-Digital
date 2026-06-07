@@ -26,6 +26,54 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-07 – [SESSIONENDE] Schritt 4.3b ERLEDIGT — Bündelung produktiv, `backend/operations` vollständig `[BELASTBAR]`
+
+- **Session-Inhalt:** Schritt 4.3b (Bündelung, ADR-018) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf, Implementation, Test-Schicht (B1–B11), Migration-Round-Trip, dev-smoke-Bündel-Stufe, Doku-Sync. Session über den Tageswechsel 2026-06-06 → 2026-06-07.
+- **Erreichter Stand:** **4.3b ERLEDIGT**. `backend/operations` jetzt **vollständig `[BELASTBAR]`** (verbleibend `[OFFEN]` nur Spike K/Hilfe-Knopf, Phase 5). 726 Tests grün, Modul-Coverage ≥ 90 % Lines / ≥ 80 % Branches; Migration `d4f1a9b8c2e6` Round-Trip + dev-smoke-Bündel-Stufe (9 Sub-Checks) grün.
+- **Git:** Branch `feat/4.3b-bundling` gepusht (Commits `b5809d7` Doku-Vorlauf, `84b303d` feat, `2341fca` test, `24b63c1` docs). **PR [#37](https://github.com/Paddel87/EB-Digital/pull/37)** eröffnet — **Merge steht aus (Patrick).**
+- **Offen / nächster Schritt:** PR #37 Merge durch Patrick; danach lokales `main` per `git pull --ff-only` synchronisieren. Dann **4.4** (`backend/realtime` — WebSocket-Hub + Pub/Sub via Valkey, ersetzt den No-Op-Realtime-Stub-Adapter) mit eigenem Detail-Plan-Vorlauf.
+- **README-Sync-Check (CLAUDE.md §16):** Status-Block, Architektur-Reife (~49 `[BELASTBAR]`, 7 `[OFFEN]`), Nächste-Schritte, „Letzte Änderung" auf 2026-06-07 / 4.3b ERLEDIGT synchronisiert.
+
+### 2026-06-07 – [SCHRITT-ABSCHLUSS] Schritt 4.3b ERLEDIGT — Bündelung (ADR-018) verifiziert
+
+- **Akzeptanzkriterien (DoD):**
+  1. ✅ **Migration-Round-Trip** `d4f1a9b8c2e6` gegen Postgres 17.9: `alembic check` „No new upgrade operations detected" vor + nach `downgrade -1` → `upgrade head`. (Vom `alembic check` aufgedeckt: ORM-Index `ix_customer_order_bundle_id` fehlte zunächst im Modell — nachgezogen, danach deckungsgleich.)
+  2. ✅ **Test-Schicht:** `test_operations_bundling.py` (B1–B11 + complete/cancel-Bündel-Pfade + Repository-Zähllogik `count_for_operation`) + erweiterte `test_operations_api.py` (4 Bündel-Endpunkte + Exception-Mapping + Rollen). Gesamt-Suite **726 grün** (vorher 676). Modul `backend/operations`: api 90 %, use_cases 95 %, übrige 100 %, Branch ≥ 80 %.
+  3. ✅ `ruff check`/`ruff format --check`/`mypy --strict` (9 Quelldateien)/`bandit` grün.
+  4. ✅ **dev-smoke.sh-Bündel-Stufe** (9 Sub-Checks, voller Bündel-Lebenszyklus inkl. Einzel-Storno-Sperre 409 + Auflösen + Audit) E2E grün.
+  5. ✅ **Reifegrad-Beförderung** (siehe REIFEGRAD-WECHSEL) + Doku-Sync (`architecture.md` §3/§9, `README.md`, `fahrplan.md`).
+- **Klassifikation:** `[ERLEDIGT]` nach CLAUDE.md §9. CHANGELOG.md existiert projektweit nicht (Pre-Release-Tracking via README/Logbuch, konsistent mit 4.1/4.2/4.3a).
+- **Reaktiv-Quote:** unverändert 1/10 = 10 % — **kein neuer ADR** (Bündelung war durch ADR-018 vorab entschieden; die drei Konkretisierungen sind im Detail-Plan/Fahrplan dokumentiert).
+
+### 2026-06-07 – [REIFEGRAD-WECHSEL] `backend/operations` vollständig `[BELASTBAR]` (Schritt 4.3b)
+
+- **`backend/operations`** verbleibender `[VORLÄUFIG]`-Bereich „Bündelung" → `[BELASTBAR]` (2026-06-07, Schritt 4.3b). Damit ist das Modul vollständig `[BELASTBAR]`; einziger `[OFFEN]`-Rest ist der Hilfe-Knopf-Bereich (Spike K, Phase 5). Realtime-Publish-Port (S3) bleibt `[VORLÄUFIG]` bis 4.4 (No-Op-Stub).
+- **Neu `[BELASTBAR]`:** Datenmodell `order_bundle` + nullable FK-Spalten `customer_order.bundle_id`/`order_assignment.bundle_id` (Migration `d4f1a9b8c2e6`); Spike-J-Bereich (Bündelungs-Trigger); 4 Bündel-Endpunkte als Erweiterung von Sub-Surface S8e.
+- **Methodik:** Beförderungs-Pflicht (`project-context.md` §6) erfüllt. Reaktiv-Quote 1/10 = 10 % (unter Schwelle Klasse G).
+
+### 2026-06-06 – [SESSIONSTART] Neue Session — Schritt 4.3b (Bündelung, ADR-018)
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt: `project-context.md` vollständig; `logbuch.md` letzter `[SESSIONENDE]` (2026-06-06, 4.3a abschlussbereit) + Einträge danach; `fahrplan.md` „Aktueller Stand" + Phase 4; `architecture.md` §1/§2/§9 + Modul `backend/operations`; `decisions.md` Teil A (Reaktiv-Quote 1/10 = 10 %); `blockers.md` „Aktive Blocker" (keine). Vertiefung: ADR-018 (Bündelungs-Vertrag) Volltext gelesen, da 4.3b ihn umsetzt.
+- **Git-Sync-Check (Sync-Schritt 0):** `git fetch origin main` + `git log HEAD..origin/main` → kein Output; lokales `main` auf Stand. **PR [#36](https://github.com/Paddel87/EB-Digital/pull/36) (4.3a) ist gemergt** (Merge-Commit `2c3ee71`), `backend/operations` `[BELASTBAR]` (ohne Bündelung). `git status` clean.
+- **Nächster Schritt:** Schritt **4.3b** (Bündelung, ADR-018). Detail-Plan-Disziplin (analog 4.3a): eigene Designfragen-Vorlage vor Implementation. Eingangsbedingungen geprüft (4.3a ERLEDIGT, ADR-018 Aktiv).
+
+### 2026-06-06 – [SCHRITT-START] Schritt 4.3b `backend/operations` Teil 2 (Bündelung) IN ARBEIT
+
+- **Eingangs-Disziplin (ADR-019/Regel-019):** `backend/operations` ist seit 4.3a bereits `[BELASTBAR]`; 4.3b befördert nur den verbleibenden `[VORLÄUFIG]`-Bereich „Bündelung". Konsumierte `[BELASTBAR]`-Bestandteile geprüft: `backend/fleet` (`vehicle.type`/`vehicle.mode`, 4.2), S4/I3 (4.3a), Audit-Infrastruktur + RealtimeAdapter-Stub (4.3a), S10/Regel-014 (2.4). Keine aktiven Blocker.
+- **Detail-Plan-Disziplin (analog 4.1/4.2/4.3a):** 9 Designfragen (0–8) vorgelegt; Patrick-Freigabe „alle Empfehlungen übernehmen" → Buchstaben-Kombi `0A/1A/2A/3A/4A/5A/6A/7A/8A`.
+- **Branch:** `feat/4.3b-bundling` (von `main` nach 4.3a-Merge `2c3ee71` abgezweigt).
+- **ADR-018-Befund:** drei Lücken/Widersprüche der Spike-J-Spezifikation beim Code-Abgleich gefunden und in der Freigabe geklärt (siehe `[BEOBACHTUNG]` unten). Reaktiv-Quote unverändert 1/10 = 10 % — kein neuer ADR (Detail-Plan im Fahrplan dokumentiert, analog 4.3a; ADR-018-Korrekturen sind Umsetzungs-Konkretisierung, kein neuer Architektur-Beschluss).
+
+### 2026-06-06 – [BEOBACHTUNG] Detail-Plan-Freigabe Schritt 4.3b (Buchstaben-Kombi `0A/1A/2A/3A/4A/5A/6A/7A/8A`)
+
+- **Vorgehen analog 4.3a:** 9 Designfragen mit Optionen + Empfehlung vorgelegt; Patrick wählte „alle Empfehlungen übernehmen".
+- **Drei ADR-018-Korrekturen (in der Freigabe bestätigt):**
+  1. **Frage 1A:** ADR-018-SQL referenziert `dispatcher_user(id)` — reale Tabelle ist `dispatcher` (vgl. `OrderAssignment.dispatcher_id → ForeignKey("dispatcher.id")`). FK in der 4.3b-Migration auf `dispatcher.id` korrigiert.
+  2. **Frage 2A:** ADR-018 §704 nennt CompleteBundle „implizit", listet aber **keinen** Audit-Action-Type dafür. Neuer Action-Type `bundle_completed` ergänzt (Regel-011 deckt das Muster, kein neuer ADR).
+  3. **Frage 3A:** ADR-018 listet `bundle_cancelled` im Audit-Vokabular, der `order_bundle`-Status-CHECK kennt aber kein `'cancelled'` (nur active/completed/dissolved). Auflösung: `bundle_cancelled` wird in 4.3b nicht produziert; Einzel-Order-Storno in aktivem Bündel wird via `OrderInActiveBundleError` (409) abgelehnt (Dissolve-first-Workflow, ADR-018 §705-konform). CancelBundle-Use-Case + `'cancelled'`-Status auf spätere Phase verschoben.
+- **Weitere Entscheidungen:** 4A (nur pending-Orders bündelbar, je Order ein Assignment mit gleicher bundle_id+VT), 5A (4 API-Endpunkte inkl. GET-List/Detail), 6A (Aggregat-Erweiterung bleibt Phase 6.5; B10/B11 gegen Repository-Zählfunktion), 7A (eigenes Realtime-Topic `operation.{op}.bundle`), 8A (B1–B11-Tests + dev-smoke-Bündel-Stufe + Coverage ≥ 90 %).
+- **Freigabepflichtig (CLAUDE.md §4):** ja — neue Entität `order_bundle` + 2 additive FK-Spalten + neue API-Endpunkte. Patrick-Freigabe als ENTSCHEIDUNG-Block-Antwort gilt; ADR-Pflicht für die Designfragen entfällt (Detail-Plan im Fahrplan dokumentiert, analog 4.1/4.2/4.3a; ADR-018 ist der zugrundeliegende Architektur-Beschluss).
+
 ### 2026-06-06 – [SESSIONENDE] Abschluss-Session Schritt 4.3a — PR #36 abschlussbereit
 
 - **Session-Inhalt:** Parallel-Arbeit-Konflikt aufgelöst (Option A, PR #36 fortgesetzt), dann die sechs offenen Verifikations-Punkte aus dem 2026-05-28-`[SESSIONENDE]` abgearbeitet. Details siehe `[SCHRITT-ABSCHLUSS]`- und `[REIFEGRAD-WECHSEL]`-Einträge unten.

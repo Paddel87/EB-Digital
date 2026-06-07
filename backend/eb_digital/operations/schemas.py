@@ -267,6 +267,38 @@ class OrderAssignmentOut(BaseModel):
 
 
 # ───────────────────────────────────────────────────────────────────────
+# Bündelung (S8e, Schritt 4.3b, ADR-018)
+# ───────────────────────────────────────────────────────────────────────
+
+
+class BundleOrdersRequest(BaseModel):
+    """Bündel-Anlage: ≥ 2 Orders + Versorgungs-Transporter.
+
+    ``order_ids`` wird **nicht** schon hier auf min. 2 begrenzt — die
+    Unterscheidung ``EmptyBundle`` (leere Liste) vs ``MinimumTwoOrders``
+    (1 Order) trifft der Use-Case mit exakten Domain-Fehlern (ADR-018
+    B6/B7). ``max_length`` ist nur ein Spam-Schutz.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    order_ids: list[uuid.UUID] = Field(max_length=200)
+    vehicle_id: uuid.UUID
+
+
+class OrderBundleOut(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: uuid.UUID
+    operation_id: uuid.UUID
+    vehicle_id: uuid.UUID
+    created_by_dispatcher_id: uuid.UUID
+    status: Literal["active", "completed", "dissolved"]
+    created_at: datetime
+    order_ids: list[uuid.UUID]
+
+
+# ───────────────────────────────────────────────────────────────────────
 # Audit-Log (S8e)
 # ───────────────────────────────────────────────────────────────────────
 
@@ -289,12 +321,14 @@ __all__ = [
     "AnonymousOrderOut",
     "AssignVehicleRequest",
     "AuditLogEntryOut",
+    "BundleOrdersRequest",
     "ChangeOperationAreasRequest",
     "OpenOperationRequest",
     "OperationAreaIn",
     "OperationAreaOut",
     "OperationOut",
     "OrderAssignmentOut",
+    "OrderBundleOut",
     "OrderItemIn",
     "OrderItemOut",
     "OrderOut",

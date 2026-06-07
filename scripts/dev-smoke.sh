@@ -1069,6 +1069,118 @@ else
 	exit 1
 fi
 
+# ─── Bündelung (Schritt 4.3b, ADR-018) ───────────────────────────────────────
+step "Bündel-Smoke (Schritt 4.3b): 2 Orders → large_order-VT bündeln → Sperre → auflösen → Audit"
+
+# B-1. Zwei neue Anon-Orders mit GPS innen → ACCEPTED/pending (Bündel verlangt pending).
+declare -a OPS_BUNDLE_ORDERS=()
+for i in 1 2; do
+	bo=$(curl --silent --insecure --max-time 10 \
+		-b "$OPS_ANON_JAR" \
+		-w '%{http_code}' -o "/tmp/dev-smoke-ops-bundle-order-$i.json" \
+		-H 'Content-Type: application/json' \
+		-d "{\"items\":[{\"base_item_id\":\"$CATALOG_BASE_ID\",\"quantity\":1}],\"location_lat\":53.08,\"location_lng\":8.80,\"location_accuracy_m\":10.0}" \
+		"https://localhost/api/anon/$OPS_TOKEN/order")
+	[[ "$bo" == "201" ]] || { fail "Bündel-Order $i Status $bo (body: $(cat /tmp/dev-smoke-ops-bundle-order-$i.json))"; exit 1; }
+	OPS_BUNDLE_ORDERS+=("$(jq -r .id "/tmp/dev-smoke-ops-bundle-order-$i.json")")
+done
+ok "2 pending-Orders für Bündelung angelegt (${OPS_BUNDLE_ORDERS[0]}, ${OPS_BUNDLE_ORDERS[1]})"
+
+# B-2. Versorgungs-Transporter in large_order-Modus schalten.
+ops_lo=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-largeorder.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"vehicle_id\":\"$FLEET_TRANSPORTER_ID\",\"mode\":\"large_order\"}" \
+	"https://localhost/api/operations/$OPS_ID/supply-transporter-mode")
+[[ "$ops_lo" == "200" && "$(jq -r .mode /tmp/dev-smoke-ops-largeorder.json)" == "large_order" ]] ||
+	{ fail "large_order-Mode Status $ops_lo (body: $(cat /tmp/dev-smoke-ops-largeorder.json))"; exit 1; }
+ok "POST .../supply-transporter-mode 200 — VT in large_order-Modus"
+
+# B-3. Bündel anlegen.
+ops_bundle=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-bundle.json \
+	-H 'Content-Type: application/json' \
+	-d "{\"order_ids\":[\"${OPS_BUNDLE_ORDERS[0]}\",\"${OPS_BUNDLE_ORDERS[1]}\"],\"vehicle_id\":\"$FLEET_TRANSPORTER_ID\"}" \
+	"https://localhost/api/operations/$OPS_ID/bundles")
+if [[ "$ops_bundle" == "201" ]]; then
+	OPS_BUNDLE_ID=$(jq -r .id /tmp/dev-smoke-ops-bundle.json)
+	b_status=$(jq -r .status /tmp/dev-smoke-ops-bundle.json)
+	b_count=$(jq '.order_ids | length' /tmp/dev-smoke-ops-bundle.json)
+	[[ "$b_status" == "active" && "$b_count" == "2" ]] ||
+		{ fail "Bündel status=$b_status count=$b_count (erwartet active/2)"; exit 1; }
+	ok "POST /api/operations/{id}/bundles 201 — bundle_id=$OPS_BUNDLE_ID active mit 2 Orders"
+else
+	fail "POST bundles Status $ops_bundle (body: $(cat /tmp/dev-smoke-ops-bundle.json))"
+	exit 1
+fi
+
+# B-4. Bündel listen + Detail lesen.
+ops_blist=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-blist.json \
+	"https://localhost/api/operations/$OPS_ID/bundles")
+[[ "$ops_blist" == "200" && "$(jq 'length' /tmp/dev-smoke-ops-blist.json)" -ge 1 ]] ||
+	{ fail "GET bundles Status $ops_blist"; exit 1; }
+ops_bdetail=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-bdetail.json \
+	"https://localhost/api/operations/$OPS_ID/bundles/$OPS_BUNDLE_ID")
+[[ "$ops_bdetail" == "200" && "$(jq -r .id /tmp/dev-smoke-ops-bdetail.json)" == "$OPS_BUNDLE_ID" ]] ||
+	{ fail "GET bundle detail Status $ops_bdetail"; exit 1; }
+ok "GET /api/operations/{id}/bundles + /{bundle_id} 200 — Bündel sicht- und lesbar"
+
+# B-5. Gebündelte Order ist jetzt assigned.
+ops_border=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-border.json \
+	"https://localhost/api/operations/$OPS_ID/orders/${OPS_BUNDLE_ORDERS[0]}")
+[[ "$ops_border" == "200" && "$(jq -r .status /tmp/dev-smoke-ops-border.json)" == "assigned" ]] ||
+	{ fail "Bündel-Order status $(jq -r .status /tmp/dev-smoke-ops-border.json 2>/dev/null) (erwartet assigned)"; exit 1; }
+ok "GET .../orders/{id} 200 — gebündelte Order auf assigned"
+
+# B-6. Einzel-Storno einer gebündelten Order → 409 (Dissolve-first-Disziplin, 3A).
+ops_bcancel=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /dev/null \
+	-X POST "https://localhost/api/operations/$OPS_ID/orders/${OPS_BUNDLE_ORDERS[0]}/cancel")
+[[ "$ops_bcancel" == "409" ]] || { fail "Einzel-Storno gebündelter Order Status $ops_bcancel (erwartet 409)"; exit 1; }
+ok "POST .../cancel auf gebündelter Order 409 — Einzel-Storno-Sperre durchgesetzt"
+
+# B-7. Bündel auflösen → dissolved.
+ops_bdiss=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-bdiss.json \
+	-X POST "https://localhost/api/operations/$OPS_ID/bundles/$OPS_BUNDLE_ID/dissolve")
+[[ "$ops_bdiss" == "200" && "$(jq -r .status /tmp/dev-smoke-ops-bdiss.json)" == "dissolved" ]] ||
+	{ fail "dissolve Status $ops_bdiss (body: $(cat /tmp/dev-smoke-ops-bdiss.json))"; exit 1; }
+ok "POST .../bundles/{id}/dissolve 200 — Bündel aufgelöst"
+
+# B-8. Order nach Auflösung zurück auf pending.
+ops_border2=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-border2.json \
+	"https://localhost/api/operations/$OPS_ID/orders/${OPS_BUNDLE_ORDERS[0]}")
+[[ "$ops_border2" == "200" && "$(jq -r .status /tmp/dev-smoke-ops-border2.json)" == "pending" ]] ||
+	{ fail "Order nach Dissolve status $(jq -r .status /tmp/dev-smoke-ops-border2.json 2>/dev/null) (erwartet pending)"; exit 1; }
+ok "GET .../orders/{id} 200 — Order nach Auflösung zurück auf pending"
+
+# B-9. Audit-Log enthält orders_bundled + bundle_dissolved.
+ops_baudit=$(curl --silent --insecure --max-time 10 \
+	-b "$CATALOG_DISP_JAR" \
+	-w '%{http_code}' -o /tmp/dev-smoke-ops-baudit.json \
+	"https://localhost/api/operations/$OPS_ID/audit-log")
+if [[ "$ops_baudit" == "200" ]]; then
+	for action in orders_bundled bundle_dissolved; do
+		cnt=$(jq "[.[] | select(.action_type == \"$action\")] | length" /tmp/dev-smoke-ops-baudit.json)
+		[[ "$cnt" -ge 1 ]] || { fail "Bündel-Audit: Aktion '$action' fehlt"; exit 1; }
+	done
+	ok "GET .../audit-log 200 — orders_bundled + bundle_dissolved protokolliert"
+else
+	fail "GET audit-log (Bündel) Status $ops_baudit"; exit 1
+fi
+
 # 12. Auth-Check: anon /order ohne Session-Cookie → 401.
 ops_order_noauth=$(curl --silent --insecure --max-time 10 \
 	-w '%{http_code}' -o /dev/null \

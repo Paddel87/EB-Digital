@@ -40,28 +40,37 @@ from eb_digital.operations.audit import AuditLogger
 from eb_digital.operations.exceptions import (
     AnonymousSessionInvalidError,
     AnonymousSessionOperationMismatchError,
+    BundleNotActiveError,
+    BundleNotFoundError,
     CatalogItemNotAvailableError,
     CrossTenantExtensionError,
+    EmptyBundleError,
     EmptyOrderError,
+    MinimumTwoOrdersError,
     NotParticipantError,
     OperationAlreadyClosedError,
     OperationNotActiveError,
     OperationNotFoundError,
     OrderAlreadyAssignedError,
+    OrderAlreadyBundledError,
+    OrderInActiveBundleError,
     OrderNotAssignedError,
     OrderNotFoundError,
     OrderNotInModerationError,
+    OrderNotInOperationError,
     OrderNotPendingError,
     VehicleNotEligibleError,
     VehicleNotFoundError,
+    VehicleNotInLargeOrderModeError,
 )
-from eb_digital.operations.models import CustomerOrder, Operation
+from eb_digital.operations.models import CustomerOrder, Operation, OrderBundle
 from eb_digital.operations.realtime_adapter import RealtimeAdapter
 from eb_digital.operations.repository import (
     CustomerOrderRepository,
     OperationAreaRepository,
     OperationAuditLogRepository,
     OperationRepository,
+    OrderBundleRepository,
 )
 
 # ─── Berechtigungs-Helper ───────────────────────────────────────────────────
@@ -121,6 +130,7 @@ _PlausibilityOutcome = Literal[
     "MODERATION_ACCURACY_TOO_LOW",
     "MODERATION_OUT_OF_RANGE",
 ]
+_BundleStatus = Literal["active", "completed", "dissolved"]
 
 
 async def _operation_to_out(db: AsyncSession, operation: Operation) -> schemas.OperationOut:
@@ -175,11 +185,32 @@ async def _order_to_out(db: AsyncSession, order: CustomerOrder) -> schemas.Order
     )
 
 
+async def _bundle_to_out(db: AsyncSession, bundle: OrderBundle) -> schemas.OrderBundleOut:
+    orders = await CustomerOrderRepository.list_for_bundle(db, bundle.id)
+    return schemas.OrderBundleOut(
+        id=bundle.id,
+        operation_id=bundle.operation_id,
+        vehicle_id=bundle.vehicle_id,
+        created_by_dispatcher_id=bundle.created_by_dispatcher_id,
+        status=cast(_BundleStatus, bundle.status),
+        created_at=bundle.created_at,
+        order_ids=[o.id for o in orders],
+    )
+
+
 def _exc_to_http(exc: Exception) -> HTTPException:
     """Mapping Domain-Exception → HTTPException (Sub-Surface S8e + S2c)."""
     if isinstance(exc, NotParticipantError):
         return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
-    if isinstance(exc, (OperationNotFoundError, OrderNotFoundError, VehicleNotFoundError)):
+    if isinstance(
+        exc,
+        (
+            OperationNotFoundError,
+            OrderNotFoundError,
+            VehicleNotFoundError,
+            BundleNotFoundError,
+        ),
+    ):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     if isinstance(exc, OperationAlreadyClosedError):
         return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
@@ -190,6 +221,8 @@ def _exc_to_http(exc: Exception) -> HTTPException:
             OrderNotInModerationError,
             OrderNotAssignedError,
             OrderAlreadyAssignedError,
+            OrderInActiveBundleError,
+            BundleNotActiveError,
         ),
     ):
         return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
@@ -202,6 +235,11 @@ def _exc_to_http(exc: Exception) -> HTTPException:
             EmptyOrderError,
             VehicleNotEligibleError,
             VehicleNotSupplyTransporterError,
+            EmptyBundleError,
+            MinimumTwoOrdersError,
+            OrderAlreadyBundledError,
+            OrderNotInOperationError,
+            VehicleNotInLargeOrderModeError,
         ),
     ):
         return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
@@ -577,6 +615,105 @@ async def audit_log_endpoint(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
     entries = await OperationAuditLogRepository.list_for_operation(db, operation_id)
     return [schemas.AuditLogEntryOut.model_validate(e) for e in entries]
+
+
+# ─── Bündelung (S8e, Schritt 4.3b, ADR-018) ──────────────────────────────────
+
+
+@router.post(
+    "/{operation_id}/bundles",
+    response_model=schemas.OrderBundleOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_bundle_endpoint(
+    operation_id: Annotated[uuid.UUID, Path()],
+    payload: schemas.BundleOrdersRequest,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db_session)],
+) -> schemas.OrderBundleOut:
+    user, tenant_id = _require_dispatcher_with_tenant(request)
+    try:
+        bundle = await use_cases.bundle_orders(
+            session=db,
+            operation_id=operation_id,
+            order_ids=payload.order_ids,
+            vehicle_id=payload.vehicle_id,
+            dispatcher_id=user.id,
+            tenant_id=tenant_id,
+            audit_logger=_audit_logger(),
+            realtime=_realtime(),
+        )
+        await db.commit()
+        return await _bundle_to_out(db, bundle)
+    except Exception as exc:
+        raise _exc_to_http(exc) from exc
+
+
+@router.post(
+    "/{operation_id}/bundles/{bundle_id}/dissolve",
+    response_model=schemas.OrderBundleOut,
+)
+async def dissolve_bundle_endpoint(
+    operation_id: Annotated[uuid.UUID, Path()],
+    bundle_id: Annotated[uuid.UUID, Path()],
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db_session)],
+) -> schemas.OrderBundleOut:
+    user, tenant_id = _require_dispatcher_with_tenant(request)
+    try:
+        bundle = await use_cases.dissolve_bundle(
+            session=db,
+            operation_id=operation_id,
+            bundle_id=bundle_id,
+            dispatcher_id=user.id,
+            tenant_id=tenant_id,
+            audit_logger=_audit_logger(),
+            realtime=_realtime(),
+        )
+        await db.commit()
+        return await _bundle_to_out(db, bundle)
+    except Exception as exc:
+        raise _exc_to_http(exc) from exc
+
+
+@router.get(
+    "/{operation_id}/bundles",
+    response_model=list[schemas.OrderBundleOut],
+)
+async def list_bundles_endpoint(
+    operation_id: Annotated[uuid.UUID, Path()],
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db_session)],
+) -> list[schemas.OrderBundleOut]:
+    user = _require_session(request)
+    operation = await OperationRepository.find_by_id(db, operation_id)
+    if operation is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Operation not found.")
+    owner_tenant_id = await OperationRepository.owner_tenant_id(db, operation_id)
+    if user.kind != KIND_PLATFORM_ADMIN and user.tenant_id != owner_tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
+    bundles = await OrderBundleRepository.list_for_operation(db, operation_id)
+    return [await _bundle_to_out(db, b) for b in bundles]
+
+
+@router.get(
+    "/{operation_id}/bundles/{bundle_id}",
+    response_model=schemas.OrderBundleOut,
+)
+async def get_bundle_endpoint(
+    operation_id: Annotated[uuid.UUID, Path()],
+    bundle_id: Annotated[uuid.UUID, Path()],
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db_session)],
+) -> schemas.OrderBundleOut:
+    user = _require_session(request)
+    bundle = await OrderBundleRepository.find_by_id(db, bundle_id)
+    if bundle is None or bundle.operation_id != operation_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bundle not found.")
+    owner_tenant_id = await OperationRepository.owner_tenant_id(db, operation_id)
+    if user.kind != KIND_PLATFORM_ADMIN and user.tenant_id != owner_tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden.")
+    return await _bundle_to_out(db, bundle)
 
 
 # ─── Anon-Router (S2c) ──────────────────────────────────────────────────────
