@@ -121,6 +121,7 @@ def _order(*, status: str = ops_models.ORDER_STATUS_PENDING, operation_id: uuid.
         plausibility_outcome=ops_models.PLAUSIBILITY_MODERATION_NO_GPS,
         moderation_actor_dispatcher_id=None,
         moderation_at=None,
+        bundle_id=None,
     )
 
 
