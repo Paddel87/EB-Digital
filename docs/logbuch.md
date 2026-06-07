@@ -26,6 +26,31 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-07 – [SESSIONENDE] Schritt 4.3b ERLEDIGT — Bündelung produktiv, `backend/operations` vollständig `[BELASTBAR]`
+
+- **Session-Inhalt:** Schritt 4.3b (Bündelung, ADR-018) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf, Implementation, Test-Schicht (B1–B11), Migration-Round-Trip, dev-smoke-Bündel-Stufe, Doku-Sync. Session über den Tageswechsel 2026-06-06 → 2026-06-07.
+- **Erreichter Stand:** **4.3b ERLEDIGT**. `backend/operations` jetzt **vollständig `[BELASTBAR]`** (verbleibend `[OFFEN]` nur Spike K/Hilfe-Knopf, Phase 5). 726 Tests grün, Modul-Coverage ≥ 90 % Lines / ≥ 80 % Branches; Migration `d4f1a9b8c2e6` Round-Trip + dev-smoke-Bündel-Stufe (9 Sub-Checks) grün.
+- **Git:** Branch `feat/4.3b-bundling`; Commits Doku-Vorlauf + Implementation + Verifikation/Doku-Sync. **PR + Merge stehen aus (Patrick).**
+- **Offen / nächster Schritt:** PR-Merge durch Patrick; danach lokales `main` per `git pull --ff-only` synchronisieren. Dann **4.4** (`backend/realtime` — WebSocket-Hub + Pub/Sub via Valkey, ersetzt den No-Op-Realtime-Stub-Adapter) mit eigenem Detail-Plan-Vorlauf.
+- **README-Sync-Check (CLAUDE.md §16):** Status-Block, Architektur-Reife (~49 `[BELASTBAR]`, 7 `[OFFEN]`), Nächste-Schritte, „Letzte Änderung" auf 2026-06-07 / 4.3b ERLEDIGT synchronisiert.
+
+### 2026-06-07 – [SCHRITT-ABSCHLUSS] Schritt 4.3b ERLEDIGT — Bündelung (ADR-018) verifiziert
+
+- **Akzeptanzkriterien (DoD):**
+  1. ✅ **Migration-Round-Trip** `d4f1a9b8c2e6` gegen Postgres 17.9: `alembic check` „No new upgrade operations detected" vor + nach `downgrade -1` → `upgrade head`. (Vom `alembic check` aufgedeckt: ORM-Index `ix_customer_order_bundle_id` fehlte zunächst im Modell — nachgezogen, danach deckungsgleich.)
+  2. ✅ **Test-Schicht:** `test_operations_bundling.py` (B1–B11 + complete/cancel-Bündel-Pfade + Repository-Zähllogik `count_for_operation`) + erweiterte `test_operations_api.py` (4 Bündel-Endpunkte + Exception-Mapping + Rollen). Gesamt-Suite **726 grün** (vorher 676). Modul `backend/operations`: api 90 %, use_cases 95 %, übrige 100 %, Branch ≥ 80 %.
+  3. ✅ `ruff check`/`ruff format --check`/`mypy --strict` (9 Quelldateien)/`bandit` grün.
+  4. ✅ **dev-smoke.sh-Bündel-Stufe** (9 Sub-Checks, voller Bündel-Lebenszyklus inkl. Einzel-Storno-Sperre 409 + Auflösen + Audit) E2E grün.
+  5. ✅ **Reifegrad-Beförderung** (siehe REIFEGRAD-WECHSEL) + Doku-Sync (`architecture.md` §3/§9, `README.md`, `fahrplan.md`).
+- **Klassifikation:** `[ERLEDIGT]` nach CLAUDE.md §9. CHANGELOG.md existiert projektweit nicht (Pre-Release-Tracking via README/Logbuch, konsistent mit 4.1/4.2/4.3a).
+- **Reaktiv-Quote:** unverändert 1/10 = 10 % — **kein neuer ADR** (Bündelung war durch ADR-018 vorab entschieden; die drei Konkretisierungen sind im Detail-Plan/Fahrplan dokumentiert).
+
+### 2026-06-07 – [REIFEGRAD-WECHSEL] `backend/operations` vollständig `[BELASTBAR]` (Schritt 4.3b)
+
+- **`backend/operations`** verbleibender `[VORLÄUFIG]`-Bereich „Bündelung" → `[BELASTBAR]` (2026-06-07, Schritt 4.3b). Damit ist das Modul vollständig `[BELASTBAR]`; einziger `[OFFEN]`-Rest ist der Hilfe-Knopf-Bereich (Spike K, Phase 5). Realtime-Publish-Port (S3) bleibt `[VORLÄUFIG]` bis 4.4 (No-Op-Stub).
+- **Neu `[BELASTBAR]`:** Datenmodell `order_bundle` + nullable FK-Spalten `customer_order.bundle_id`/`order_assignment.bundle_id` (Migration `d4f1a9b8c2e6`); Spike-J-Bereich (Bündelungs-Trigger); 4 Bündel-Endpunkte als Erweiterung von Sub-Surface S8e.
+- **Methodik:** Beförderungs-Pflicht (`project-context.md` §6) erfüllt. Reaktiv-Quote 1/10 = 10 % (unter Schwelle Klasse G).
+
 ### 2026-06-06 – [SESSIONSTART] Neue Session — Schritt 4.3b (Bündelung, ADR-018)
 
 - **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt: `project-context.md` vollständig; `logbuch.md` letzter `[SESSIONENDE]` (2026-06-06, 4.3a abschlussbereit) + Einträge danach; `fahrplan.md` „Aktueller Stand" + Phase 4; `architecture.md` §1/§2/§9 + Modul `backend/operations`; `decisions.md` Teil A (Reaktiv-Quote 1/10 = 10 %); `blockers.md` „Aktive Blocker" (keine). Vertiefung: ADR-018 (Bündelungs-Vertrag) Volltext gelesen, da 4.3b ihn umsetzt.
