@@ -1342,9 +1342,33 @@ Jeder Schritt folgt diesem Schema. Abweichungen nur nach Freigabe.
 
 #### 4.4: backend/realtime — WebSocket-Hub + Pub/Sub via Valkey
 
-- **Status:** OFFEN
+- **Status:** IN ARBEIT (seit 2026-06-08)
 - **Phasentyp-Kontext:** UMSETZUNG
-- **Abhängigkeiten:** 4.3
+- **Abhängigkeiten:** 4.3 (S3-Publish-Aufrufstellen produktiv; No-Op-Stub vorhanden), 2.2 (Valkey-Pool), 2.4 (S10), 2.3 (Anon-Session-Validierung)
+- **Freigabepflichtig:** ja (neues Modul `backend/realtime` + neue WS-API-Endpunkte/S9 + erste produktive Pub/Sub-Nutzung). Detail-Plan-Freigabe `0A/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A` (Patrick, 2026-06-08, „alle Empfehlungen übernehmen").
+- **Eingangskriterien (ADR-019/Regel-019):** konsumierte `[BELASTBAR]`-Bestandteile geprüft: Valkey-Pool (2.2), `get_current_session_user`/`get_current_anonymous_session` (2.2/2.3), S10 (`list_operations_for_tenant`, `tenant_participates_in_operation`, 2.4), S3-Publish-Aufrufstellen in `backend/operations` (4.3a/4.3b). Zu bauende Verträge S3/S9 + „Pub/Sub via Valkey" sind `[VORLÄUFIG]` und werden durch diesen Schritt `[BELASTBAR]` (analog Modul-Bau in 4.1/4.2/4.3a). Keine aktiven Blocker.
+- **Zu tun (Detail-Plan, freigegeben):**
+  - **Modul `backend/eb_digital/realtime/`** anlegen: `topics.py` (Topic-Schema `operation.{id}.{kind}` + Rollen-Topic-Mengen), `messages.py` (Server→Client-Frame `{topic,event_type,payload,ts}` + Wire-De/Serialisierung), `publisher.py` (`RealtimePublisher` mit S3-Signatur → Valkey `PUBLISH`), `hub.py` (`WebSocketHub`: In-Memory-Subscription-Registry + Pub/Sub-Listener-Task `PSUBSCRIBE operation.*` + Fan-out mit Anon-Filter), `connection.py` (`Connection` + Writer-/Heartbeat-/Receive-Loops, einzelner Writer pro WS gegen Concurrent-Send), `auth.py` (WS-Auth über bestehende SessionMiddleware, Close-Code 4401/4403), `redaction.py` (Tile-Hash-Helper), `api.py` (WS-Endpunkte `/ws/dispatcher`, `/ws/carer`, `/ws/anon/{operation_url}`).
+  - **Pub/Sub-Brücke (1A):** dedizierter Listener-Task pro Worker auf eigener Valkey-Connection, `PSUBSCRIBE operation.*`, Fan-out an lokale Registry.
+  - **WS-Auth (2A):** Session-Helper auf `HTTPConnection` generalisieren (Request + WebSocket); Cookie-Auth wiederverwenden; Reject `4401` (nicht authentifiziert) / `4403` (Tenant-Scope-Verstoß).
+  - **Subscription-Autorisierung (3A):** Disponent-`subscribe` prüft pro Operation `tenant_participates_in_operation` (S10), unerlaubt → Fehler-Frame (kein Drop); Carer auto-subscribe via `list_operations_for_tenant` (S10) auf `assignment`+`chat`; Anon nur `order_status` der eigenen Operation, server-seitige `session_id`-Filterung.
+  - **Anon-Filterung (4A):** `order_status`-Publish-Payload in `backend/operations/use_cases.py` additiv um `anonymous_session_id` erweitern (4 Aufrufstellen: order_placed/approved/cancelled/completed); Hub forwardet Anon-Frame nur bei `session_id`-Match.
+  - **PII-Redaction (5A):** Realtime-Logger-Wrapper mit Tile-Hash-Redaction (wiederverwendet `logging.py`-Redaction); Helper jetzt angelegt+getestet, GPS-Push-Verhalten erst Phase 6.
+  - **Heartbeat (6A):** Server-Ping alle 30 s, Pong-Timeout 10 s → Drop; Reconnect = Client-Aufgabe (kein WS-Replay).
+  - **Pub/Sub jetzt (7A):** Brücke trotz Single-Worker-Betrieb gebaut+getestet (zweite Hub-Instanz gegen denselben Valkey im Test); Multi-Worker-Lasttest Phase 7.
+  - **`chat`/`gps_push` (8A):** nicht produktiv (kein Produzent bis Phase 6); Topic-Namen reserviert; unbekannte Aktionen → Fehler-Frame.
+  - **Adapter-Umstellung (10A):** echter Publisher in `backend/realtime`; `operations/api.py` `_realtime(request)` liefert ihn aus `app.state`; `operations/realtime_adapter.py` definiert die `RealtimePublisher`-Protocol + behält No-Op-`RealtimeAdapter` (Test/Fallback). App-Wiring in `app.py`-Lifespan (Hub-Listener-Start, Publisher in `app.state`).
+- **Akzeptanzkriterien (funktionsbasiert, UMSETZUNG):**
+  - WS-Connect je Rolle: nicht authentifiziert → Close 4401; authentifiziert → `accept`.
+  - Disponent `subscribe` auf teilnehmende Operation → Topics aktiv; auf fremde Operation → Fehler-Frame, kein Drop.
+  - Ein `order_status`-Event aus `backend/operations` läuft durch Valkey-Pub/Sub und erreicht eine subscribte Disponent-WS; Anon-WS erhält es nur bei eigener `session_id`.
+  - Heartbeat: ausbleibender Pong → Connection-Drop nach Timeout.
+  - `ruff`/`ruff format --check`/`mypy --strict`/`bandit` grün; Coverage `backend/realtime` ≥ 80 % Lines / ≥ 70 % Branches (Standard, kein kritischer Pfad).
+  - `dev-smoke.sh`-Realtime-Stufe (WS je Rolle, subscribe, E2E-Event durch Valkey, Tenant-Scoping-Reject, Heartbeat) grün.
+- **Betroffene Module:** `backend/realtime` (neu), `backend/operations` (additive Payload + Adapter-Wiring, im Step-Scope), `backend/auth`/`backend/auth_anonymous` (Session-Helper-Typ-Generalisierung, rückwärtskompatibel), `app.py` (Wiring).
+- **Reifegrad-Wirkung:** `backend/realtime` `[VORLÄUFIG]` → `[BELASTBAR]`; „Pub/Sub via Valkey" `[VORLÄUFIG]` → `[BELASTBAR]`; Schnittstellen S3 + S9 `[VORLÄUFIG]` → `[BELASTBAR]`. `help_alert`-Payload bleibt `[OFFEN]` (Spike K, Phase 5); `chat`/`gps_push`-Aktionen bleiben reserviert.
+- **Artefakte:** `backend/eb_digital/realtime/*`, additive Änderung `operations/use_cases.py`+`operations/api.py`+`operations/realtime_adapter.py`, `app.py`-Wiring, Generalisierung `auth/sessions.py`+`auth_anonymous/sessions.py`, Tests `backend/tests/test_realtime_*.py`, `scripts/dev-smoke.sh`-Realtime-Stufe, Doku-Sync `architecture.md` §3/§4/§9 + `README.md`.
+- **Notizen:** Reaktiv-Quote bleibt 1/10 = 10 % — kein neuer ADR (4.4 setzt bestehende Verträge S3/S9 produktiv um; additive `session_id`-Payload-Ergänzung im Detail-Plan dokumentiert, analog ADR-018-Konkretisierungen in 4.3b). PSUBSCRIBE-Pattern `operation.*` (Redis-Glob `*` matcht auch `.`).
 
 #### 4.5: frontend-einsatzkraft — anonyme Bestell-PWA (F2 Hard-Path)
 

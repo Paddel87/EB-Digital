@@ -26,6 +26,26 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-08 – [SESSIONSTART] Neue Session — Beginn Schritt 4.4 (`backend/realtime`)
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt: `project-context.md` (Stack, Constraints, §6 Datenschutz/PII-Redaction, §7 Coverage); `logbuch.md` letzter `[SESSIONENDE]` (2026-06-07, 4.3b ERLEDIGT) + Einträge danach; `fahrplan.md` „Aktueller Stand" + Phase 4 + Schritt-4.4-Stub; `architecture.md` §1/§2/§9 + Vertiefung Modul `backend/realtime` (§3) + Schnittstellen S3 (Event-Bus) / S9 (WS-Topologie) / S10 (Participation-Lookup); `decisions.md` Teil A (Reaktiv-Quote 1/10 = 10 %); `blockers.md` „Aktive Blocker" (keine).
+- **Git-Sync-Check (Sync-Schritt 0):** `git fetch origin main` + `git log` → lokales `main` deckungsgleich mit `origin/main` (`80ed0e5`). **PR [#37](https://github.com/Paddel87/EB-Digital/pull/37) (4.3b) ist gemergt** (`mergedAt 2026-06-07`). Working Tree clean.
+- **Code-Vertiefung:** No-Op-`RealtimeAdapter`-Stub (`operations/realtime_adapter.py`, Signatur `publish(*, topic, payload, tenant_scope)`) gelesen — 4.4 ersetzt ihn durch echte Valkey-Pub/Sub-Brücke bei unveränderten Aufrufstellen. Valkey-Client (`cache/__init__.py`, redis-py-Async, `app.state.valkey`), Session-Mechanik (`auth/sessions.py` `SessionUser{kind,id,tenant_id}`, `auth_anonymous/sessions.py` `AnonymousSessionUser{session_id,operation_id}`) und App-Wiring (`app.py` Lifespan + SessionMiddleware) gesichtet. Noch **kein** `backend/realtime`-Verzeichnis vorhanden.
+- **Eingangslage 4.4:** Schritt 4.4 ist im Fahrplan nur als Stub geführt (Status/Phasentyp/Abhängigkeiten). Freigabepflichtig (CLAUDE.md §4: neues Modul + neue WS-API-Endpunkte/S9 + erste produktive Pub/Sub-Nutzung). Nächste Aktion: Detail-Plan mit Designfragen vorlegen (analog 4.1/4.2/4.3a/4.3b), **vor** Implementation.
+- **Nächster Schritt:** Detail-Plan-Designfragen für `backend/realtime` an Patrick (ENTSCHEIDUNG ERFORDERLICH).
+
+### 2026-06-08 – [BEOBACHTUNG] Detail-Plan-Freigabe Schritt 4.4 (`0A/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`)
+
+- **Vorgehen analog 4.1/4.2/4.3a/4.3b:** 11 Designfragen (0–10) mit Optionen + Empfehlung vorgelegt; Patrick wählte „alle Empfehlungen übernehmen".
+- **Kern-Entscheidungen:** 0A (Scope: Pub/Sub-Brücke + Hub + 3 WS-Endpunkte + Topics mit heutigen Produzenten; `help_alert`/`chat`/`gps_push` reserviert), 1A (dedizierter Pub/Sub-Listener-Task `PSUBSCRIBE operation.*` pro Worker), 2A (WS-Auth über bestehende SessionMiddleware, Session-Helper auf `HTTPConnection` generalisiert, Close 4401/4403), 3A (Disponent-`subscribe` mit S10-Check, Carer-Auto-Subscribe via S10, Anon `session_id`-Filterung), 4A (`order_status`-Payload additiv um `anonymous_session_id`), 5A (Tile-Hash-Redaction-Helper), 6A (30 s Ping / 10 s Pong-Timeout), 7A (Pub/Sub jetzt gebaut+getestet trotz Single-Worker), 8A (`chat`/`gps_push` nicht produktiv, Fehler-Frame bei unbekannter Aktion), 9A (Unit-Tests + dev-smoke-Stufe gegen echten Valkey, Coverage ≥ 80/70 % Standard), 10A (echter Publisher in `backend/realtime`, `RealtimePublisher`-Protocol in operations, Wiring in `app.py`).
+- **Freigabepflichtig (CLAUDE.md §4):** ja — neues Modul + neue WS-API-Endpunkte + Pub/Sub-Nutzung. Patrick-Freigabe als ENTSCHEIDUNG-Block-Antwort gilt; ADR-Pflicht entfällt (4.4 setzt bestehende Verträge S3/S9 produktiv um, Detail-Plan im Fahrplan dokumentiert, analog 4.1–4.3b). Reaktiv-Quote unverändert 1/10 = 10 %.
+
+### 2026-06-08 – [SCHRITT-START] Schritt 4.4 `backend/realtime` IN ARBEIT
+
+- **Branch:** `feat/4.4-realtime` (von `main` `80ed0e5` nach 4.3b-Merge abgezweigt).
+- **Eingangs-Disziplin (ADR-019/Regel-019) geprüft:** konsumierte `[BELASTBAR]`-Bestandteile — Valkey-Pool (2.2), Session-Helper (2.2/2.3), S10 (2.4), S3-Publish-Aufrufstellen (4.3a/4.3b). Zu bauende Verträge S3/S9 + „Pub/Sub via Valkey" `[VORLÄUFIG]` → durch 4.4 `[BELASTBAR]` (Modul-Bau-Muster wie 4.1/4.2/4.3a). Keine aktiven Blocker.
+- **Doku-Vorlauf:** Fahrplan-Schritt 4.4 vom Stub auf Voll-Format erweitert (Detail-Plan dokumentiert).
+
 ### 2026-06-07 – [SESSIONENDE] Schritt 4.3b ERLEDIGT — Bündelung produktiv, `backend/operations` vollständig `[BELASTBAR]`
 
 - **Session-Inhalt:** Schritt 4.3b (Bündelung, ADR-018) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf, Implementation, Test-Schicht (B1–B11), Migration-Round-Trip, dev-smoke-Bündel-Stufe, Doku-Sync. Session über den Tageswechsel 2026-06-06 → 2026-06-07.
