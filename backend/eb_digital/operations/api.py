@@ -64,7 +64,7 @@ from eb_digital.operations.exceptions import (
     VehicleNotInLargeOrderModeError,
 )
 from eb_digital.operations.models import CustomerOrder, Operation, OrderBundle
-from eb_digital.operations.realtime_adapter import RealtimeAdapter
+from eb_digital.operations.realtime_adapter import NullRealtimePublisher, RealtimePublisher
 from eb_digital.operations.repository import (
     CustomerOrderRepository,
     OperationAreaRepository,
@@ -105,8 +105,16 @@ def _audit_logger() -> AuditLogger:
     return AuditLogger()
 
 
-def _realtime() -> RealtimeAdapter:
-    return RealtimeAdapter()
+def _realtime(request: Request) -> RealtimePublisher:
+    """Liefert den echten Valkey-Publisher aus ``app.state`` (Schritt 4.4).
+
+    Fallback auf den No-Op-Publisher, falls kein Hub verdrahtet ist (z. B.
+    Unit-Tests, die die App ohne Lifespan konstruieren).
+    """
+    publisher = getattr(request.app.state, "realtime_publisher", None)
+    if publisher is None:
+        return NullRealtimePublisher()
+    return publisher  # type: ignore[no-any-return]
 
 
 # ─── Response-Builder ───────────────────────────────────────────────────────
@@ -279,7 +287,7 @@ async def open_operation(
             access_code_active=payload.access_code_active,
             plausibility_threshold_m=payload.plausibility_threshold_m,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return await _operation_to_out(db, operation)
@@ -341,7 +349,7 @@ async def close_operation_endpoint(
             dispatcher_id=user.id,
             tenant_id=tenant_id,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return await _operation_to_out(db, operation)
@@ -365,7 +373,7 @@ async def change_operation_areas_endpoint(
             tenant_id=tenant_id,
             area_payloads=[(a.area_index, a.label, a.polygon.model_dump()) for a in payload.areas],
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return await _operation_to_out(db, operation)
@@ -392,7 +400,7 @@ async def toggle_access_code_endpoint(
             tenant_id=tenant_id,
             activate=payload.activate,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return schemas.AccessCodeIssueOut(
@@ -423,7 +431,7 @@ async def supply_transporter_mode_endpoint(
             vehicle_id=payload.vehicle_id,
             mode=payload.mode,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return {"vehicle_id": str(vehicle.id), "mode": vehicle.mode}
@@ -490,7 +498,7 @@ async def approve_moderated_endpoint(
             dispatcher_id=user.id,
             tenant_id=tenant_id,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return await _order_to_out(db, order)
@@ -520,7 +528,7 @@ async def assign_vehicle_endpoint(
             dispatcher_id=user.id,
             tenant_id=tenant_id,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return schemas.OrderAssignmentOut.model_validate(assignment)
@@ -547,7 +555,7 @@ async def cancel_order_endpoint(
             dispatcher_id=user.id,
             tenant_id=tenant_id,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return await _order_to_out(db, order)
@@ -589,7 +597,7 @@ async def complete_order_endpoint(
             actor_carer_tenant_id=actor_carer_tenant_id,
             tenant_id=tenant_id,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return await _order_to_out(db, order)
@@ -641,7 +649,7 @@ async def create_bundle_endpoint(
             dispatcher_id=user.id,
             tenant_id=tenant_id,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return await _bundle_to_out(db, bundle)
@@ -668,7 +676,7 @@ async def dissolve_bundle_endpoint(
             dispatcher_id=user.id,
             tenant_id=tenant_id,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
         return await _bundle_to_out(db, bundle)
@@ -793,7 +801,7 @@ async def place_anon_order(
             location_accuracy_m=payload.location_accuracy_m,
             location_text=payload.location_text,
             audit_logger=_audit_logger(),
-            realtime=_realtime(),
+            realtime=_realtime(request),
         )
         await db.commit()
     except HTTPException:

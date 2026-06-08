@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Final
 
-from starlette.requests import Request
+from starlette.requests import HTTPConnection, Request
 
 from eb_digital.auth_anonymous.models import AnonymousSession
 
@@ -54,7 +54,7 @@ def set_anonymous_session(request: Request, record: AnonymousSession) -> Anonymo
     )
 
 
-def get_current_anonymous_session(request: Request) -> AnonymousSessionUser | None:
+def get_current_anonymous_session(request: HTTPConnection) -> AnonymousSessionUser | None:
     """Liefert die aktive anonyme Session aus dem Cookie, oder ``None``.
 
     ``None`` bei: fehlender Payload, Schema-Verstoß, abgelaufenem
@@ -83,7 +83,7 @@ def get_current_anonymous_session(request: Request) -> AnonymousSessionUser | No
     )
 
 
-def clear_anonymous_session(request: Request) -> None:
+def clear_anonymous_session(request: HTTPConnection) -> None:
     """Entfernt die Anon-Session-Payload (kein Logout-Endpoint in 2.3, aber
     für Cleanup-Pfad in den Repository-Helpern nutzbar)."""
     request.session.pop(ANON_SESSION_KEY, None)

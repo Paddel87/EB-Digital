@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Any, Final
 
-from starlette.requests import Request
+from starlette.requests import HTTPConnection, Request
 
 from eb_digital.auth.repositories import (
     KIND_CARER,
@@ -76,10 +76,13 @@ def set_session(request: Request, subject: AuthSubject) -> SessionUser:
     )
 
 
-def get_current_session_user(request: Request) -> SessionUser | None:
+def get_current_session_user(request: HTTPConnection) -> SessionUser | None:
     """Liefert den aktuellen User oder ``None`` (Session fehlt / ungültig / abgelaufen).
 
     Bei abgelaufener Session wird die Payload sofort entfernt (cleanup beim Read).
+
+    Akzeptiert jede ``HTTPConnection`` — sowohl ``Request`` (REST) als auch
+    ``WebSocket`` (Realtime-Hub, Schritt 4.4) tragen die Starlette-Session.
     """
     payload = request.session.get(SESSION_KEY)
     if not isinstance(payload, dict):
@@ -111,7 +114,7 @@ def get_current_session_user(request: Request) -> SessionUser | None:
     )
 
 
-def clear_session(request: Request) -> None:
+def clear_session(request: HTTPConnection) -> None:
     """Entfernt die Session-Payload (Logout)."""
     request.session.pop(SESSION_KEY, None)
 

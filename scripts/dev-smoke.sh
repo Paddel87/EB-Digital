@@ -1190,6 +1190,119 @@ ops_order_noauth=$(curl --silent --insecure --max-time 10 \
 [[ "$ops_order_noauth" == "401" ]] || { fail "anon order ohne Session Status $ops_order_noauth (erwartet 401)"; exit 1; }
 ok "POST /api/anon/{token}/order ohne Session 401 — Anon-Session-Pflicht durchgesetzt"
 
+# ─── Realtime (Schritt 4.4) ──────────────────────────────────────────────────
+step "Realtime-Smoke (Schritt 4.4): WS-Auth + Subscribe (S10) + Valkey-Pub/Sub-Fan-out + Anon-Filter"
+
+# Session-Cookies aus den Netscape-Cookie-Jars extrahieren (HttpOnly-Zeilen
+# tragen das Präfix in Feld 1; Name=Feld 6, Wert=Feld 7). Disponent-Jar trägt
+# die Login-Session, Anon-Jar die anonyme Einsatzkraft-Session derselben Operation.
+RT_DISP_COOKIE=$(awk '$6 ~ /session/ {print $6"="$7}' "$CATALOG_DISP_JAR" | tail -1)
+RT_ANON_COOKIE=$(awk '$6 ~ /session/ {print $6"="$7}' "$OPS_ANON_JAR" | tail -1)
+RT_ANON_SID=$(jq -r .session_id /tmp/dev-smoke-ops-sess.json)
+if [[ -z "$RT_DISP_COOKIE" || -z "$RT_ANON_COOKIE" || -z "$RT_ANON_SID" || "$RT_ANON_SID" == "null" ]]; then
+	fail "Realtime-Smoke: Cookie-/Session-Extraktion fehlgeschlagen"
+	exit 1
+fi
+
+# Eine einzige In-Container-Session treibt den vollen E2E-Pfad: WS-Handshake
+# (Cookie-Auth) → Subscribe (S10-Berechtigung) → echter Valkey-PUBLISH →
+# Hub-Listener des laufenden uvicorn → Fan-out an die WS-Clients. Heartbeat
+# (30 s) ist bewusst NICHT Teil des Smokes (Wartezeit) — er ist unit-getestet.
+rt_out=$(docker compose exec -T \
+	-e EB_DISP_COOKIE="$RT_DISP_COOKIE" \
+	-e EB_ANON_COOKIE="$RT_ANON_COOKIE" \
+	-e EB_OPS_ID="$OPS_ID" \
+	-e EB_OPS_TOKEN="$OPS_TOKEN" \
+	-e EB_ANON_SESSION_ID="$RT_ANON_SID" \
+	backend python -c "
+import asyncio, json, os, uuid
+import websockets
+from eb_digital.cache import create_valkey_client
+from eb_digital.realtime.publisher import RealtimePublisher
+from eb_digital.realtime.topics import topic_for, KIND_ORDER_STATUS
+from eb_digital.settings import get_settings
+
+DISP = os.environ['EB_DISP_COOKIE']
+ANON = os.environ['EB_ANON_COOKIE']
+OPS_ID = os.environ['EB_OPS_ID']
+OPS_TOKEN = os.environ['EB_OPS_TOKEN']
+ANON_SID = os.environ['EB_ANON_SESSION_ID']
+BASE = 'ws://localhost:8000/api/ws'
+
+async def recv_until(ws, pred, timeout=5.0):
+    async def loop():
+        while True:
+            frame = json.loads(await ws.recv())
+            if pred(frame):
+                return frame
+    return await asyncio.wait_for(loop(), timeout)
+
+async def main():
+    s = get_settings()
+    op = uuid.UUID(OPS_ID)
+    topic = topic_for(op, KIND_ORDER_STATUS)
+    vk = create_valkey_client(s.valkey_url)
+    pub = RealtimePublisher(vk)
+    try:
+        async with websockets.connect(BASE + '/dispatcher', additional_headers={'Cookie': DISP}) as dws:
+            await dws.send(json.dumps({'action': 'subscribe', 'data': {'operations': [OPS_ID]}}))
+            sub = await recv_until(dws, lambda f: f.get('event_type') == 'subscribed')
+            assert topic in sub['payload']['topics'], sub
+            print('RTOK:/ws/dispatcher Cookie-Auth + subscribe (S10 erlaubt) — order_status-Topic aktiv')
+
+            await dws.send(json.dumps({'action': 'subscribe', 'data': {'operations': [str(uuid.uuid4())]}}))
+            err = await recv_until(dws, lambda f: f.get('event_type') == 'error')
+            assert err['payload']['code'] == 'forbidden', err
+            print('RTOK:/ws/dispatcher subscribe fremde Operation → forbidden (Tenant-Scoping)')
+
+            async with websockets.connect(BASE + '/anon/' + OPS_TOKEN, additional_headers={'Cookie': ANON}) as aws:
+                await asyncio.sleep(0.4)
+                await pub.publish(topic=topic, payload={'event_type': 'order_placed', 'order_id': 'rt-smoke', 'anonymous_session_id': ANON_SID}, tenant_scope=None)
+                d = await recv_until(dws, lambda f: f.get('payload', {}).get('order_id') == 'rt-smoke')
+                assert d['topic'] == topic and d['event_type'] == 'order_placed', d
+                print('RTOK:Valkey-PUBLISH → Hub-Listener → /ws/dispatcher Fan-out (order_placed empfangen)')
+                a = await recv_until(aws, lambda f: f.get('payload', {}).get('order_id') == 'rt-smoke')
+                assert a['payload']['anonymous_session_id'] == ANON_SID, a
+                print('RTOK:/ws/anon erhält eigenes order_placed (session_id-Filter positiv)')
+
+                await pub.publish(topic=topic, payload={'event_type': 'order_placed', 'order_id': 'rt-foreign', 'anonymous_session_id': str(uuid.uuid4())}, tenant_scope=None)
+                await recv_until(dws, lambda f: f.get('payload', {}).get('order_id') == 'rt-foreign')
+                saw_foreign = False
+                try:
+                    await recv_until(aws, lambda f: f.get('payload', {}).get('order_id') == 'rt-foreign', timeout=1.5)
+                    saw_foreign = True
+                except asyncio.TimeoutError:
+                    pass
+                assert not saw_foreign, 'anon saw foreign order'
+                print('RTOK:/ws/anon erhält fremdes order_placed NICHT (session_id-Filter negativ)')
+
+        rejected = False
+        try:
+            async with websockets.connect(BASE + '/dispatcher'):
+                pass
+        except Exception:
+            rejected = True
+        assert rejected, 'unauthenticated WS not rejected'
+        print('RTOK:/ws/dispatcher ohne Cookie → Handshake abgelehnt')
+        print('RT_DONE')
+    finally:
+        await vk.aclose()
+
+asyncio.run(main())
+" 2>&1) || {
+	fail "Realtime-Smoke: python exit !=0"
+	printf '%s\n' "$rt_out" >&2
+	exit 1
+}
+if [[ "$rt_out" != *RT_DONE* ]]; then
+	fail "Realtime-Smoke unvollständig"
+	printf '%s\n' "$rt_out" >&2
+	exit 1
+fi
+while IFS= read -r rt_line; do
+	[[ "$rt_line" == RTOK:* ]] && ok "${rt_line#RTOK:}"
+done <<<"$rt_out"
+
 # 13. Operation beenden → anon /info danach 404.
 ops_close=$(curl --silent --insecure --max-time 10 \
 	-b "$CATALOG_DISP_JAR" \

@@ -26,6 +26,52 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-08 – [SESSIONENDE] Schritt 4.4 ERLEDIGT — `backend/realtime` produktiv, S3/S9 + Pub/Sub `[BELASTBAR]`
+
+- **Session-Inhalt:** Schritt 4.4 (`backend/realtime`) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf + Freigabe, Implementation (neues Modul, 8 Dateien), Adapter-Umstellung in `backend/operations`, Session-Helper-Generalisierung, Test-Schicht (55 Tests), dev-smoke-Realtime-Stufe, Doku-Sync.
+- **Erreichter Stand:** **4.4 ERLEDIGT**. `backend/realtime` `[BELASTBAR]`; „Pub/Sub via Valkey", S3, S9 `[BELASTBAR]`. 781 Tests grün (+55), Gesamt-Coverage 91,86 %, Modul-Coverage 93–100 % Lines; voller dev-smoke (inkl. Realtime-Stufe, 6 Sub-Checks) E2E gegen Compose-Stack grün.
+- **Git:** Branch `feat/4.4-realtime` (von `main` `80ed0e5`), gepusht. Commits: Doku-Vorlauf + feat + test + Doku-Sync. **PR [#38](https://github.com/Paddel87/EB-Digital/pull/38)** eröffnet — **Merge steht aus (Patrick).**
+- **Offen / nächster Schritt:** PR [#38](https://github.com/Paddel87/EB-Digital/pull/38) mergen (Patrick); danach lokales `main` per `git pull --ff-only` synchronisieren. Dann **4.5** (`frontend-einsatzkraft` — anonyme Bestell-PWA, konsumiert `/api/ws/anon/{token}`).
+- **README-Sync-Check (CLAUDE.md §16):** Projektphase, Architektur-Reife (~53 `[BELASTBAR]`, ~15 `[VORLÄUFIG]`, 7 `[OFFEN]`), Nächste-Schritte, „Letzte Änderung" auf 2026-06-08 / 4.4 ERLEDIGT synchronisiert.
+
+### 2026-06-08 – [SCHRITT-ABSCHLUSS] Schritt 4.4 ERLEDIGT — `backend/realtime` (WS-Hub + Valkey-Pub/Sub) verifiziert
+
+- **Akzeptanzkriterien (DoD, funktionsbasiert):**
+  1. ✅ Neues Modul `backend/eb_digital/realtime/` (`topics`/`messages`/`redaction`/`publisher`/`connection`/`hub`/`api` + WS-Auth über generalisierte Session-Helper); 3 WS-Endpunkte unter `/api/ws/*` registriert.
+  2. ✅ `ruff`/`ruff format --check`/`mypy --strict` (65 Quelldateien)/`bandit` grün.
+  3. ✅ **781 Tests grün** (+55 Realtime). Coverage `backend/realtime`: api 93 %, hub 96 %, übrige 100 % (≥ 80 % Lines, Standard — kein kritischer Pfad). Gesamt 91,86 %.
+  4. ✅ **dev-smoke.sh-Realtime-Stufe** (6 Sub-Checks): WS-Cookie-Auth + subscribe (S10), Tenant-Scoping-Reject (forbidden), Valkey-PUBLISH→Hub-Listener→Dispatcher-Fan-out, Anon-`session_id`-Filter positiv + negativ, unauthentifizierter Handshake abgelehnt. Voller Smoke grün.
+  5. ✅ Reifegrad-Beförderung + Doku-Sync (`architecture.md` §1/§2/§3/§4/§9, `README.md`, `fahrplan.md`).
+- **Klassifikation:** `[ERLEDIGT]` nach CLAUDE.md §9. CHANGELOG.md existiert projektweit nicht (Pre-Release-Tracking via README/Logbuch, konsistent mit 4.1–4.3b).
+- **Reaktiv-Quote:** unverändert 1/10 = 10 % — **kein neuer ADR** (4.4 setzt die bestehenden Verträge S3/S9 produktiv um; die additive `anonymous_session_id`-Payload-Ergänzung ist Umsetzungs-Konkretisierung, im Detail-Plan/Fahrplan dokumentiert, analog ADR-018-Korrekturen in 4.3b).
+- **Reibungen:** (a) `Connection`-Dataclass `eq=False` (Identitäts-Hash für Registry-Sets); (b) 4.3a/4.3b-Test-`_order`-Stubs um `anonymous_session_id` ergänzt (additive Payload); (c) begründete `# type: ignore[no-untyped-call]` für `PubSub.aclose` (redis-py-7-Stub-Lücke).
+
+### 2026-06-08 – [REIFEGRAD-WECHSEL] `backend/realtime` → `[BELASTBAR]` (Schritt 4.4)
+
+- **`backend/realtime`** `[VORLÄUFIG]` → `[BELASTBAR]` (2026-06-08, Schritt 4.4). Reserviert (kein Produzent bis Phase 5/6): `help_alert`-Payload (Spike K), `chat`/`gps_push`-Client-Aktionen.
+- **Mitbefördert auf `[BELASTBAR]`:** „Pub/Sub via Valkey" (Kommunikations-Grundmodus), Schnittstelle **S3** (Operations Event Bus → Realtime), Schnittstelle **S9** (WebSocket-Topologie). Der Realtime-Publish-Port von `backend/operations` (S3) ist damit nicht länger No-Op-Stub.
+- **Methodik:** Beförderungs-Pflicht (`project-context.md` §6) erfüllt. Reaktiv-Quote 1/10 = 10 % (unter Schwelle Klasse G).
+
+### 2026-06-08 – [SESSIONSTART] Neue Session — Beginn Schritt 4.4 (`backend/realtime`)
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt: `project-context.md` (Stack, Constraints, §6 Datenschutz/PII-Redaction, §7 Coverage); `logbuch.md` letzter `[SESSIONENDE]` (2026-06-07, 4.3b ERLEDIGT) + Einträge danach; `fahrplan.md` „Aktueller Stand" + Phase 4 + Schritt-4.4-Stub; `architecture.md` §1/§2/§9 + Vertiefung Modul `backend/realtime` (§3) + Schnittstellen S3 (Event-Bus) / S9 (WS-Topologie) / S10 (Participation-Lookup); `decisions.md` Teil A (Reaktiv-Quote 1/10 = 10 %); `blockers.md` „Aktive Blocker" (keine).
+- **Git-Sync-Check (Sync-Schritt 0):** `git fetch origin main` + `git log` → lokales `main` deckungsgleich mit `origin/main` (`80ed0e5`). **PR [#37](https://github.com/Paddel87/EB-Digital/pull/37) (4.3b) ist gemergt** (`mergedAt 2026-06-07`). Working Tree clean.
+- **Code-Vertiefung:** No-Op-`RealtimeAdapter`-Stub (`operations/realtime_adapter.py`, Signatur `publish(*, topic, payload, tenant_scope)`) gelesen — 4.4 ersetzt ihn durch echte Valkey-Pub/Sub-Brücke bei unveränderten Aufrufstellen. Valkey-Client (`cache/__init__.py`, redis-py-Async, `app.state.valkey`), Session-Mechanik (`auth/sessions.py` `SessionUser{kind,id,tenant_id}`, `auth_anonymous/sessions.py` `AnonymousSessionUser{session_id,operation_id}`) und App-Wiring (`app.py` Lifespan + SessionMiddleware) gesichtet. Noch **kein** `backend/realtime`-Verzeichnis vorhanden.
+- **Eingangslage 4.4:** Schritt 4.4 ist im Fahrplan nur als Stub geführt (Status/Phasentyp/Abhängigkeiten). Freigabepflichtig (CLAUDE.md §4: neues Modul + neue WS-API-Endpunkte/S9 + erste produktive Pub/Sub-Nutzung). Nächste Aktion: Detail-Plan mit Designfragen vorlegen (analog 4.1/4.2/4.3a/4.3b), **vor** Implementation.
+- **Nächster Schritt:** Detail-Plan-Designfragen für `backend/realtime` an Patrick (ENTSCHEIDUNG ERFORDERLICH).
+
+### 2026-06-08 – [BEOBACHTUNG] Detail-Plan-Freigabe Schritt 4.4 (`0A/1A/2A/3A/4A/5A/6A/7A/8A/9A/10A`)
+
+- **Vorgehen analog 4.1/4.2/4.3a/4.3b:** 11 Designfragen (0–10) mit Optionen + Empfehlung vorgelegt; Patrick wählte „alle Empfehlungen übernehmen".
+- **Kern-Entscheidungen:** 0A (Scope: Pub/Sub-Brücke + Hub + 3 WS-Endpunkte + Topics mit heutigen Produzenten; `help_alert`/`chat`/`gps_push` reserviert), 1A (dedizierter Pub/Sub-Listener-Task `PSUBSCRIBE operation.*` pro Worker), 2A (WS-Auth über bestehende SessionMiddleware, Session-Helper auf `HTTPConnection` generalisiert, Close 4401/4403), 3A (Disponent-`subscribe` mit S10-Check, Carer-Auto-Subscribe via S10, Anon `session_id`-Filterung), 4A (`order_status`-Payload additiv um `anonymous_session_id`), 5A (Tile-Hash-Redaction-Helper), 6A (30 s Ping / 10 s Pong-Timeout), 7A (Pub/Sub jetzt gebaut+getestet trotz Single-Worker), 8A (`chat`/`gps_push` nicht produktiv, Fehler-Frame bei unbekannter Aktion), 9A (Unit-Tests + dev-smoke-Stufe gegen echten Valkey, Coverage ≥ 80/70 % Standard), 10A (echter Publisher in `backend/realtime`, `RealtimePublisher`-Protocol in operations, Wiring in `app.py`).
+- **Freigabepflichtig (CLAUDE.md §4):** ja — neues Modul + neue WS-API-Endpunkte + Pub/Sub-Nutzung. Patrick-Freigabe als ENTSCHEIDUNG-Block-Antwort gilt; ADR-Pflicht entfällt (4.4 setzt bestehende Verträge S3/S9 produktiv um, Detail-Plan im Fahrplan dokumentiert, analog 4.1–4.3b). Reaktiv-Quote unverändert 1/10 = 10 %.
+
+### 2026-06-08 – [SCHRITT-START] Schritt 4.4 `backend/realtime` IN ARBEIT
+
+- **Branch:** `feat/4.4-realtime` (von `main` `80ed0e5` nach 4.3b-Merge abgezweigt).
+- **Eingangs-Disziplin (ADR-019/Regel-019) geprüft:** konsumierte `[BELASTBAR]`-Bestandteile — Valkey-Pool (2.2), Session-Helper (2.2/2.3), S10 (2.4), S3-Publish-Aufrufstellen (4.3a/4.3b). Zu bauende Verträge S3/S9 + „Pub/Sub via Valkey" `[VORLÄUFIG]` → durch 4.4 `[BELASTBAR]` (Modul-Bau-Muster wie 4.1/4.2/4.3a). Keine aktiven Blocker.
+- **Doku-Vorlauf:** Fahrplan-Schritt 4.4 vom Stub auf Voll-Format erweitert (Detail-Plan dokumentiert).
+
 ### 2026-06-07 – [SESSIONENDE] Schritt 4.3b ERLEDIGT — Bündelung produktiv, `backend/operations` vollständig `[BELASTBAR]`
 
 - **Session-Inhalt:** Schritt 4.3b (Bündelung, ADR-018) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf, Implementation, Test-Schicht (B1–B11), Migration-Round-Trip, dev-smoke-Bündel-Stufe, Doku-Sync. Session über den Tageswechsel 2026-06-06 → 2026-06-07.

@@ -115,6 +115,7 @@ def _order(
         operation_id=operation_id,
         status=status,
         bundle_id=bundle_id,
+        anonymous_session_id=None,
     )
 
 
