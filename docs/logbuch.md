@@ -26,6 +26,45 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-09 – [SESSIONENDE] Schritt 4.5 ERLEDIGT — `frontend-einsatzkraft` Bestellpfad produktiv (F2)
+
+- **Session-Inhalt:** Schritt 4.5 (`frontend-einsatzkraft` Bestell-PWA) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf + Freigabe (0A–10A), Implementation (6 neue lib-Bausteine + Dashboard-Page-Umbau + Vite-Proxy-`ws:true`), Test-Schicht (33 neue Vitest-Tests), Build-Smoke, Doku-Sync.
+- **Erreichter Stand:** **4.5 ERLEDIGT**. `frontend-einsatzkraft` bleibt `[VORLÄUFIG]` (Architektur-Pattern-Beförderung erst nach Phase-6-Last-Test, Präzedenz 2.5/2.6) — Bestellpfad F2 funktional validiert. 80 Vitest-Tests grün (+33), Coverage `src/lib/` 95.21 % Lines / 82.53 % Branches; eslint/prettier/svelte-check/tsc grün; Build (adapter-static) grün.
+- **Git:** Branch `feat/4.5-einsatzkraft-pwa` (von `main` `ab6c202`). PR folgt (CI-Erwartung: Frontend lint/format/typecheck/test/build grün; reine Frontend-Änderung, Backend unberührt).
+- **Lehre (Memory-bezogen):** WS-Client als erster Frontend-WS-Konsument bewusst gekapselt + mit injizierbarer Socket-Factory unit-getestet (Mock-`WebSocket`, Fake-Timer für Reconnect) — Test-Env ist `node`, also keine `window`/`WebSocket`-Abhängigkeit im Test; die browser-only Default-Pfade (`defaultUrl`/`defaultSocketFactory`) sind die einzigen unabgedeckten Zeilen.
+- **Offen / nächster Schritt:** **4.6** (Tests + Coverage-Anker — Coverage-Frischlauf aller Phase-4-belastbaren Module, `backend/operations` ≥ 90 %). Karten-Anzeige + 150-m-Annäherung der Einsatzkraft-PWA bleiben Phase 6 (Tile-Proxy/Spike L).
+- **README-Sync-Check (CLAUDE.md §16):** Projektphase, „Letzte Änderung" (2026-06-09), Architektur-Reife-Notiz (Frontend-Validierungsstand), „Nächste Schritte" auf 4.5 ERLEDIGT / 4.6 nächster synchronisiert. Reife-Zähler unverändert (keine Beförderung). CHANGELOG existiert projektweit nicht (Pre-Release-Tracking via README/Logbuch, konsistent mit 4.1–4.4).
+
+### 2026-06-09 – [SCHRITT-ABSCHLUSS] Schritt 4.5 ERLEDIGT — `frontend-einsatzkraft` Bestellpfad (Katalog + Bestellung + WS-Live-Status) verifiziert
+
+- **Akzeptanzkriterien (DoD, funktionsbasiert):**
+  1. ✅ Lib-Bausteine: `api/catalog` (S2b-Binding), `api/operations` (S2c-Binding), `realtime/ws` (S9-WS-Client mit Pong + Auto-Reconnect/Backoff), `stores/cart` (Warenkorb + genau-eine-Referenz-Mapping über `source`), `location` (Geolocation-Promise-Wrapper), `order-display` (Status-/Outcome-Texte). Dashboard-Page-Umbau (Katalog nach Kategorie + Stepper, Standort GPS/Text, Submit, Tracking-Ansicht mit Live-Status). `vite.config.ts` `ws:true`.
+  2. ✅ `eslint` (inkl. `eslint-plugin-security`) 0/0; `prettier --check` sauber; `svelte-check` 0/0 (406 Dateien); `tsc --noEmit --strict` sauber.
+  3. ✅ **80 Vitest-Tests grün** (+33). Coverage `src/lib/` 95.21 % Lines / 82.53 % Branches (≥ 80/70 Standard). `realtime/ws.ts` 92.85 % / 79.16 %.
+  4. ✅ `pnpm --filter frontend-einsatzkraft build` (adapter-static, PWA) grün — dev-smoke-Einsatzkraft-Build-Stufe. Kein neuer Backend-Smoke (S2b/S2c/S9 bereits E2E-verifiziert).
+  5. ✅ Doku-Sync (`architecture.md` §3/§5/§9, `README.md`, `fahrplan.md`).
+- **Klassifikation:** `[ERLEDIGT]` nach CLAUDE.md §9. **Kein REIFEGRAD-WECHSEL** — `frontend-einsatzkraft` bleibt bewusst `[VORLÄUFIG]` (Pattern-Beförderung nach Phase-6-Last-Test, Detail-Plan 10A).
+- **Reaktiv-Quote:** unverändert 1/10 = 10 % — **kein neuer ADR** (4.5 ist additiver Konsum belastbarer Verträge S2b/S2c/S9, keine Vertrags-/Architekturänderung).
+- **Reibungen:** (a) `svelte/prefer-svelte-reactivity`-Fehler auf built-in `Map` in der Komponente → `groupByCategory` auf Array-`find` umgestellt; (b) `security/detect-object-injection`-Warnungen auf dynamischen Record-Keys in `cart.ts` → Map-intern via `Object.entries`/`Object.fromEntries` (warnungsfrei, ohne Suppression).
+
+### 2026-06-08 – [SESSIONSTART] Neue Session — Beginn Schritt 4.5 (`frontend-einsatzkraft` Bestell-PWA, F2 Hard-Path)
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt: `project-context.md` vollständig (Stack, Constraints §6 Datenschutz/Sicherheit, §7 Coverage/Frontend-Toolchain, §8.1 Plattform-Matrix); `logbuch.md` letzter `[SESSIONENDE]` (2026-06-08, 4.4 ERLEDIGT) + Einträge danach; `fahrplan.md` „Aktueller Stand" + Phase 4 + Schritt-4.5-Stub; `architecture.md` §1/§2/§9 + Vertiefung Modul `frontend-einsatzkraft` (§3), Flow **F2** (§5), Schnittstellen **S2** (Anon-REST), **S9** (WS-Topologie, `/ws/anon/{operation_url}`); `decisions.md` Teil A (Reaktiv-Quote 1/10 = 10 %); `blockers.md` „Aktive Blocker" (keine).
+- **Git-Sync-Check (Sync-Schritt 0):** `git fetch origin main` → lokales `main` deckungsgleich mit `origin/main` (`ab6c202`, 4.4-Abschluss-Doku). Working Tree clean. PR #38 (4.4) gemergt.
+- **Eingangslage 4.5:** Schritt 4.5 ist im Fahrplan nur als Stub geführt (Status OFFEN, Phasentyp UMSETZUNG, Abhängigkeiten 4.1/4.3/4.4 + 2.6). Baut auf der in 2.6 erstellten `frontend-einsatzkraft`-Basis auf (Landing, `/[token]`-Route mit `/info`-Load + AccessCode-Form, `/[token]/dashboard`-Platzhalter). 4.5 löst den Phase-4-Platzhalter „Bestellpfad und Karten-Anzeige folgen in Phase 4" ein — konsumiert S2c (`/order`), S2b (`/catalog`), S9 (`/ws/anon/{operation_url}`). Freigabepflichtig (CLAUDE.md §4: API-Vertrags-Konsum neuer Endpunkte + WS-Erstnutzung im Frontend + potenziell MapLibre-GL-Aktivierung). Nächste Aktion: Code-Vertiefung der 2.6-Basis, dann Detail-Plan mit Designfragen vorlegen (analog 4.1–4.4), **vor** Implementation.
+
+### 2026-06-08 – [BEOBACHTUNG] Detail-Plan-Freigabe Schritt 4.5 (`0A–10A`)
+
+- **Vorgehen analog 4.1–4.4:** 11 Designfragen (0–10) mit Optionen + Empfehlung vorgelegt; Patrick wählte „Freigabe für Empfehlungen" → alle Empfehlungen (0A–10A).
+- **Kern-Entscheidungen:** 0A (Scope: nur Bestell-Pfad — Katalog/Bestellung/Standort/Live-Status via WS; Karte + 150-m-Annäherung bleiben Phase 6, weil `infra/tile-proxy` [VORLÄUFIG, Phase 6] + Spike L [Phase 5] noch keine Tiles liefern), 1A (Status-Abruf WS-only, geseedet aus `POST /order`-Antwort — **kein** neuer Backend-Endpunkt), 2A (gekapselter WS-Client `$lib/realtime/ws.ts` mit Pong/Reconnect, unit-testbar via Mock-WebSocket), 3A (`ws: true` am `/api`-Vite-Proxy), 4A (Geolocation auf explizite Nutzeraktion + Text-Fallback, Genauigkeit transparent), 5A (Katalog nach Kategorie gruppiert, Mengen-Stepper, Ein-Submit; Mapping genau-eine-Ref via `source`), 6A (Plausibilitäts-Outcome-UX: ACCEPTED vs. „geht an Disponenten"), 7A (Fokus auf eine aktive Bestellung), 8A (In-Memory-Session unverändert, Hard-Refresh → Re-Auth), 9A (Vitest-Unit, Coverage Standard ≥ 80/70 %; Build-Smoke vorhanden, kein neuer Backend-Smoke), 10A (`frontend-einsatzkraft` bleibt `[VORLÄUFIG]`; **kein neuer ADR**, additiver Konsum belastbarer Verträge S2b/S2c/S9).
+- **Freigabepflichtig (CLAUDE.md §4):** ja — erster WS-Konsument im Frontend + Scope-Entscheidungen mit Architektur-Bezug. Patrick-Freigabe als ENTSCHEIDUNG-Block-Antwort gilt; ADR-Pflicht entfällt (rein additiv, keine Vertrags-/Architekturänderung). Reaktiv-Quote unverändert 1/10 = 10 %.
+
+### 2026-06-08 – [SCHRITT-START] Schritt 4.5 `frontend-einsatzkraft` Bestell-PWA IN ARBEIT
+
+- **Branch:** `feat/4.5-einsatzkraft-pwa` (von `main` `ab6c202`).
+- **Eingangs-Disziplin (ADR-019/Regel-019) geprüft:** konsumierte `[BELASTBAR]`-Bestandteile — S2b `/catalog` (4.1), S2c `/order` (4.3a), S9 `/ws/anon/{operation_url}` (4.4), `auth_anonymous`-Session (2.3). 2.6-Frontend-Basis (Landing, `/[token]`, Dashboard-Guard) vorhanden. Keine aktiven Blocker.
+- **Doku-Vorlauf:** Fahrplan-Schritt 4.5 vom Stub auf Voll-Format erweitert (Detail-Plan dokumentiert).
+
 ### 2026-06-08 – [SESSIONENDE] Schritt 4.4 ERLEDIGT — `backend/realtime` produktiv, S3/S9 + Pub/Sub `[BELASTBAR]`
 
 - **Session-Inhalt:** Schritt 4.4 (`backend/realtime`) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf + Freigabe, Implementation (neues Modul, 8 Dateien), Adapter-Umstellung in `backend/operations`, Session-Helper-Generalisierung, Test-Schicht (55 Tests), dev-smoke-Realtime-Stufe, Doku-Sync.
