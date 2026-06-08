@@ -61,10 +61,14 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5175,
       proxy: {
+        // `ws: true` proxyt auch den WebSocket-Pfad /api/ws/anon/{token}
+        // (S9, Schritt 4.5) same-origin auf das Backend; ohne das Flag
+        // leitet Vite nur HTTP weiter. In Production routet Caddy/nginx.
         "/api": {
           target: backendUrl,
           changeOrigin: true,
           secure: false,
+          ws: true,
         },
       },
     },
