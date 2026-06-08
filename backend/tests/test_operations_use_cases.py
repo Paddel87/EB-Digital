@@ -122,6 +122,7 @@ def _order(*, status: str = ops_models.ORDER_STATUS_PENDING, operation_id: uuid.
         moderation_actor_dispatcher_id=None,
         moderation_at=None,
         bundle_id=None,
+        anonymous_session_id=None,
     )
 
 
