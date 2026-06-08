@@ -30,8 +30,8 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 - **Session-Inhalt:** Schritt 4.4 (`backend/realtime`) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf + Freigabe, Implementation (neues Modul, 8 Dateien), Adapter-Umstellung in `backend/operations`, Session-Helper-Generalisierung, Test-Schicht (55 Tests), dev-smoke-Realtime-Stufe, Doku-Sync.
 - **Erreichter Stand:** **4.4 ERLEDIGT**. `backend/realtime` `[BELASTBAR]`; „Pub/Sub via Valkey", S3, S9 `[BELASTBAR]`. 781 Tests grün (+55), Gesamt-Coverage 91,86 %, Modul-Coverage 93–100 % Lines; voller dev-smoke (inkl. Realtime-Stufe, 6 Sub-Checks) E2E gegen Compose-Stack grün.
-- **Git:** Branch `feat/4.4-realtime` (von `main` `80ed0e5`). Commits: Doku-Vorlauf + Implementation/Tests + Doku-Sync. **PR-Eröffnung + Merge stehen aus (Patrick).**
-- **Offen / nächster Schritt:** PR mergen (Patrick); danach lokales `main` per `git pull --ff-only` synchronisieren. Dann **4.5** (`frontend-einsatzkraft` — anonyme Bestell-PWA, konsumiert `/api/ws/anon/{token}`).
+- **Git:** Branch `feat/4.4-realtime` (von `main` `80ed0e5`), gepusht. Commits: Doku-Vorlauf + feat + test + Doku-Sync. **PR [#38](https://github.com/Paddel87/EB-Digital/pull/38)** eröffnet — **Merge steht aus (Patrick).**
+- **Offen / nächster Schritt:** PR [#38](https://github.com/Paddel87/EB-Digital/pull/38) mergen (Patrick); danach lokales `main` per `git pull --ff-only` synchronisieren. Dann **4.5** (`frontend-einsatzkraft` — anonyme Bestell-PWA, konsumiert `/api/ws/anon/{token}`).
 - **README-Sync-Check (CLAUDE.md §16):** Projektphase, Architektur-Reife (~53 `[BELASTBAR]`, ~15 `[VORLÄUFIG]`, 7 `[OFFEN]`), Nächste-Schritte, „Letzte Änderung" auf 2026-06-08 / 4.4 ERLEDIGT synchronisiert.
 
 ### 2026-06-08 – [SCHRITT-ABSCHLUSS] Schritt 4.4 ERLEDIGT — `backend/realtime` (WS-Hub + Valkey-Pub/Sub) verifiziert
