@@ -26,6 +26,32 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-08 – [SESSIONENDE] Schritt 4.4 ERLEDIGT — `backend/realtime` produktiv, S3/S9 + Pub/Sub `[BELASTBAR]`
+
+- **Session-Inhalt:** Schritt 4.4 (`backend/realtime`) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf + Freigabe, Implementation (neues Modul, 8 Dateien), Adapter-Umstellung in `backend/operations`, Session-Helper-Generalisierung, Test-Schicht (55 Tests), dev-smoke-Realtime-Stufe, Doku-Sync.
+- **Erreichter Stand:** **4.4 ERLEDIGT**. `backend/realtime` `[BELASTBAR]`; „Pub/Sub via Valkey", S3, S9 `[BELASTBAR]`. 781 Tests grün (+55), Gesamt-Coverage 91,86 %, Modul-Coverage 93–100 % Lines; voller dev-smoke (inkl. Realtime-Stufe, 6 Sub-Checks) E2E gegen Compose-Stack grün.
+- **Git:** Branch `feat/4.4-realtime` (von `main` `80ed0e5`). Commits: Doku-Vorlauf + Implementation/Tests + Doku-Sync. **PR-Eröffnung + Merge stehen aus (Patrick).**
+- **Offen / nächster Schritt:** PR mergen (Patrick); danach lokales `main` per `git pull --ff-only` synchronisieren. Dann **4.5** (`frontend-einsatzkraft` — anonyme Bestell-PWA, konsumiert `/api/ws/anon/{token}`).
+- **README-Sync-Check (CLAUDE.md §16):** Projektphase, Architektur-Reife (~53 `[BELASTBAR]`, ~15 `[VORLÄUFIG]`, 7 `[OFFEN]`), Nächste-Schritte, „Letzte Änderung" auf 2026-06-08 / 4.4 ERLEDIGT synchronisiert.
+
+### 2026-06-08 – [SCHRITT-ABSCHLUSS] Schritt 4.4 ERLEDIGT — `backend/realtime` (WS-Hub + Valkey-Pub/Sub) verifiziert
+
+- **Akzeptanzkriterien (DoD, funktionsbasiert):**
+  1. ✅ Neues Modul `backend/eb_digital/realtime/` (`topics`/`messages`/`redaction`/`publisher`/`connection`/`hub`/`api` + WS-Auth über generalisierte Session-Helper); 3 WS-Endpunkte unter `/api/ws/*` registriert.
+  2. ✅ `ruff`/`ruff format --check`/`mypy --strict` (65 Quelldateien)/`bandit` grün.
+  3. ✅ **781 Tests grün** (+55 Realtime). Coverage `backend/realtime`: api 93 %, hub 96 %, übrige 100 % (≥ 80 % Lines, Standard — kein kritischer Pfad). Gesamt 91,86 %.
+  4. ✅ **dev-smoke.sh-Realtime-Stufe** (6 Sub-Checks): WS-Cookie-Auth + subscribe (S10), Tenant-Scoping-Reject (forbidden), Valkey-PUBLISH→Hub-Listener→Dispatcher-Fan-out, Anon-`session_id`-Filter positiv + negativ, unauthentifizierter Handshake abgelehnt. Voller Smoke grün.
+  5. ✅ Reifegrad-Beförderung + Doku-Sync (`architecture.md` §1/§2/§3/§4/§9, `README.md`, `fahrplan.md`).
+- **Klassifikation:** `[ERLEDIGT]` nach CLAUDE.md §9. CHANGELOG.md existiert projektweit nicht (Pre-Release-Tracking via README/Logbuch, konsistent mit 4.1–4.3b).
+- **Reaktiv-Quote:** unverändert 1/10 = 10 % — **kein neuer ADR** (4.4 setzt die bestehenden Verträge S3/S9 produktiv um; die additive `anonymous_session_id`-Payload-Ergänzung ist Umsetzungs-Konkretisierung, im Detail-Plan/Fahrplan dokumentiert, analog ADR-018-Korrekturen in 4.3b).
+- **Reibungen:** (a) `Connection`-Dataclass `eq=False` (Identitäts-Hash für Registry-Sets); (b) 4.3a/4.3b-Test-`_order`-Stubs um `anonymous_session_id` ergänzt (additive Payload); (c) begründete `# type: ignore[no-untyped-call]` für `PubSub.aclose` (redis-py-7-Stub-Lücke).
+
+### 2026-06-08 – [REIFEGRAD-WECHSEL] `backend/realtime` → `[BELASTBAR]` (Schritt 4.4)
+
+- **`backend/realtime`** `[VORLÄUFIG]` → `[BELASTBAR]` (2026-06-08, Schritt 4.4). Reserviert (kein Produzent bis Phase 5/6): `help_alert`-Payload (Spike K), `chat`/`gps_push`-Client-Aktionen.
+- **Mitbefördert auf `[BELASTBAR]`:** „Pub/Sub via Valkey" (Kommunikations-Grundmodus), Schnittstelle **S3** (Operations Event Bus → Realtime), Schnittstelle **S9** (WebSocket-Topologie). Der Realtime-Publish-Port von `backend/operations` (S3) ist damit nicht länger No-Op-Stub.
+- **Methodik:** Beförderungs-Pflicht (`project-context.md` §6) erfüllt. Reaktiv-Quote 1/10 = 10 % (unter Schwelle Klasse G).
+
 ### 2026-06-08 – [SESSIONSTART] Neue Session — Beginn Schritt 4.4 (`backend/realtime`)
 
 - **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt: `project-context.md` (Stack, Constraints, §6 Datenschutz/PII-Redaction, §7 Coverage); `logbuch.md` letzter `[SESSIONENDE]` (2026-06-07, 4.3b ERLEDIGT) + Einträge danach; `fahrplan.md` „Aktueller Stand" + Phase 4 + Schritt-4.4-Stub; `architecture.md` §1/§2/§9 + Vertiefung Modul `backend/realtime` (§3) + Schnittstellen S3 (Event-Bus) / S9 (WS-Topologie) / S10 (Participation-Lookup); `decisions.md` Teil A (Reaktiv-Quote 1/10 = 10 %); `blockers.md` „Aktive Blocker" (keine).
