@@ -104,11 +104,26 @@ class WebSocketHub:
     # ─── Pub/Sub-Listener ────────────────────────────────────────────────
 
     async def start_listener(self, valkey: Redis) -> None:
-        """Starte den ``PSUBSCRIBE operation.*``-Listener-Task."""
+        """Starte den ``PSUBSCRIBE operation.*``-Listener-Task.
+
+        Ist Valkey beim App-Start nicht erreichbar (z. B. Unit-Tests, die die
+        App-Lifespan ohne Valkey fahren), wird der Fehler geloggt und der
+        Listener übersprungen — der App-Start bricht **nicht** ab. Pub/Sub ist
+        dann inaktiv bis zum nächsten Start; Rate-Limit etc. bleiben unberührt
+        (lazy-connectender Command-Client).
+        """
         if self._listener_task is not None:
             return
         pubsub = valkey.pubsub()
-        await pubsub.psubscribe(TOPIC_PATTERN)
+        try:
+            # Eager ``psubscribe`` macht die Subscription beim Rückgabezeitpunkt
+            # garantiert aktiv (Readiness für direkt folgende PUBLISH-Aufrufe).
+            await pubsub.psubscribe(TOPIC_PATTERN)
+        except Exception:
+            logger.exception("realtime.listener.subscribe_failed")
+            with contextlib.suppress(Exception):
+                await pubsub.aclose()  # type: ignore[no-untyped-call]
+            return
         self._pubsub = pubsub
         self._listener_task = asyncio.create_task(self._listen(pubsub))
         logger.info("realtime.listener.started", extra={"realtime_pattern": TOPIC_PATTERN})
