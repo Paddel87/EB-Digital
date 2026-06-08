@@ -17,6 +17,8 @@ from eb_digital.db import create_db_engine, create_session_factory
 from eb_digital.fleet import api as fleet_api
 from eb_digital.logging import configure_logging, get_logger
 from eb_digital.operations import api as operations_api
+from eb_digital.realtime import RealtimePublisher, WebSocketHub
+from eb_digital.realtime import api as realtime_api
 from eb_digital.settings import get_settings
 from eb_digital.tenants import api as tenants_api
 
@@ -42,9 +44,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     valkey = create_valkey_client(settings.valkey_url)
     app.state.valkey = valkey
 
+    # Realtime-Hub (Schritt 4.4): Pub/Sub-Listener + S3-Publisher. Der
+    # Listener abonniert ``operation.*`` auf einer eigenen Pub/Sub-Connection
+    # aus dem Valkey-Pool; ``backend/operations`` publisht über den Publisher.
+    hub = WebSocketHub()
+    await hub.start_listener(valkey)
+    app.state.realtime_hub = hub
+    app.state.realtime_publisher = RealtimePublisher(valkey)
+
     try:
         yield
     finally:
+        await hub.stop_listener()
         await valkey.aclose()
         await engine.dispose()
         logger.info("application_shutdown")
@@ -82,6 +93,7 @@ def create_app() -> FastAPI:
     api_router.include_router(fleet_api.router)
     api_router.include_router(operations_api.router)
     api_router.include_router(operations_api.anon_order_router)
+    api_router.include_router(realtime_api.router)
 
     app.include_router(api_router)
 

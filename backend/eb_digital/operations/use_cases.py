@@ -95,7 +95,7 @@ from eb_digital.operations.exceptions import (
     VehicleNotFoundError,
     VehicleNotInLargeOrderModeError,
 )
-from eb_digital.operations.realtime_adapter import RealtimeAdapter
+from eb_digital.operations.realtime_adapter import RealtimePublisher
 from eb_digital.operations.repository import (
     CustomerOrderRepository,
     OperationAreaRepository,
@@ -178,7 +178,7 @@ async def open_operation(
     access_code_active: bool,
     plausibility_threshold_m: int | None,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> tuple[ops_models.Operation, str | None]:
     """Eröffnet einen Einsatz, legt OperationArea(s) + Owner-Participation
     + Dispatcher-Participation an und schreibt Audit-Log.
@@ -272,7 +272,7 @@ async def close_operation(
     dispatcher_id: uuid.UUID,
     tenant_id: uuid.UUID,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> ops_models.Operation:
     operation = await OperationRepository.find_by_id(session, operation_id)
     if operation is None:
@@ -313,7 +313,7 @@ async def change_operation_areas(
     tenant_id: uuid.UUID,
     area_payloads: list[tuple[int, str | None, dict[str, Any]]],
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> ops_models.Operation:
     operation = await OperationRepository.find_by_id(session, operation_id)
     if operation is None:
@@ -359,7 +359,7 @@ async def toggle_access_code(
     tenant_id: uuid.UUID,
     activate: bool,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> tuple[ops_models.Operation, str | None]:
     operation = await OperationRepository.find_by_id(session, operation_id)
     if operation is None:
@@ -411,7 +411,7 @@ async def switch_supply_transporter_mode(
     vehicle_id: uuid.UUID,
     mode: str,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> Vehicle:
     """Wechselt den Modus eines Versorgungs-Transporters mit Audit-Log.
 
@@ -482,7 +482,7 @@ async def place_order(
     location_accuracy_m: float | None,
     location_text: str | None,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> tuple[ops_models.CustomerOrder, PlausibilityResult]:
     """Anonyme Bestellung mit Plausibility-Check (ADR-017).
 
@@ -599,6 +599,11 @@ async def place_order(
             "event_type": "order_placed",
             "order_id": str(order.id),
             "status": status_value,
+            # Anon-Filter-Schlüssel (Detail-Plan 4.4-4A): die anonyme Session,
+            # die diese Bestellung erzeugt hat. Kein PII (anonymer Identifier).
+            "anonymous_session_id": (
+                str(order.anonymous_session_id) if order.anonymous_session_id else None
+            ),
         },
         tenant_scope=owner_tenant_id,
     )
@@ -621,7 +626,7 @@ async def approve_low_plausibility_order(
     dispatcher_id: uuid.UUID,
     tenant_id: uuid.UUID,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> ops_models.CustomerOrder:
     await _require_tenant_participates(session, tenant_id=tenant_id, operation_id=operation_id)
     order = await CustomerOrderRepository.find_by_id(session, order_id)
@@ -650,6 +655,9 @@ async def approve_low_plausibility_order(
             "event_type": "order_moderation_approved",
             "order_id": str(order.id),
             "status": ops_models.ORDER_STATUS_PENDING,
+            "anonymous_session_id": (
+                str(order.anonymous_session_id) if order.anonymous_session_id else None
+            ),
         },
         tenant_scope=tenant_id,
     )
@@ -668,7 +676,7 @@ async def assign_vehicle(
     dispatcher_id: uuid.UUID,
     tenant_id: uuid.UUID,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> ops_models.OrderAssignment:
     """Erfüllt S4 + Invariante I3.
 
@@ -742,7 +750,7 @@ async def cancel_order(
     dispatcher_id: uuid.UUID,
     tenant_id: uuid.UUID,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> ops_models.CustomerOrder:
     await _require_tenant_participates(session, tenant_id=tenant_id, operation_id=operation_id)
     order = await CustomerOrderRepository.find_by_id(session, order_id)
@@ -781,6 +789,9 @@ async def cancel_order(
         payload={
             "event_type": "order_cancelled",
             "order_id": str(order.id),
+            "anonymous_session_id": (
+                str(order.anonymous_session_id) if order.anonymous_session_id else None
+            ),
         },
         tenant_scope=tenant_id,
     )
@@ -799,7 +810,7 @@ async def complete_order(
     actor_carer_tenant_id: uuid.UUID | None,
     tenant_id: uuid.UUID,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> ops_models.CustomerOrder:
     """Abschluss einer zugewiesenen Bestellung.
 
@@ -845,6 +856,9 @@ async def complete_order(
         payload={
             "event_type": "order_completed",
             "order_id": str(order.id),
+            "anonymous_session_id": (
+                str(order.anonymous_session_id) if order.anonymous_session_id else None
+            ),
         },
         tenant_scope=tenant_id,
     )
@@ -873,7 +887,7 @@ async def _maybe_complete_bundle(
     actor_dispatcher_id: uuid.UUID | None,
     tenant_id: uuid.UUID,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> None:
     bundle = await OrderBundleRepository.find_by_id(session, bundle_id)
     if bundle is None or bundle.status != ops_models.BUNDLE_STATUS_ACTIVE:
@@ -918,7 +932,7 @@ async def bundle_orders(
     dispatcher_id: uuid.UUID,
     tenant_id: uuid.UUID,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> ops_models.OrderBundle:
     """Bündelt ≥ 2 ``pending``-Orders auf einen Versorgungs-Transporter im
     ``large_order``-Modus (ADR-018 Use-Case-Vertrag).
@@ -1039,7 +1053,7 @@ async def dissolve_bundle(
     dispatcher_id: uuid.UUID,
     tenant_id: uuid.UUID,
     audit_logger: AuditLogger,
-    realtime: RealtimeAdapter,
+    realtime: RealtimePublisher,
 ) -> ops_models.OrderBundle:
     """Löst ein aktives Bündel auf (ADR-018 §703).
 
