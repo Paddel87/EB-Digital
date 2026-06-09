@@ -26,6 +26,39 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-09 – [SESSIONENDE] Schritt 4.6 ERLEDIGT — Coverage-Anker + Phase-4-Abschluss
+
+- **Session-Inhalt:** Schritt 4.6 (Tests + Coverage-Anker, Phase-4-Abschluss) vollständig verifiziert und dokumentiert — Detail-Plan-Vorlauf + Freigabe (`0A/1A/2A/3A/4-kein-ADR/5A`), Coverage-Frischlauf aller Phase-4-Module bei gestopptem Stack, voller `dev-smoke.sh`, Doku-Sync (fahrplan/README/logbuch). Reine Verifikation + Doku, keine Code-Änderung (Präzedenz 2.7).
+- **Erreichter Stand:** **4.6 ERLEDIGT → Phase 4 vollständig ERLEDIGT.** Backend 781 passed + 1 skipped (Stack down, CI-treu), TOTAL 89,78 % ≥ 80 %-Gate; `backend/operations` 96,8 % Lines / 90,1 % Branches ≥ 90 %-Anker; Frontend-Disponent 27/27 (96,61 % Lines), Frontend-Einsatzkraft 80/80 (96,77 % Lines); voller dev-smoke.sh (alle Stufen + Frontend-Builds) E2E grün (exit 0). Keine Reifegrad-Beförderung in 4.6.
+- **Git:** Branch `feat/4.6-coverage-anchor` (von `main` `b3d5713`). Reine Doku-Änderung (`docs/fahrplan.md`, `docs/logbuch.md`, `README.md`). PR folgt.
+- **Befund (für Phase-7-Härtung):** `catalog`/`fleet`-Repository-Query-Methoden werden per `dev-smoke.sh`-E2E abgedeckt, nicht per pytest (Repository-Unit-Tests nutzen `_StubSession`, decken nur Write-Pfade) → pytest-Modul-Coverage dort niedrig (catalog/repositories 39 %, fleet 69–76 %), aber global 80 %-Gate und operations-90 %-Anker erfüllt. Das globale TOTAL-Gate maskiert pro-Modul-Lücken; per-Modul-Schwellen sind nur für kritische Pfade (auth/operations/retention/resilience) hart. Phase-7-Kandidat: catalog/fleet-Repository-Integrationstests gegen Test-DB.
+- **Offen / nächster Schritt:** **Phase 5 (Spikes Wave 2 — ERKUNDUNG)**: Spikes G, H, K, L, M. Klärt Phase-6-Eingangsbedingungen.
+- **README-Sync-Check (CLAUDE.md §16):** Projektphase (Phase 4 ERLEDIGT, Phase 5 nächste), „Letzte Änderung" (2026-06-09), Verwendungs-Hinweis (Phase 4 abgeschlossen, F2 E2E lauffähig), „Nächste Schritte" (Phase 5 als #1) synchronisiert. Architektur-Reife-Zähler unverändert (keine Beförderung in 4.6). Status bleibt „Konzeption", Version v0.1.0 (Phase-Abschluss ist kein Statuswechsel) — keine Badge-Änderung. CHANGELOG existiert projektweit nicht (Pre-Release-Tracking via README/Logbuch, konsistent mit 4.1–4.5).
+
+### 2026-06-09 – [SCHRITT-ABSCHLUSS] Schritt 4.6 ERLEDIGT — Coverage-Anker (Phase-4-Abschluss) verifiziert
+
+- **Akzeptanzkriterien (DoD, funktionsbasiert):**
+  1. ✅ Backend-Coverage-Frischlauf bei **gestopptem Compose-Stack** (CI-treu, Lehre aus 4.4-CI-Reibung): `uv run pytest backend/tests --cov=eb_digital` → **781 passed + 1 skipped**, TOTAL **89,78 %** ≥ 80 %-Gate.
+  2. ✅ `backend/operations`-Aggregat **96,8 % Lines / 90,1 % Branches** ≥ 90 %-Anker (kritischer Pfad). `backend/realtime` 93–100 %, `auth*`/`tenants` ≥ 95 %.
+  3. ✅ Frontend-Sweep: Disponent **27/27** (96,61 % Lines / 93,33 % Branch), Einsatzkraft **80/80** (96,77 % Lines / 88,7 % Branch) — ≥ 80/70 %. Betreuer (Phase-6-Stub) 0 %, nicht im Scope.
+  4. ✅ Voller `dev-smoke.sh` (alle Stufen: health/tile-proxy/auth/anon/tenants/DB-Lifecycle/catalog/fleet/operations-F2/Bündel/realtime + Frontend-Builds) E2E grün, **exit 0** — validiert die per pytest nicht gemessenen catalog/fleet-Repository-Query-Pfade.
+  5. ✅ Doku-Sync (`fahrplan.md` Voll-Format + Aktueller-Stand + Phasen-Übersicht + Phase-4-Reflexion; `README.md`; `logbuch.md`).
+- **Klassifikation:** `[ERLEDIGT]` nach CLAUDE.md §9. **Keine Code-Änderung**, **keine Reifegrad-Beförderung**, **kein neuer ADR** (Phase-Abschluss = Buchhaltung). Reaktiv-Quote unverändert 1/10 = 10 %.
+- **Reibungen:** keine. Einziger nennenswerter Befund: der catalog/fleet-Repository-Coverage-Split (siehe SESSIONENDE), bewusst akzeptiert (Frage-2A), als Phase-7-Härtungskandidat vermerkt.
+
+### 2026-06-09 – [SCHRITT-START] Schritt 4.6 (Coverage-Anker, Phase-4-Abschluss) IN ARBEIT
+
+- **Branch:** `feat/4.6-coverage-anchor` (von `main` `b3d5713`).
+- **Eingangs-Disziplin:** 4.1–4.5 ERLEDIGT; Phase-4-Coverage-Schwellen je Schritt etabliert. Keine aktiven Blocker. Reine Verifikation + Doku, keine Code-Architektur-Berührung.
+- **Doku-Vorlauf:** Fahrplan-Schritt 4.6 vom Stub auf Voll-Format erweitert (Detail-Plan + ACs dokumentiert).
+
+### 2026-06-09 – [SESSIONSTART] Neue Session — Beginn Schritt 4.6 (Tests + Coverage-Anker, Phase-4-Abschluss)
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt: `project-context.md` vollständig (Stack, §6 Constraints, §7 Coverage-Mindestwerte/Toolchain, §8.1 Plattform-Matrix); `logbuch.md` letzter `[SESSIONENDE]` (2026-06-09, 4.5 ERLEDIGT) + Einträge danach; `fahrplan.md` „Aktueller Stand" + Phase 4 + Schritt-4.6-Stub + Präzedenz-Schritt 2.7 (Phase-2-Abschluss-Muster); `architecture.md` §1/§2/§9 (Reifegrad-Übersicht); `decisions.md` Teil A (Reaktiv-Quote 1/10 = 10 %); `blockers.md` „Aktive Blocker" (keine).
+- **Git-Sync-Check (Sync-Schritt 0):** `git fetch origin main` → lokales `main` deckungsgleich mit `origin/main` (`b3d5713`, 4.5-Abschluss-Doku, PR #39 gemergt). Working Tree clean.
+- **Eingangslage 4.6:** Schritt 4.6 ist im Fahrplan nur als Stub geführt (Status OFFEN, Phasentyp UMSETZUNG, Phase-2-Pattern „Coverage-Frischlauf für alle in Phase 4 belastbaren Module; `backend/operations` ≥ 90 %"). Als Phase-4-Abschluss-Schritt analog 2.7: reine Verifikation + Dokumentation, keine Code-Architektur-Änderung erwartet. Freigabepflichtig (CLAUDE.md §4 / Präzedenz 2.7: Stub → volles Schritt-Format). Nächste Aktion: Detail-Plan mit Designfragen an Patrick (ENTSCHEIDUNG ERFORDERLICH), **vor** Verifikations-/Doku-Arbeit.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus.
+
 ### 2026-06-09 – [SESSIONENDE] Schritt 4.5 ERLEDIGT — `frontend-einsatzkraft` Bestellpfad produktiv (F2)
 
 - **Session-Inhalt:** Schritt 4.5 (`frontend-einsatzkraft` Bestell-PWA) vollständig umgesetzt und verifiziert — Detail-Plan-Vorlauf + Freigabe (0A–10A), Implementation (6 neue lib-Bausteine + Dashboard-Page-Umbau + Vite-Proxy-`ws:true`), Test-Schicht (33 neue Vitest-Tests), Build-Smoke, Doku-Sync.
