@@ -26,6 +26,30 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-10 – [SESSIONENDE] Phase 5 begonnen — Spike G Teilstand (Valhalla ✅, TomTom blockiert #002), Spike K Konzept fertig (wartet auf Freigabe)
+
+- **Session-Inhalt:** Phase-5-Start (Patrick-Direktive „Beginne Phase 5"). Schritt 5.1 (Spike G) begonnen; TomTom-Empirie durch fehlenden API-Key blockiert (**Blocker #002** angelegt); Valhalla-Vergleichsteil vollständig empirisch durchgeführt; nach Blocker-Protokoll Punkt 4 auf Schritt 5.3 (Spike K) ausgewichen und das Konzept vollständig erarbeitet.
+- **Erreichter Stand:** **5.1 `[BLOCKIERT]`** (Teilstand: [`docs/spikes/spike-g-results.md`](spikes/spike-g-results.md)) — Valhalla 3.7.0 lokal (Docker + Geofabrik-Bremen-Extract, Setup ~5 min): `ignore_access` erzwingt Befahrung der Fußgängerzone Obernstraße (0,192 km direkt statt 0,637 km Umfahrung; Stadtquerung 0,938 statt 2,133 km), `ignore_oneways` erzwingt Einbahn-Gegenrichtung (0,106 statt 0,416 km), `exclude_polygons`/`exclude_locations` sperren beliebige Geometrien (0,248 → 2,951 km Umweg). Scoping-Risiko globaler `ignore_*`-Flags empirisch belegt + 3-Call-Komposition als Gegenmittel verifiziert. Zwei Adapter-Lehren: Snapping-Disziplin (`radius` nötig, sonst 442) und Geometrie-Disziplin (Sperre wirkt nur bei Kanten-Schnitt, vorher `/locate`-Matching). **5.3 `[WARTET-AUF-FREIGABE]`** ([`docs/spikes/spike-k-results.md`](spikes/spike-k-results.md)) — Hilfe-Knopf: 2-Tap-Auslösung mit Kategorien `eigennot`/`panne`, Beschreibung optional (Niederschwelligkeit), Auto-Standort-Anhang, Rückzieh-Pfad, Acknowledge/Resolve-Quittung via WS + Audit-Log, Re-Notification statt Eskalation, `help_alert`-Datenmodell + S3-WS-Payload (schließt offene 4.4-Frage), Kein-Notruf-UX-Hinweis (Vision-Abgrenzung).
+- **Reibungen:** (a) `.env` byte-identisch mit `.env.example` — beide Geo-API-Keys sind Platzhalter; 401 bei Orbis v2 und Legacy v1 → Blocker #002 (betrifft auch Spike L/MapTiler). (b) Valhalla-442-Snapping-Artefakt bei `ignore_access` ohne Location-`radius` — als Adapter-Lehre dokumentiert.
+- **Kein ADR angelegt** (Spike-ADRs sind freigabepflichtig; Spike-G-ADR braucht TomTom-Empirie, Spike-K-ADR wartet auf Konzept-Freigabe). Reaktiv-Quote unverändert 1/10 = 10 %. Keine Reifegrad-Änderung (`[OFFEN]`-Bereiche G/K werden erst mit ADR zu `[VORLÄUFIG]`).
+- **Git:** Branch `feat/5.1-spike-g` (von `main` `45821f6`). Reine Doku-/Spike-Änderung, kein Produktivcode. PR folgt.
+- **README-Sync-Check (CLAUDE.md §16):** Projektphase (Phase 5 LAUFEND seit 2026-06-10 mit Spike-Stand), „Letzte Änderung", **Blocker-Zähler 0 → 1**, „Nächste Schritte" (Key-Eingang / Spike-K-Freigabe / Spike H), Doku-Tabelle, Phase-5-Akkordeon + SVG-Fortschrittsbalken (LÄUFT seit 2026-06-10, 0/5 Spikes unverändert) synchronisiert. Status bleibt „Konzeption", v0.1.0, keine Badge-Änderung. CHANGELOG existiert projektweit nicht (Pre-Release-Tracking via README/Logbuch).
+- **Offen / nächster Schritt:** **(1)** Patrick: TomTom-API-Key (+ MapTiler-Key) in `.env` → Blocker #002 auflösen → TomTom-Empirie T1/T2/T3 + Spike-G-ADR-Entwurf. **(2)** Patrick: Spike-K-Konzept freigeben → ADR-Anlage. **(3)** Key-unabhängig möglich: Spike H (Resilience, 5.2).
+
+### 2026-06-10 – [BLOCKER] Blocker #002 angelegt — TomTom-API-Key fehlt (Informationslücke, Muster 1)
+
+- **Befund:** `.env` ist byte-identisch mit `.env.example`; `TOMTOM_API_KEY`/`MAPTILER_API_KEY` sind Beispielwerte. Probe gegen Orbis Routing v2 und Legacy v1: beide `401 Unauthorized`. Repo-weite Suche: keine alternative Key-Quelle.
+- **Wirkung:** TomTom-Empirie (T1/T2/T3) von Spike G nicht durchführbar; Spike-G-ADR nicht finalisierbar. Spike L (MapTiler) perspektivisch ebenfalls betroffen.
+- **Reaktion:** Sofort-Blocker nach Erkennungs-Muster 1 (ohne Dreifach-Versuch), Eintrag in `blockers.md`; 5.1 auf `[BLOCKIERT]`; Ausweich auf Spike K nach Blocker-Protokoll Punkt 4.
+
+### 2026-06-10 – [SESSIONSTART] Neue Session — Beginn Phase 5 (Spikes Wave 2, ERKUNDUNG), Schritt 5.1 (Spike G)
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt: `project-context.md` vollständig (Stack, §5 TomTom-Migrations-Hinweise, §6 Constraints inkl. ADR-016-Cache-Verzicht, §11 TomTom-Recherche-Befunde 2026-05-17 inkl. Abschnitt E RouteOverride); `logbuch.md` letzter `[SESSIONENDE]` (2026-06-10, README-Fortschrittsbalken); `fahrplan.md` „Aktueller Stand" + Phase 5 vollständig (Schritt 5.1 in Voll-Format, 5.2–5.5 als Stubs); `architecture.md` §1/§2/§9 (Reifegrad: OFFEN-Bereiche Spike G/H/K/L/M); `decisions.md` Teil A (20 ADRs, Reaktiv-Quote 1/10 = 10 %); `blockers.md` „Aktive Blocker" (keine).
+- **Auftrag (Patrick, direkt):** „Beginne Phase 5."
+- **Git-Sync-Check (Sync-Schritt 0):** `git fetch origin main` → lokales `main` deckungsgleich mit `origin/main` (`45821f6`, PR #41 gemergt, Fortschrittsbalken). Working Tree clean.
+- **Eingangslage Phase 5:** ERKUNDUNG, fünf Spikes G/H/K/L/M. Erster Schritt laut Fahrplan: **5.1 Spike G** (Sperrungs-Override-Technik, Zeitbox 8–12 h, freigabefrei als Spike; Folge-ADR freigabepflichtig). Eingangskriterien geprüft: TomTom-Recherche-Befunde (§11, 2026-05-17) gelesen, `avoidAreas`-Rechteck-Limit + `supportingPoints`-Mechanik verstanden, ADR-016 (Cache-Verzicht → Budget-Relevanz pro Override-Versuch) berücksichtigt. **TomTom- und MapTiler-API-Keys in `.env` vorhanden** (entwickler-eigene Keys, kein Mandanten-Bezug) — empirische Szenarien T1/T2/T3 sind durchführbar.
+- **Modus / Werkzeug:** Claude Code, semi-autonomer Modus.
+
 ### 2026-06-10 – [SESSIONENDE] README-Fortschrittsbalken umgesetzt (animiertes SVG + `<details>`-Phasen-Akkordeon)
 
 - **Session-Inhalt:** Möglichkeiten-Prüfung für einen „interaktiven" Fortschrittsbalken in der GitHub-README + Umsetzung der besten freigabefreien Variante.
