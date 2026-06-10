@@ -36,6 +36,63 @@ EB Digital ersetzt die heute übliche WhatsApp-Improvisation bei der ehrenamtlic
 - Keine native App in Phase 1 – ausschließlich PWA.
 - Keine US-Cloud-Anbieter, kein Tracking, keine SaaS-Auth-Provider.
 
+## Entwicklungsfortschritt
+
+<!-- Sync-Quellen: fahrplan.md „Phasen-Übersicht" + „Aktueller Stand".
+     Der Balken (docs/assets/entwicklungsfortschritt.svg) und die aufklappbaren
+     Phasen-Details werden bei jedem Phasen-Statuswechsel mitgepflegt
+     (CLAUDE.md §16, Trigger 1 + 2).
+     Technik-Hinweis: GitHub entfernt JavaScript/CSS aus READMEs — Interaktivität
+     ist bewusst auf <details>-Aufklappen beschränkt; der Balken ist ein
+     animiertes SVG (SMIL), der Stand wird manuell synchronisiert. -->
+
+![Entwicklungsfortschritt: 4 von 7 Phasen abgeschlossen, Phase 5 läuft](docs/assets/entwicklungsfortschritt.svg)
+
+<details>
+<summary><strong>Phase 1 — Repository-Bootstrap &amp; Tech-Foundations</strong> · UMSETZUNG · ✅ ERLEDIGT 2026-05-10</summary>
+
+Schritte 1.1–1.8: uv-/pnpm-Workspace, Pre-Commit-Hooks + CI-Pipeline, FastAPI-Skelett mit JSON-Logging (PII-Redaction), DB-Plumbing (SQLAlchemy 2.0 async + Alembic + PostgreSQL 17.9), Procrastinate-Job-Engine, Admin-Bootstrap-CLI, drei SvelteKit-Frontend-Skelette, Compose-Stack (Caddy + nginx-Tile-Proxy) inkl. `scripts/dev-smoke.sh`.
+
+</details>
+<details>
+<summary><strong>Phase 2 — Auth + Tenants + Verbund-Tauglichkeit</strong> · UMSETZUNG · ✅ ERLEDIGT 2026-05-16</summary>
+
+Schritte 2.1–2.7 (+ Hot-Stabilisierung 2.5b, ADR-015): Datenmodell-Skelett, Login + Cookie-Sessions + Rate-Limit (ADR-013), anonyme Bezieher-Schicht (`auth_anonymous`), Mandanten-Verwaltung mit Self-Service-Onboarding (S10, Invarianten I1/I2), `frontend-disponent`-Login-UI, `frontend-einsatzkraft`-AccessCode-UI, Coverage-Anker (Backend 95,84 %).
+
+</details>
+<details>
+<summary><strong>Phase 3 — Spikes Wave 1 (Operations-Vorklärungen)</strong> · ERKUNDUNG · ✅ ERLEDIGT 2026-05-28</summary>
+
+Spike I → ADR-017 (Geo-Plausibilität: Hülle-Distanz + dynamische GPS-Toleranz), Spike J → ADR-018 (Bündelung: manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders).
+
+</details>
+<details>
+<summary><strong>Phase 4 — Operations Core + Realtime + Einsatzkraft-PWA</strong> · UMSETZUNG · ✅ ERLEDIGT 2026-06-09</summary>
+
+Schritte 4.1–4.6: `backend/catalog` (4.1), `backend/fleet` (4.2), `backend/operations` mit Plausibilität + Audit-Log + Assignment (4.3a) und Bündelung (4.3b), `backend/realtime` WebSocket-Hub + Valkey-Pub/Sub (4.4), `frontend-einsatzkraft`-Bestellpfad F2 mit WS-Live-Status (4.5), Coverage-Anker bei gestopptem Stack — Backend 89,78 % TOTAL, `backend/operations` 96,8 % Lines (4.6).
+
+</details>
+<details open>
+<summary><strong>Phase 5 — Spikes Wave 2 (Geo, Frontends, Resilience, Roll-out)</strong> · ERKUNDUNG · 🔵 LÄUFT seit 2026-06-09</summary>
+
+Fünf Spikes, 0 / 5 erledigt: **Spike G** (Sperrungs-Override-Technik), **Spike H** (Resilience-Granularität RTO/RPO), **Spike K** (Hilfe-Knopf-Semantik), **Spike L** (Tile-Caching-Strategie Frontend), **Spike M** (Fahrzeugbezeichnungs-Schema, DPolG-Rückfrage). Klärt die Phase-6-Eingangsbedingungen.
+
+</details>
+<details>
+<summary><strong>Phase 6 — Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export</strong> · UMSETZUNG · ⚪ OFFEN</summary>
+
+Karten produktiv (MapLibre, Tile-Proxy nach ADR-016), Disponenten- und Betreuer-Operations-UIs, `backend/geo` mit Routing + Sperrungs-Override, `backend/resilience`, `backend/retention`, `backend/export`.
+
+</details>
+<details>
+<summary><strong>Phase 7 — Stabilisierung, Roll-out-Vorbereitung, Validierung</strong> · STABILISIERUNG · ⚪ OFFEN</summary>
+
+Lasttest (NFR-Validierung, API-Budget unter Cache-freier Annahme), externe Security-Review des Auth-Stacks ([#26](https://github.com/Paddel87/EB-Digital/issues/26)), Roadmap-Meilensteine N/O/P. Danach **Phase X** (Verbund-Modus für parallele Mandanten-Großlagen) als spätere Erweiterung.
+
+</details>
+
+→ Vollständiger Fahrplan: [`docs/fahrplan.md`](docs/fahrplan.md)
+
 ## Aktueller Status
 
 <!-- Dieser Block wird vor jedem Sessionende synchronisiert mit:

@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="150" viewBox="0 0 840 150" role="img" aria-label="Entwicklungsfortschritt: 4 von 7 Phasen abgeschlossen (57 Prozent), Phase 5 läuft">
+  <!-- Sync-Quelle: docs/fahrplan.md „Phasen-Übersicht" + „Aktueller Stand".
+       Pflege bei jedem Phasen-Statuswechsel (CLAUDE.md §16, Trigger 1).
+       Stand: 2026-06-10 — Phase 1–4 ERLEDIGT, Phase 5 (ERKUNDUNG) laufend, Phase 6–7 OFFEN. -->
+  <style>
+    text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .title { font-size: 16px; font-weight: 600; fill: #1f2328; }
+    .meta  { font-size: 13px; font-weight: 600; fill: #57606a; }
+    .pct   { fill: #1a7f37; }
+    .lbl   { font-size: 11px; font-weight: 600; fill: #57606a; }
+    .sub   { font-size: 10px; fill: #818b98; }
+    .seg-in { font-size: 11px; font-weight: 700; fill: #ffffff; }
+    .open  { fill: #d8dee4; }
+    .legend { font-size: 10.5px; fill: #57606a; }
+    @media (prefers-color-scheme: dark) {
+      .title { fill: #e6edf3; }
+      .meta, .lbl, .legend { fill: #9198a1; }
+      .sub { fill: #6e7681; }
+      .pct { fill: #3fb950; }
+      .open { fill: #30363d; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="shine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <clipPath id="done-clip">
+      <rect x="20" y="44" width="110" height="26" rx="5"/>
+      <rect x="135" y="44" width="110" height="26" rx="5"/>
+      <rect x="250" y="44" width="110" height="26" rx="5"/>
+      <rect x="365" y="44" width="110" height="26" rx="5"/>
+    </clipPath>
+  </defs>
+
+  <!-- Kopfzeile -->
+  <text class="title" x="20" y="28">Entwicklungsfortschritt</text>
+  <text class="meta" x="820" y="28" text-anchor="end">4 / 7 Phasen abgeschlossen · <tspan class="pct">57 %</tspan></text>
+
+  <!-- Phase 1–4: ERLEDIGT -->
+  <rect x="20" y="44" width="110" height="26" rx="5" fill="#2da44e"/>
+  <rect x="135" y="44" width="110" height="26" rx="5" fill="#2da44e"/>
+  <rect x="250" y="44" width="110" height="26" rx="5" fill="#2da44e"/>
+  <rect x="365" y="44" width="110" height="26" rx="5" fill="#2da44e"/>
+  <text class="seg-in" x="75" y="61" text-anchor="middle">✓</text>
+  <text class="seg-in" x="190" y="61" text-anchor="middle">✓</text>
+  <text class="seg-in" x="305" y="61" text-anchor="middle">✓</text>
+  <text class="seg-in" x="420" y="61" text-anchor="middle">✓</text>
+
+  <!-- Lauflicht über den erledigten Phasen -->
+  <g clip-path="url(#done-clip)">
+    <rect x="-160" y="44" width="160" height="26" fill="url(#shine)">
+      <animateTransform attributeName="transform" type="translate" from="0 0" to="640 0" dur="3.2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Phase 5: LAUFEND (pulsierend) -->
+  <rect x="480" y="44" width="110" height="26" rx="5" fill="#0969da">
+    <animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/>
+  </rect>
+  <text class="seg-in" x="535" y="61" text-anchor="middle">0 / 5 Spikes</text>
+
+  <!-- Phase 6–7: OFFEN -->
+  <rect class="open" x="595" y="44" width="110" height="26" rx="5"/>
+  <rect class="open" x="710" y="44" width="110" height="26" rx="5"/>
+
+  <!-- Phasen-Beschriftung -->
+  <text class="lbl" x="75" y="88" text-anchor="middle">1 · Bootstrap</text>
+  <text class="lbl" x="190" y="88" text-anchor="middle">2 · Auth + Tenants</text>
+  <text class="lbl" x="305" y="88" text-anchor="middle">3 · Spikes W1</text>
+  <text class="lbl" x="420" y="88" text-anchor="middle">4 · Operations + RT</text>
+  <text class="lbl" x="535" y="88" text-anchor="middle">5 · Spikes W2</text>
+  <text class="lbl" x="650" y="88" text-anchor="middle">6 · Geo + PWAs</text>
+  <text class="lbl" x="765" y="88" text-anchor="middle">7 · Stabilisierung</text>
+  <text class="sub" x="75" y="102" text-anchor="middle">ERLEDIGT 2026-05-10</text>
+  <text class="sub" x="190" y="102" text-anchor="middle">ERLEDIGT 2026-05-16</text>
+  <text class="sub" x="305" y="102" text-anchor="middle">ERLEDIGT 2026-05-28</text>
+  <text class="sub" x="420" y="102" text-anchor="middle">ERLEDIGT 2026-06-09</text>
+  <text class="sub" x="535" y="102" text-anchor="middle">LÄUFT seit 2026-06-09</text>
+  <text class="sub" x="650" y="102" text-anchor="middle">OFFEN</text>
+  <text class="sub" x="765" y="102" text-anchor="middle">OFFEN</text>
+
+  <!-- Legende -->
+  <circle cx="26" cy="128" r="5" fill="#2da44e"/>
+  <text class="legend" x="36" y="132">erledigt</text>
+  <circle cx="106" cy="128" r="5" fill="#0969da">
+    <animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/>
+  </circle>
+  <text class="legend" x="116" y="132">laufende Phase (ERKUNDUNG)</text>
+  <circle class="open" cx="296" cy="128" r="5"/>
+  <text class="legend" x="306" y="132">offen</text>
+  <text class="legend" x="820" y="132" text-anchor="end">Quelle: docs/fahrplan.md · Stand 2026-06-10</text>
+</svg>

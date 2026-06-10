@@ -26,6 +26,25 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-10 – [SESSIONENDE] README-Fortschrittsbalken umgesetzt (animiertes SVG + `<details>`-Phasen-Akkordeon)
+
+- **Session-Inhalt:** Möglichkeiten-Prüfung für einen „interaktiven" Fortschrittsbalken in der GitHub-README + Umsetzung der besten freigabefreien Variante.
+- **Möglichkeiten-Prüfung (Ergebnis):** GitHub sanitisiert README-HTML — kein JavaScript, kein `<style>`, keine Event-Handler. Echte Klick-Interaktivität existiert nur über `<details>`/`<summary>`. Als Bild eingebundene SVGs dürfen SMIL-/CSS-Animationen und `prefers-color-scheme`-Media-Queries enthalten (Dark-Mode-tauglich), aber keine Hover-/Klick-Logik (Camo-Proxy → `<img>`-Kontext). Verworfen: Mermaid-Gantt (nicht interaktiv, optisch ungeeignet), reiner Unicode-Balken (nicht interaktiv, unpräzise), shields.io-Dynamik-Badge + Auto-Update via GitHub Action (freigabepflichtig, CLAUDE.md §4 Kategorie 7 — als Option für später dokumentiert, nicht umgesetzt).
+- **Umsetzung:** (a) `docs/assets/entwicklungsfortschritt.svg` — animierter 7-Phasen-Balken (Phase 1–4 grün mit Lauflicht-Schimmer, Phase 5 blau pulsierend „0 / 5 Spikes", 6–7 grau; Beschriftung mit ERLEDIGT-Daten; Legende; Dark-Mode via Media-Query; Sync-Quellen-Kommentar im SVG; xmllint-valide). (b) README-Sektion „Entwicklungsfortschritt" zwischen „Über das Projekt" und „Aktueller Status": SVG-Einbindung + 7 aufklappbare Phasen-`<details>` (laufende Phase 5 per `open`-Attribut vorausgeklappt) + Phase-X-Hinweis + Fahrplan-Link + Pflege-Kommentar (Sync-Pflicht bei Phasen-Statuswechsel, §16 Trigger 1 + 2).
+- **Einordnung:** Dokumentationspflege (CLAUDE.md §5, freigabefrei), kein Fahrplan-Schritt — direkter Arbeitsauftrag Patricks, kein Code, keine Architektur-/Pipeline-Berührung. Kein neuer ADR, Reaktiv-Quote unverändert 1/10 = 10 %.
+- **Pflege-Hinweis für Folge-Sessions:** Der SVG-Balken ist ab jetzt Teil der README-Sync-Prüfung (§16 Trigger 2) — bei Phasen-Statuswechsel SVG-Segmente/Daten/Prozentwert + `<details>`-Status mitziehen. Quelle ist ausschließlich `fahrplan.md` „Phasen-Übersicht".
+- **Verifikation:** `xmllint --noout` valide; `pre-commit run` auf allen geänderten Dateien grün (prettier inkl.). Reine Doku-Änderung, Tests/CI-Gates nicht berührt.
+- **Git:** Branch `docs/readme-fortschrittsbalken` (von `main` `485899c`), PR folgt.
+- **README-Sync-Check (CLAUDE.md §16):** neue Sektion gegen `fahrplan.md` Phasen-Übersicht abgeglichen (Phase 1–4 ERLEDIGT mit Daten, Phase 5 laufend ab 2026-06-09 mit Spikes G/H/K/L/M, 6–7 OFFEN, Phase X Erweiterung); Status-Block, Version, Badges unverändert (kein Statuswechsel, keine Badge-Änderung — Balken ist kein Badge, Badge-Zähler bleibt 7/10).
+- **Offen / nächster Schritt:** unverändert **Phase 5 (Spikes Wave 2 — ERKUNDUNG)**: Spikes G, H, K, L, M.
+
+### 2026-06-10 – [SESSIONSTART] Neue Session — README-Fortschrittsbalken (Dokumentationspflege, Patrick-Direktive)
+
+- **Pflicht-Mindest-Lektüre (CLAUDE.md §2)** durchgeführt: `project-context.md` vollständig; `logbuch.md` letzter `[SESSIONENDE]` (2026-06-09, 4.6 ERLEDIGT, Phase 4 abgeschlossen); `fahrplan.md` „Aktueller Stand" + Phasen-Übersicht (Phase 5 NÄCHSTE, keine aktiven Schritte); `architecture.md` Struktur-Check §1/§2/§9; `decisions.md` Teil A (20 ADRs, Reaktiv-Quote 1/10 = 10 %); `blockers.md` „Aktive Blocker" (keine).
+- **Auftrag (Patrick, direkt):** „Erstelle für die README einen interaktiven Fortschrittsbalken, der die Entwicklung abbildet, prüfe die Möglichkeiten."
+- **Einordnung:** Dokumentationspflege / README-Statusbild (CLAUDE.md §5 freigabefrei, §16 README-Pflege). Kein Code, keine Architektur-, keine Pipeline-Berührung — Optionen mit CI-Workflow-Anteil (Auto-Update via Action) wären freigabepflichtig (§4 Kategorie 7) und werden nur als Vorschlag dokumentiert, nicht umgesetzt.
+- **Git-Ausgangslage:** `main` clean auf `485899c` (PR #40 gemergt, 4.6-Doku).
+
 ### 2026-06-09 – [SESSIONENDE] Schritt 4.6 ERLEDIGT — Coverage-Anker + Phase-4-Abschluss
 
 - **Session-Inhalt:** Schritt 4.6 (Tests + Coverage-Anker, Phase-4-Abschluss) vollständig verifiziert und dokumentiert — Detail-Plan-Vorlauf + Freigabe (`0A/1A/2A/3A/4-kein-ADR/5A`), Coverage-Frischlauf aller Phase-4-Module bei gestopptem Stack, voller `dev-smoke.sh`, Doku-Sync (fahrplan/README/logbuch). Reine Verifikation + Doku, keine Code-Änderung (Präzedenz 2.7).
