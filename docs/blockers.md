@@ -22,7 +22,20 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
 
 ## Aktive Blocker
 
-_Keine aktiven Blocker._
+### Blocker #002: TomTom-API-Key fehlt — empirischer Teil von Spike G (T1/T2/T3 gegen TomTom) nicht durchführbar
+
+- **Datum:** 2026-06-10
+- **Fahrplan-Referenz:** 5.1 (Spike G — Sperrungs-Override-Technik)
+- **Modul:** `backend/geo` (Spike-Stadium, Wegwerf-Code)
+- **Blocker-Typ:** Informationslücke
+- **Beschreibung:**
+  Die Fahrplan-Notiz zu 5.1 sieht vor, dass der TomTom-Test „mit dem entwickler-eigenen API-Key des Plattform-Betreibers" läuft. Im Repo existiert jedoch kein echter Key: `.env` ist byte-identisch mit `.env.example` (geprüft per `diff` am 2026-06-10), `TOMTOM_API_KEY` und `MAPTILER_API_KEY` sind Beispielwerte. Probe-Requests gegen TomTom Orbis Routing v2 (`/maps/orbis/routing/calculateRoute/...?apiVersion=2`) und Legacy Routing v1 antworten beide mit `401 Unauthorized` („You are missing valid authentication credentials"). Keine weitere `.env`-Datei im Repo gefunden.
+- **Versuchte Ansätze:** (1) Orbis Routing API v2 mit `.env`-Key → 401. (2) Legacy Routing API v1 mit `.env`-Key → 401. (3) Repo-weite Suche nach alternativen Env-Dateien/Key-Quellen → keine. (Kein Dreifach-Fehlschlag nötig — Informationslücke greift sofort, Muster 1.)
+- **Offene Hypothesen:** keine technischen — der Key existiert schlicht nicht im Arbeitsverzeichnis.
+- **Klärungsfrage an Patrick:** Bitte echten TomTom-API-Key (developer.tomtom.com, Freemium-Konto reicht: 2.500 Nicht-Tile-Requests/Tag frei) in `.env` unter `TOMTOM_API_KEY=` eintragen. Der Spike braucht geschätzt 30–60 Routing-Calls — weit unter dem Tageslimit. Optional gleich `MAPTILER_API_KEY` für Spike L mitpflegen.
+- **Auswirkung:** Nur der TomTom-empirische Teil von 5.1 wartet. Der Valhalla-Vergleichsteil (lokales Docker-Setup, OSM-Extract Bremen) läuft unabhängig weiter; Spike-Abschluss (ADR mit Technik-Wahl je Sperrungsart) braucht aber die TomTom-Befunde.
+
+(Stand Aktive Blocker: 2026-06-10 — 1 aktiver Blocker.)
 
 (Stand: 2026-05-10. Im Härtungs-Schritt von Modus-2-Schritt 3 wurden keine Blocker identifiziert; alle in Schublade 1 zusammengefassten Grundsatzfragen aus `project-context.md` Abschnitt 11 sind in der Klärungs-Session am 2026-05-07 abschließend entschieden, alle Schublade-2-Punkte als Spikes G–M in `fahrplan.md` Phasen 3 und 5 platziert, alle Schublade-3-Punkte als Roadmap-Meilensteine N/O/P in Phase 7. Blocker #001 wurde am 2026-05-10 ursächlich aufgeklärt und nach „Gelöste Blocker" verschoben.)
 
