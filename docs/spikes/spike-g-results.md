@@ -2,7 +2,7 @@
 
 - **Fahrplan-Referenz:** 5.1 (Phase 5, ERKUNDUNG)
 - **Datum:** 2026-06-10 (Valhalla-Teil vormittags; TomTom-Teil nach Key-Eingang, Blocker #002 aufgelöst)
-- **Status:** **Empirie vollständig** (T1/T2/T3 gegen TomTom Orbis v2 + Valhalla-Vergleich). ADR-Entwurf liegt unten vor — **wartet auf Freigabe**.
+- **Status:** **ABGESCHLOSSEN** — Empirie vollständig (T1/T2/T3 gegen TomTom Orbis v2 + Valhalla-Vergleich); **Patrick-Freigabe Option B am 2026-06-10**, fixiert als **ADR-021** in `docs/decisions.md` (+ Regel-020). Der ADR-Entwurf in Abschnitt 5 ist durch ADR-021 abgelöst und bleibt als Spike-Artefakt erhalten.
 - **Zeitverbrauch:** ~3,5 h gesamt (innerhalb Zeitbox 8–12 h)
 - **Key-Hinweis:** TomTom-Tests liefen mit einem temporären, von Patrick bereitgestellten API-Key (nach Spike-Abschluss gesperrt; `.env` zurück auf Platzhalter).
 

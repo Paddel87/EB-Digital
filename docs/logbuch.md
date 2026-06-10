@@ -26,6 +26,17 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-11 – [SESSIONENDE] 5.1 / Spike G ERLEDIGT — ADR-021 (Valhalla self-hosted) angelegt, TomTom vollständig entfallen
+
+- **Session-Inhalt** (Fortsetzung der 2026-06-10-Session über Mitternacht): Patrick-Freigabe **Option B** für den Spike-G-ADR-Entwurf; ADR-Anlage + vollständiger Doku-Sync über alle Pflicht-Dokumente. Zuvor in derselben Konversation: Komplexitäts-Erklärung Option C und Lizenz-Analyse Valhalla/ODbL als Entscheidungsgrundlage.
+- **ADR-021 angelegt** `[ERKENNTNIS] [MODUL] [STACK] [PERFORMANCE]`: Routing-Wechsel auf self-hosted Valhalla 3.7.x; TomTom entfällt vollständig (einzige Rolle war Routing). Optionen A/B/C dokumentiert, Entscheidung B (Patrick 2026-06-10); Hybrid C bleibt per ADR-014-Adapter additiv nachrüstbar (Re-Evaluations-Trigger: Phase-7-Lasttest 7.1, ETA-Qualität ohne Live-Traffic). Lizenz-Block im ADR: Valhalla MIT ✓, ODbL-Attribution durch MapTiler-Attribution abgedeckt, Share-alike trivial (Pipeline ohne Datenveränderung), Invariante „Overrides bleiben Collective Database", Container-Sub-Deps nach **Regel-020** (neu: Container-Grenze = Lizenz-Grenze).
+- **[REIFEGRAD-WECHSEL]:** `[OFFEN]`-Bereich „Sperrungs-Override-Technik" (`backend/geo`) → `[VORLÄUFIG]` (ADR-021); S7-`[OFFEN]`-Anteil „Sperrungs-Override-Aufrufschema" → `[VORLÄUFIG]` (S7 reduziert auf MapTiler-Pfade — Routing verlässt den Tile-Proxy, Valhalla ist Compose-intern). `backend/geo` hat damit keinen `[OFFEN]`-Bereich mehr.
+- **Doku-Sync:** `decisions.md` (ADR-021 + Regel-020 + Teil-A-Zeile, Fenster ADR-012–021, Reaktiv-Quote 1/10 = 10 % unverändert); `project-context.md` (§3 Valhalla/Geofabrik-Block mit `Verifiziert: 2026-06-10` empirisch, §5 Services-Tabelle TomTom→Geofabrik, Migrations-Hinweise obsolet, §6 Routing-Throttle = Last-Schutz + Budget nur noch MapTiler, §11 Obsolet-Vermerk auf TomTom-Recherche); `architecture.md` (§1 Kommunikationsmodus + Valhalla-Zeile, Modul-Karte ±Valhalla/−TomTom, Modul `backend/geo` + `infra/tile-proxy` umgestellt, §8 zwei neue Verworfene Alternativen TomTom/Hybrid, §9 Zeilen Spike G/S7/geo/NFR-Routing); `fahrplan.md` (5.1 ERLEDIGT, 6.1 + 7.1 auf Valhalla umgeschrieben, Aktueller Stand, Phasen-Übersicht 1/5); `README.md` (Akkordeon 1/5, Architektur-Skizze, Infrastruktur-Liste, Nächste Schritte, Projektphase, Letzte Änderung); SVG-Balken „1 / 5 Spikes".
+- **Kein Code geändert** (ERKUNDUNG; produktive Umsetzung in 6.1 mit Detail-Plan: Geofabrik-Update-Pipeline-Folge-ADR, Digest-Pin, Container-Sub-Dep-Lizenz-Verifikation, Extract-Zuschnitt).
+- **Git:** Branch `feat/5.1-spike-g-tomtom`, Folge-Commit auf PR [#43](https://github.com/Paddel87/EB-Digital/pull/43) (PR enthält damit TomTom-Empirie + ADR-021-Umsetzung).
+- **README-Sync-Check (CLAUDE.md §16):** vollständig durchgeführt (siehe Doku-Sync oben); Status „Konzeption", v0.1.0, Badge-Zahl unverändert.
+- **Offen / nächster Schritt:** **(1)** Patrick: Spike-K-Konzept-Freigabe → Spike-K-ADR (letzte offene Freigabe). **(2)** Spike H (5.2, Resilience) als nächster durchführbarer Schritt. **(3)** Spike L nach MapTiler-Key, Spike M nach DPolG-Rückfrage.
+
 ### 2026-06-10 – [SESSIONENDE] Spike-G-Empirie vollständig — TomTom-K.-o. für permanente Sperrungen, ADR-Entwurf (Empfehlung: Valhalla) wartet auf Freigabe; Blocker #002 gelöst
 
 - **Session-Inhalt:** TomTom-Empirie T1/T2/T3 mit temporärem Key (Blocker #002 gelöst), Spike-G-Protokoll vervollständigt, ADR-Entwurf formuliert, Doku-Sync, `.env` zurück auf Platzhalter.

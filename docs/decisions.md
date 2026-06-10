@@ -35,10 +35,11 @@
 | 018 | 2026-05-28 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodelländerungen      | Bündelungs-Trigger (Spike J): manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders   |
 | 019 | 2026-05-28 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Phase-4-Sonderregel — UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen (Regel-019)   |
 | 020 | 2026-05-28 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert (Plausibility-/Geo-Pfad)         |
+| 021 | 2026-06-10 | Aktiv  | ERKENNTNIS     | MODUL, STACK, PERFORMANCE | Externe Abhängigkeiten     | Spike G: Routing-Wechsel auf self-hosted Valhalla (TomTom-K.-o. für permanente Sperrungen)    |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-011 bis ADR-020).
+- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-012 bis ADR-021).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 - **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz). Bleibt im Fenster bis ADR-025 (dann fällt ADR-015 aus dem 10er-Fenster).
@@ -801,6 +802,39 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
 
 ---
 
+#### ADR-021: Spike G — Routing-Wechsel auf self-hosted Valhalla (TomTom-K.-o. für permanente Sperrungen)
+
+- **Datum:** 2026-06-10
+- **Status:** Aktiv
+- **Tags:** `[ERKENNTNIS]` `[MODUL]` `[STACK]` `[PERFORMANCE]`
+- **Phasentyp-Kontext:** ERKUNDUNG (Phase 5, Schritt 5.1 / Spike G)
+- **Reifegrad-Wirkung:** `[OFFEN]`-Bereich „Sperrungs-Override-Technik" in `backend/geo` → `[VORLÄUFIG]`; S7-`[OFFEN]`-Anteil „Sperrungs-Override-Aufrufschema" → `[VORLÄUFIG]`. Routing-Adapter-Spezifikation in `backend/geo` von TomTom auf Valhalla umgestellt (Beförderung auf `[BELASTBAR]` mit Phase-6-Implementierung 6.1).
+- **Kategorie:** Externe Abhängigkeiten + Architekturänderungen (Adapter-Tausch nach ADR-014/Regel-017, kein Modul-Refactor).
+- **Kontext:** Patrick-Direktive 2026-05-17 verlangt, dass vom Routing-Provider als gesperrt geführte Straßen auf Disponenten-Freigabe **befahrbar** gemacht werden (Reverse-Override) — bei Innenstadt-Großlagen (Fußgängerzonen, Absperrungen) der Kern-Use-Case. Spike-G-Empirie 2026-06-10 ([`docs/spikes/spike-g-results.md`](spikes/spike-g-results.md)): **TomTom Orbis v2 kann permanente Sperrungen nicht erzwingen** — `supportingPoints` weicht selbst bei 19 dichten Punkten exakt auf der Fußgängerzonen-Polyline aus (T2) und verweigert die Einbahn-Gegenrichtung (T3); es existiert kein öffentlicher Parameter zum Aufheben von Zufahrtsbeschränkungen. Traffic-Sperrungen sind ignorierbar (T1, `traffic=historical`), Sperren via `avoidAreas` möglich (nur Rechtecke). **Valhalla 3.7.0 erfüllt alle Szenarien** (`ignore_access`, `ignore_oneways`, `exclude_polygons`/`exclude_locations`, 3-Call-Komposition gegen globales Flag-Scoping).
+- **Optionen:**
+  - **A: TomTom-only, Anforderung (b) streichen** — Reverse-Override nur für Traffic-Sperrungen; Vision-Klarstellung nötig; Kern-Use-Case Innenstadt-Großlage entfällt.
+  - **B: Routing-Wechsel auf self-hosted Valhalla** — erfüllt (a) strukturell (kein Traffic-Feed, Disponenten-Sperrliste als alleinige Quelle der Wahrheit) und (b) empirisch; Routing-API-Budget entfällt; TomTom-Vertrag, ToS Clause 11.4 und Preisänderungs-Risiko 2026-07-01 entfallen. Kosten: ETA ohne Live-Verkehrslage; Betrieb Container + monatliche OSM-Updates.
+  - **C: Hybrid (TomTom-ETA + Valhalla für Overrides)** — maximale Fähigkeit, maximale Komplexität: Engine-Wahl-Heuristik, doppelte Sperren-Übersetzung, doppelte Test-/Fallback-/Audit-Last, alle B-Betriebskosten **plus** alle TomTom-Lasten; verhält sich bei aktiven Overrides ohnehin wie B.
+- **Entscheidung:** **Option B** — Patrick-Freigabe 2026-06-10. Begründung: (b) ist hart und mit TomTom unerfüllbar; Live-Traffic-Verlust wiegt im Einsatz-Kontext wenig (Disponent kennt die Absperrlage früher und verlässlicher als der Provider-Feed); Budget-, Lizenz- und Souveränitäts-Effekte zahlen in bestehende Constraints ein (ADR-016, Vision Self-Hosting, ADR-014). C bleibt dank ADR-014-Adapter **additiv nachrüstbar**, falls der Phase-7-Lasttest ETA-Qualität ohne Verkehrslage als operatives Problem ausweist.
+- **Konsequenzen:**
+  - **Stack (`project-context.md` §3):** Valhalla 3.7.x (MIT) als self-hosted Routing-Engine, Container `ghcr.io/valhalla/valhalla-scripted` (`Verifiziert: 2026-06-10` — Version 3.7.0 empirisch im Spike-G-Lauf aus `/status`; Digest-Pin + Bild-Strategie-Detail im 6.1-Detail-Plan). Daten: OSM-Extracts via Geofabrik (ODbL). **TomTom entfällt vollständig** (einzige Rolle war Routing): Services-Tabelle §5, Budget-/Throttle-Constraints §6, Migrations-Hinweise §5 werden bereinigt; Recherche-Befunde §11 bleiben als Historie mit Obsolet-Vermerk.
+  - **Override-Technik je Sperrungsart:** (a) entfällt strukturell — Live-Closures existieren im Graph nicht; real existierende Sperrungen pflegt der Disponent als `exclude_polygons`/`exclude_locations`. (b) `ignore_access`/`ignore_oneways` via 3-Call-Komposition (Leg-Scoping, empirisch verifiziert).
+  - **Adapter-Disziplinen (`backend/geo`, Phase 6.1):** Location-`radius`/`search_filter` bei `ignore_*`-Requests (Snapping-442-Schutz); Disponenten-Klick → `/locate`-Kanten-Matching **vor** Sperren-Anlage (wirkungslose-Sperre-Schutz); Komposition kapselt der Adapter, nicht der Aufrufer.
+  - **Datenmodell `route_override`** (Phase-6-Migration): `id`, `operation_id` (FK CASCADE, einsatzgebunden), `kind` (`block` | `allow`), `geometry` (JSONB, WGS84), `matched_refs` (JSONB, provider-neutral), `created_by_dispatcher_id`, `created_at`. Audit-Pflicht (Regel-012): Action-Types `route_override_created`/`route_override_removed`.
+  - **Budget:** Routing-Re-Routes sind budget-frei; `geo_usage_daily` reduziert sich auf MapTiler-Pfade (`maptiler_geocoding_calls`, `maptiler_tile_proxy_hits`); die ~50-€/Monat-Annahme (§6) wird entlastet, Phase-7-Validierung (7.1) bleibt für MapTiler bestehen. Das 30-s-Fahrzeug-Throttle bleibt als **Last-Schutz** (nicht mehr Budget-Schutz).
+  - **Lizenz (Regel-016-Prüfung, dokumentiert):**
+    1. **Valhalla: MIT** ✓ (Erlaubt-Liste §6).
+    2. **OSM-Daten: ODbL 1.0** — Attribution „© OpenStreetMap contributors" ist durch die ohnehin pflichtige MapTiler-Karten-Attribution („© MapTiler © OpenStreetMap contributors") abgedeckt und gilt ausdrücklich auch für Routing-Ergebnisse.
+    3. **ODbL-Share-alike:** Pipeline enthält keine eigene Datenveränderung (unveränderter Geofabrik-Extract + Standard-Valhalla-Build); Compliance durch Dokumentation von Quelle (Extract-Datum) und Build-Weg.
+    4. **Invariante (Collective Database):** `route_override`- und Einsatzdaten bleiben eigenständige Daten **neben** dem Routing-Graphen und werden nie in den Tile-Build eingearbeitet — sonst würden Einsatzdaten ODbL-share-alike-pflichtig.
+    5. **Container-Scoping:** Container-Grenze = Lizenz-Grenze (→ **Regel-020**); Container-interne C++-Deps (z. B. libspatialite, libzmq — Lizenzstand Trainingsstand-Vermutung, **ungeprüft**) sind bei 6.1 zu verifizieren, erzeugen aber nach Regel-020 keine Pflichten für EB-Digital-Code.
+  - **ADR-014/Regel-017-Konformität:** reiner Adapter-Tausch; `infra/tile-proxy` verliert den Routing-Pfad (`/routing/tomtom/*` entfällt — Valhalla ist Compose-intern, kein API-Key-Inject nötig), bleibt provider-neutral für Tiles/Geocoding. Rückweg zu TomTom oder Hybrid C bleibt per Adapter offen.
+  - **Folge-Aufgaben (Phase 6.1, im Detail-Plan zu konkretisieren):** Geofabrik-Update-Pipeline (monatliche Extract-Erneuerung + Tile-Rebuild als Procrastinate- oder Cron-Job — eigener Folge-ADR im 6.1-Detail-Plan), RAM-/Storage-Dimensionierung für den Ziel-Extract (Bremen ~500 MB RAM; DE gesamt deutlich mehr — Extract-Zuschnitt nach Einsatzgebieten klären), Compose-Integration mit Digest-Pin, Container-Sub-Dep-Lizenz-Verifikation.
+  - **Reaktiv-Quote:** `[ERKENNTNIS]` (planmäßiges Spike-Ergebnis, keine Reaktion auf Implementierungsbug). Fenster wandert auf ADR-012 bis ADR-021; ADR-015 bleibt einziger `[REAKTIV]`-Eintrag → 1 / 10 = 10 %.
+- **Abgeleitete Regel:** Regel-020 (Container-Grenze = Lizenz-Grenze) — siehe Teil C.
+
+---
+
 ## Teil C: Entscheidungsregeln
 
 <!-- Regeln für wiederkehrende Fälle, damit die KI in ähnlichen Situationen
@@ -998,3 +1032,11 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
 - **Regel:** Die zu befördernden Module gelten **am Schrittbeginn als hinreichend belastbar, um den Schritt starten zu lassen**, wenn (a) der Modul-Schnitt durch einen ADR strategisch fixiert ist (Stack/Architektur-ADRs wie ADR-002/003/009), (b) alle **konsumierten** Bestandteile außerhalb der zu befördernden Module tatsächlich `[BELASTBAR]` sind, und (c) der Detail-Plan vor Code-Eingriff jeden berührten Bestandteil benennt. Die tatsächliche Beförderung des Moduls von `[VORLÄUFIG]` auf `[BELASTBAR]` erfolgt erst mit funktional erfülltem Schritt (Definition of Done aus CLAUDE.md §9 plus Coverage-Anker plus Smoke-Probe).
 - **Ausnahmen:** keine. UMSETZUNG-Phasen, die **nicht** primär Module befördern, sondern bereits belastbare Module erweitern (z. B. Phase 7 Stabilisierung — die ist allerdings STABILISIERUNG, kein UMSETZUNG, daher außerhalb des Geltungsbereichs), fallen unter die strikte Original-Eingangs-Disziplin.
 - **Gegenbeispiel:** Schritt 4.1 `backend/catalog` **nicht starten**, weil das Modul heute `[VORLÄUFIG]` ist und die strikte Eingangs-Disziplin „[BELASTBAR] vor Schrittbeginn" fordert — verboten, weil das das Schritt-Format-Patterndokument durch wörtliche Lektüre über den Phasen-Zweck stellt und Phase 4 unmöglich machen würde. Korrekt: Detail-Plan vorlegen (siehe Regel oben Punkt c), Patrick-Freigabe, Schritt starten.
+
+#### Regel-020: Container-Grenze = Lizenz-Grenze für Infrastruktur-Komponenten
+
+- **Herkunft:** ADR-021
+- **Gilt für:** die Lizenz-Bewertung von Komponenten, die als eigenständige Container/Prozesse betrieben und ausschließlich über Netzwerk-Schnittstellen (HTTP, SQL-Protokoll, Redis-Protokoll o. ä.) angesprochen werden — z. B. PostgreSQL, Valkey, nginx, Caddy, Valhalla.
+- **Regel:** Gegen die Erlaubt-/Ausschluss-Listen in `project-context.md` §6 wird die **Lizenz der Komponente selbst** geprüft (plus die Lizenz der von ihr konsumierten **Daten**, falls vorhanden — z. B. OSM/ODbL). Container-intern gelinkte Sub-Dependencies erzeugen **keine** Pflichten für den EB-Digital-Code und keine ADR-Pflicht, solange (a) kein Code-Linking zwischen EB-Digital-Prozessen und der Komponente stattfindet, (b) das Image vom Upstream-Registry bezogen und nicht selbst distribuiert wird, und (c) die Kommunikation ausschließlich über Netzwerk-Schnittstellen läuft. Beginnt das Projekt, eigene Images mit der Komponente zu **distribuieren** (Registry-Push an Dritte), ist die Bewertung per ADR zu erneuern.
+- **Ausnahmen:** Prozess-interne Abhängigkeiten (Python-Pakete in `pyproject.toml`, npm-Pakete in `package.json`) — dort gilt Regel-016 in voller Schärfe inklusive Sub-Dependency-Prüfung (Präzedenzfälle ADR-011 psycopg, ADR-020 GEOS).
+- **Gegenbeispiel:** Eine LGPL-Python-Bibliothek mit dem Argument „läuft ja im Docker-Container" ohne ADR aufnehmen — verboten: das Deployment-Vehikel ändert nichts daran, dass die Bibliothek in den EB-Digital-Prozess gelinkt wird.

@@ -75,6 +75,11 @@ Begründung: PostgreSQL als Backing nutzt vorhandene Infrastruktur und macht Job
 - PostgreSQL 17.9 (NICHT 18 – „Stabilität vor Aktualität", 7 Monate Praxisreife mehr; EOL 2029-11) — `Verifiziert: 2026-05-07`
 - Valkey 8.1.7 (NICHT 9 – Linux-Foundation-Fork, gewählt wegen Lizenzwechsel von Redis zu RSALv2/SSPL; Rolle reduziert auf Cache und WebSocket-Pub/Sub, Jobs gehen in PostgreSQL) — `Verifiziert: 2026-05-07`
 
+**Routing (self-hosted, ADR-021)**
+
+- Valhalla 3.7.x (MIT; self-hosted Routing-Engine als eigener Container, ersetzt TomTom vollständig — Spike-G-Befund: TomTom kann permanente Sperrungen nicht auf Disponenten-Freigabe befahrbar machen, Valhalla erfüllt alle Override-Szenarien via `ignore_access`/`ignore_oneways`/`exclude_polygons`) — `Verifiziert: 2026-06-10` (empirisch, Spike-G-Lauf: Version 3.7.0 aus `/status`; Image `ghcr.io/valhalla/valhalla-scripted`, Digest-Pin + Container-Sub-Dep-Lizenz-Verifikation im 6.1-Detail-Plan). Lizenz-Scoping nach **Regel-020** (Container-Grenze = Lizenz-Grenze).
+- OSM-Daten via Geofabrik-Extracts (ODbL 1.0; Attribution durch MapTiler-Karten-Attribution „© MapTiler © OpenStreetMap contributors" abgedeckt; Share-alike trivial erfüllt, da Pipeline ohne eigene Datenveränderung — Quelle + Extract-Datum werden dokumentiert; Einsatzdaten bleiben Collective Database, Invariante in ADR-021). Update-Pipeline (monatlich) wird in Phase 6.1 per Folge-ADR festgelegt.
+
 **Frontend Frameworks und Bibliotheken**
 
 - Svelte 5.55.x (Svelte 5 ist stabile Default-Linie) — `Verifiziert: 2026-05-07` (Re-Bestätigung 2026-05-10 Schritt 1.7)
@@ -181,7 +186,7 @@ Was bewusst ausgeschlossen ist, mit Begründung. Verhindert, dass die KI nahelie
 - **Keine SaaS-Auth-Provider** (Auth0, Clerk, Supabase-Auth, WorkOS) — Self-Hosting + Privacy-by-Design.
 - **Kein FastAPI-Users, kein passlib** — FastAPI-Users im Maintenance-Mode (kein Feature-Wachstum), passlib seit 2020-10 ohne Release. Auth wird auf etablierten Bausteinen (argon2-cffi, itsdangerous, Starlette-Sessions) selbst geschrieben, siehe Abschnitt 3 „Fixiert".
 - **Kein Taskiq, kein ARQ, kein Celery** — Taskiq mit Velocity-Risiko, ARQ-Maintenance verlangsamt, Celery Overkill. Procrastinate als alleinige Job-Engine.
-- **Keine Google Maps / Google Routing / Google Geocoding** — externe Dienste sind ausschließlich MapTiler (Karten/Geocoding) und TomTom (Routing).
+- **Keine Google Maps / Google Routing / Google Geocoding** — externer Dienst ist ausschließlich MapTiler (Karten/Geocoding); Routing läuft self-hosted via Valhalla (ADR-021; bis 2026-06-10 war TomTom als Routing-Dienst vorgesehen).
 - **Keine ORM-Schnellschüsse** (SQLModel als Hauptweg, Tortoise-ORM, Peewee) — SQLAlchemy 2.0 als alleiniges Backend-ORM, um Multi-Tenant-Patterns konsistent zu halten.
 - **Keine Behörden-IT-Anschlüsse** — Vision-Constraint, technisch durchgesetzt durch fehlende externe Schnittstellen Richtung polizeiliche/behördliche Systeme.
 - **Kein Tracking** (Google Analytics, Plausible-Cloud, Matomo-Cloud) — Privacy-by-Design.
@@ -215,21 +220,21 @@ Was bewusst ausgeschlossen ist, mit Begründung. Verhindert, dass die KI nahelie
 
 ### Services
 
-| Service      | Zweck                       | Authentifizierung                          | Ausfallverhalten                                                                                                                    |
-| ------------ | --------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| **MapTiler** | Vektor-Tiles, Geocoding     | API-Key (Backend-Seite, niemals im Client) | Fallback: Tiles aus nginx-Cache; Geocoding-Ausfall → Disponent setzt Position manuell auf Karte                                     |
-| **TomTom**   | Routing inkl. Verkehrsdaten | API-Key (Backend-Seite, niemals im Client) | Fallback: ohne Verkehrslage routen (Static-Routing aus letzter Antwort); bei vollständigem Ausfall → Disponent koordiniert per Chat |
+| Service                         | Zweck                               | Authentifizierung                          | Ausfallverhalten                                                                                                                                      |
+| ------------------------------- | ----------------------------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MapTiler**                    | Vektor-Tiles, Geocoding             | API-Key (Backend-Seite, niemals im Client) | Fallback: Browser-/SW-Cache (ADR-016); Geocoding-Ausfall → Disponent setzt Position manuell auf Karte                                                 |
+| **Geofabrik** (Daten, kein API) | OSM-Extracts für Valhalla (ADR-021) | keine                                      | Download-Server-Ausfall verschiebt nur das Daten-Update; letzter gebauter Routing-Graph bleibt voll funktionsfähig (self-hosted, kein Laufzeit-Bezug) |
+
+_Routing ist seit ADR-021 (2026-06-10) kein externer Service mehr: Valhalla läuft self-hosted im Compose-Stack. TomTom ist vollständig entfallen._
 
 ### APIs
 
 API-Verträge werden in `architecture.md` Abschnitt 4 detailliert. Hier nur Kategorien:
 
-- **Tile-API (MapTiler):** GET-Tiles, aggressiv gecacht (≥ 7 Tage TTL für statische Tiles).
+- **Tile-API (MapTiler):** GET-Tiles; Cache-Schichten nur Browser + PWA-Service-Worker (ADR-016).
 - **Geocoding-API (MapTiler):** sparsam, mit Backend-Cache von Adresse → Koordinate.
-- **Routing-API (TomTom):** maximal 1 Aufruf pro Auftrag, frühestens nach 30 s erneut für dasselbe Fahrzeug. Detaillierte Budget-Disziplin siehe Abschnitt 6 (Performance).
-- **Bekannte Migrations-Hinweise TomTom (Stand 2026-05-07):**
-  - Section-Type `tollRoad` wurde am 2025-03-15 entfernt – stattdessen `toll` und `tollVignette` verwenden.
-  - Orbis Maps v1 wurde am 2025-02-19 dekommissioniert – Adapter im `backend/geo`-Modul muss die aktive Routing-API-Version explizit pinnen, kein implizites `latest`.
+- **Routing (Valhalla, intern — ADR-021):** maximal 1 Aufruf pro Auftrag, frühestens nach 30 s erneut für dasselbe Fahrzeug — seit ADR-021 **Last-Schutz** statt Budget-Schutz (self-hosted, keine API-Kosten). Override-Routen nutzen die 3-Call-Komposition (Adapter-intern, Spike G).
+- ~~Bekannte Migrations-Hinweise TomTom~~ — **obsolet durch ADR-021** (TomTom vollständig entfallen; historische Hinweise zu `tollRoad`/Orbis-v1 in der Git-Historie).
 
 ## 6. Constraints (operationalisierbar)
 
@@ -257,8 +262,8 @@ API-Verträge werden in `architecture.md` Abschnitt 4 detailliert. Hier nur Kate
 ### Performance
 
 - **Tile-Caching:** **kein serverseitiges Caching im Backend** (ADR-016, 2026-05-17 — MapTiler Cloud Terms und TomTom ToS Clause 11.4 verbieten beide Multi-Client-Server-Cache). Alleinige Cache-Schichten: Browser-Cache gemäß Provider-`Cache-Control`-Header (MapTiler default 4 h) plus PWA-Service-Worker-Pre-Cache des Operations-Raums vor Schichtbeginn (Spike L, Phase 5).
-- **Routing-Aufrufe:** maximal 1 pro Auftrag, frühestens 30 s erneut für dasselbe Fahrzeug. **Kein 60-s-Backend-Cache** für identische (Start, Ziel)-Paare (ADR-016, TomTom Clause 11.4) — Wiederholungs-Schutz ausschließlich über das 30-s-Fahrzeug-Throttle im `backend/geo`-Adapter.
-- **API-Budget Externdienste:** initial ~50 €/Monat über alle aktiven Einsatztage – Verbrauchszähler im `backend/geo`-Modul Pflicht; Überschreitung erzeugt Disponenten-Warnung und ggf. automatischen Fallback auf rein lokale Tile-Wiedergabe. **Vor Phase-7-Lasttest neu zu validieren** unter Cache-freier Annahme (ADR-016); Budget-Anhebung ist ADR-pflichtige Entscheidung nach der Messung (Schritt 7.1).
+- **Routing-Aufrufe:** maximal 1 pro Auftrag, frühestens 30 s erneut für dasselbe Fahrzeug — seit **ADR-021** (Valhalla self-hosted) reiner **Last-Schutz**, kein Budget-Schutz mehr. Der frühere 60-s-Backend-Cache-Verzicht (ADR-016, TomTom Clause 11.4) ist durch den TomTom-Wegfall gegenstandslos; das 30-s-Fahrzeug-Throttle im `backend/geo`-Adapter bleibt.
+- **API-Budget Externdienste:** initial ~50 €/Monat über alle aktiven Einsatztage — seit ADR-021 nur noch **MapTiler-Pfade** (Tiles, Geocoding); Routing ist budget-frei. Verbrauchszähler im `backend/geo`-Modul Pflicht (`geo_usage_daily`, reduziert auf MapTiler-Spalten); Überschreitung erzeugt Disponenten-Warnung und ggf. automatischen Fallback auf rein lokale Tile-Wiedergabe. **Vor Phase-7-Lasttest neu zu validieren** unter Cache-freier Annahme (ADR-016); Budget-Anhebung ist ADR-pflichtige Entscheidung nach der Messung (Schritt 7.1).
 - **p95-Antwortzeit Backend-API:** < 300 ms bei der unter Abschnitt 2 angenommenen Last (Annahme, in STABILISIERUNG zu validieren).
 - **Datenbankabfragen:** keine N+1-Muster, kein `SELECT *`; Linter-/Review-Regel.
 
@@ -489,7 +494,7 @@ Punkte, die zu Projektstart bewusst offen sind. Claude arbeitet nicht an Bereich
 
 **Während Session 2026-05-17 identifiziert:**
 
-- **TomTom-Provider-Strategie: konsolidierte Befunde (Recherche 2026-05-17)** — exploratorische Prüfung der vollständigen TomTom-Nutzungsmöglichkeiten über Routing hinaus (Auftrag: „Nutzungsmöglichkeiten von TomTom Kartenmaterial"). Geprüft: Map Display API (Tiles), Routing API, Geocoding/Search API, Maps SDK for Web JS, Pricing-Modell, ToS-Caching-Regeln, RouteOverride-Techniken für Spike G. Quellen: developer.tomtom.com (direkte Fetch-Abrufe ggf. 403 blockiert, daher primär über strukturierte Websuche; Angaben sind Stand 2026-05-17 und als **ungeprüft** zu behandeln, bis zur tatsächlichen Implementierung zu verifizieren).
+- **TomTom-Provider-Strategie: konsolidierte Befunde (Recherche 2026-05-17)** — **OBSOLET durch ADR-021 (2026-06-10):** TomTom ist nach dem Spike-G-K.-o.-Befund (permanente Sperrungen nicht erzwingbar) vollständig entfallen; Routing läuft self-hosted via Valhalla. Die folgenden Befunde bleiben als Recherche-Historie erhalten (u. a. falls Hybrid-Option C je reaktiviert wird). — Ursprünglicher Eintrag: exploratorische Prüfung der vollständigen TomTom-Nutzungsmöglichkeiten über Routing hinaus (Auftrag: „Nutzungsmöglichkeiten von TomTom Kartenmaterial"). Geprüft: Map Display API (Tiles), Routing API, Geocoding/Search API, Maps SDK for Web JS, Pricing-Modell, ToS-Caching-Regeln, RouteOverride-Techniken für Spike G. Quellen: developer.tomtom.com (direkte Fetch-Abrufe ggf. 403 blockiert, daher primär über strukturierte Websuche; Angaben sind Stand 2026-05-17 und als **ungeprüft** zu behandeln, bis zur tatsächlichen Implementierung zu verifizieren).
 
   **A. TomTom Map Display API (Orbis — Kartenmaterial-Tiles)**
 

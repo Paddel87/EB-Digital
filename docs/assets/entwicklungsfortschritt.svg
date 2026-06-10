@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="840" height="150" viewBox="0 0 840 150" role="img" aria-label="Entwicklungsfortschritt: 4 von 7 Phasen abgeschlossen (57 Prozent), Phase 5 läuft">
   <!-- Sync-Quelle: docs/fahrplan.md „Phasen-Übersicht" + „Aktueller Stand".
        Pflege bei jedem Phasen-Statuswechsel (CLAUDE.md §16, Trigger 1).
-       Stand: 2026-06-10 — Phase 1–4 ERLEDIGT, Phase 5 (ERKUNDUNG) laufend, Phase 6–7 OFFEN. -->
+       Stand: 2026-06-11 — Phase 1–4 ERLEDIGT, Phase 5 (ERKUNDUNG) laufend, Phase 6–7 OFFEN. -->
   <style>
     text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
     .title { font-size: 16px; font-weight: 600; fill: #1f2328; }
@@ -59,7 +59,7 @@
   <rect x="480" y="44" width="110" height="26" rx="5" fill="#0969da">
     <animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/>
   </rect>
-  <text class="seg-in" x="535" y="61" text-anchor="middle">0 / 5 Spikes</text>
+  <text class="seg-in" x="535" y="61" text-anchor="middle">1 / 5 Spikes</text>
 
   <!-- Phase 6–7: OFFEN -->
   <rect class="open" x="595" y="44" width="110" height="26" rx="5"/>
@@ -90,5 +90,5 @@
   <text class="legend" x="116" y="132">laufende Phase (ERKUNDUNG)</text>
   <circle class="open" cx="296" cy="128" r="5"/>
   <text class="legend" x="306" y="132">offen</text>
-  <text class="legend" x="820" y="132" text-anchor="end">Quelle: docs/fahrplan.md · Stand 2026-06-10</text>
+  <text class="legend" x="820" y="132" text-anchor="end">Quelle: docs/fahrplan.md · Stand 2026-06-11</text>
 </svg>
