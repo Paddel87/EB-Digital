@@ -22,20 +22,9 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
 
 ## Aktive Blocker
 
-### Blocker #002: TomTom-API-Key fehlt — empirischer Teil von Spike G (T1/T2/T3 gegen TomTom) nicht durchführbar
+_Keine aktiven Blocker._
 
-- **Datum:** 2026-06-10
-- **Fahrplan-Referenz:** 5.1 (Spike G — Sperrungs-Override-Technik)
-- **Modul:** `backend/geo` (Spike-Stadium, Wegwerf-Code)
-- **Blocker-Typ:** Informationslücke
-- **Beschreibung:**
-  Die Fahrplan-Notiz zu 5.1 sieht vor, dass der TomTom-Test „mit dem entwickler-eigenen API-Key des Plattform-Betreibers" läuft. Im Repo existiert jedoch kein echter Key: `.env` ist byte-identisch mit `.env.example` (geprüft per `diff` am 2026-06-10), `TOMTOM_API_KEY` und `MAPTILER_API_KEY` sind Beispielwerte. Probe-Requests gegen TomTom Orbis Routing v2 (`/maps/orbis/routing/calculateRoute/...?apiVersion=2`) und Legacy Routing v1 antworten beide mit `401 Unauthorized` („You are missing valid authentication credentials"). Keine weitere `.env`-Datei im Repo gefunden.
-- **Versuchte Ansätze:** (1) Orbis Routing API v2 mit `.env`-Key → 401. (2) Legacy Routing API v1 mit `.env`-Key → 401. (3) Repo-weite Suche nach alternativen Env-Dateien/Key-Quellen → keine. (Kein Dreifach-Fehlschlag nötig — Informationslücke greift sofort, Muster 1.)
-- **Offene Hypothesen:** keine technischen — der Key existiert schlicht nicht im Arbeitsverzeichnis.
-- **Klärungsfrage an Patrick:** Bitte echten TomTom-API-Key (developer.tomtom.com, Freemium-Konto reicht: 2.500 Nicht-Tile-Requests/Tag frei) in `.env` unter `TOMTOM_API_KEY=` eintragen. Der Spike braucht geschätzt 30–60 Routing-Calls — weit unter dem Tageslimit. Optional gleich `MAPTILER_API_KEY` für Spike L mitpflegen.
-- **Auswirkung:** Nur der TomTom-empirische Teil von 5.1 wartet. Der Valhalla-Vergleichsteil (lokales Docker-Setup, OSM-Extract Bremen) läuft unabhängig weiter; Spike-Abschluss (ADR mit Technik-Wahl je Sperrungsart) braucht aber die TomTom-Befunde.
-
-(Stand Aktive Blocker: 2026-06-10 — 1 aktiver Blocker.)
+(Stand Aktive Blocker: 2026-06-10 — Blocker #002 am selben Tag gelöst, siehe „Gelöste Blocker". **Hinweis für Spike L (5.4):** `MAPTILER_API_KEY` in `.env` ist weiterhin Platzhalter — vor Beginn von 5.4 als Eingangsbedingung von Patrick bereitzustellen; bewusst kein aktiver Blocker, da 5.4 nicht begonnen ist.)
 
 (Stand: 2026-05-10. Im Härtungs-Schritt von Modus-2-Schritt 3 wurden keine Blocker identifiziert; alle in Schublade 1 zusammengefassten Grundsatzfragen aus `project-context.md` Abschnitt 11 sind in der Klärungs-Session am 2026-05-07 abschließend entschieden, alle Schublade-2-Punkte als Spikes G–M in `fahrplan.md` Phasen 3 und 5 platziert, alle Schublade-3-Punkte als Roadmap-Meilensteine N/O/P in Phase 7. Blocker #001 wurde am 2026-05-10 ursächlich aufgeklärt und nach „Gelöste Blocker" verschoben.)
 
@@ -77,6 +66,13 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
 
 [Nach Auflösung hierher verschieben. Ergänzungen: "Lösungsdatum", "Lösung", "ADR-Referenz falls zutreffend".
 Bei hoher Anzahl: nach `docs/archiv/blockers-YYYY-MM.md` auslagern.]
+
+### Blocker #002: TomTom-API-Key fehlt — TomTom-Empirie von Spike G nicht durchführbar – GELÖST 2026-06-10
+
+- **Ursprüngliche Beschreibung (gekürzt):** `.env` war byte-identisch mit `.env.example`, `TOMTOM_API_KEY`/`MAPTILER_API_KEY` Platzhalter; Orbis Routing v2 und Legacy v1 antworteten 401. TomTom-Szenarien T1/T2/T3 von Schritt 5.1 (Spike G) damit nicht durchführbar (Informationslücke, Muster 1 — Sofort-Blocker ohne Dreifach-Versuch).
+- **Lösung:** Patrick stellte am selben Tag einen **temporären** TomTom-API-Key bereit (nur lokale `.env`, gitignored; nach Spike-Abschluss von Patrick gesperrt, `.env` zurück auf Platzhalter). Rückfrage geklärt: benötigt war Routing-API-Zugriff (Orbis v2), nicht Map Display. Smoke: Orbis v2 und v1 beide 200. TomTom-Empirie vollständig durchgeführt (12 Routing- + 1 Traffic-Call), Ergebnisse in [`docs/spikes/spike-g-results.md`](spikes/spike-g-results.md).
+- **ADR:** folgt aus Spike G (ADR-Entwurf wartet auf Freigabe — der Blocker selbst erzeugte keinen ADR).
+- **Abgeleitete Regel:** Externe-API-Spikes brauchen die Credential-Frage als **Eingangskriterium im Fahrplan-Schritt** (explizit prüfen, bevor der Schritt startet) — Folge-Hinweis für Spike L bereits unter „Aktive Blocker" als 5.4-Eingangsbedingung vermerkt (`MAPTILER_API_KEY` weiterhin Platzhalter).
 
 ### Blocker #001: uv-/venv-Korruption nach intensiven Reinstall-/Sync-Sequenzen – GELÖST 2026-05-10
 
