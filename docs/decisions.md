@@ -13,33 +13,34 @@
 
 ## Teil A: ADR-Übersicht
 
-| ADR | Datum      | Status | Klassifikation | Themen                    | Kategorie                  | Kurztitel                                                                                     |
-| --- | ---------- | ------ | -------------- | ------------------------- | -------------------------- | --------------------------------------------------------------------------------------------- |
-| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Projektgrößen-Klassifikation Klasse G                                                         |
-| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK                     | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate)                        |
-| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends                               |
-| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                                           |
-| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                                                |
-| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets                                      |
-| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE             | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                                            |
-| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL                     | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                                            |
-| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5                                    |
-| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                                            |
-| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime                                      |
-| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten     | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)                            |
-| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY           | Externe Abhängigkeiten     | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                                       |
-| 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL           | Architekturänderungen      | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip                    |
-| 015 | 2026-05-15 | Aktiv  | REAKTIV        | STACK, SECURITY, METHODIK | Sicherheit und Datenschutz | `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b) |
-| 016 | 2026-05-17 | Aktiv  | STRATEGISCH    | MODUL, STACK, PERFORMANCE | Architekturänderungen      | Verzicht auf serverseitiges Caching vor externen Geo-Services                                 |
-| 017 | 2026-05-18 | Aktiv  | ERKENNTNIS     | PERFORMANCE, MODUL        | Architekturänderungen      | Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)          |
-| 018 | 2026-05-28 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodelländerungen      | Bündelungs-Trigger (Spike J): manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders   |
-| 019 | 2026-05-28 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Phase-4-Sonderregel — UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen (Regel-019)   |
-| 020 | 2026-05-28 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert (Plausibility-/Geo-Pfad)         |
-| 021 | 2026-06-10 | Aktiv  | ERKENNTNIS     | MODUL, STACK, PERFORMANCE | Externe Abhängigkeiten     | Spike G: Routing-Wechsel auf self-hosted Valhalla (TomTom-K.-o. für permanente Sperrungen)    |
+| ADR | Datum      | Status | Klassifikation | Themen                    | Kategorie                  | Kurztitel                                                                                      |
+| --- | ---------- | ------ | -------------- | ------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------- |
+| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Projektgrößen-Klassifikation Klasse G                                                          |
+| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK                     | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate)                         |
+| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends                                |
+| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                                            |
+| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                                                 |
+| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets                                       |
+| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE             | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                                             |
+| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL                     | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                                             |
+| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5                                     |
+| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                                             |
+| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime                                       |
+| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten     | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)                             |
+| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY           | Externe Abhängigkeiten     | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                                        |
+| 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL           | Architekturänderungen      | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip                     |
+| 015 | 2026-05-15 | Aktiv  | REAKTIV        | STACK, SECURITY, METHODIK | Sicherheit und Datenschutz | `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b)  |
+| 016 | 2026-05-17 | Aktiv  | STRATEGISCH    | MODUL, STACK, PERFORMANCE | Architekturänderungen      | Verzicht auf serverseitiges Caching vor externen Geo-Services                                  |
+| 017 | 2026-05-18 | Aktiv  | ERKENNTNIS     | PERFORMANCE, MODUL        | Architekturänderungen      | Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)           |
+| 018 | 2026-05-28 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodelländerungen      | Bündelungs-Trigger (Spike J): manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders    |
+| 019 | 2026-05-28 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Phase-4-Sonderregel — UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen (Regel-019)    |
+| 020 | 2026-05-28 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert (Plausibility-/Geo-Pfad)          |
+| 021 | 2026-06-10 | Aktiv  | ERKENNTNIS     | MODUL, STACK, PERFORMANCE | Externe Abhängigkeiten     | Spike G: Routing-Wechsel auf self-hosted Valhalla (TomTom-K.-o. für permanente Sperrungen)     |
+| 022 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, DEPLOYMENT         | Betrieb und Deployment     | Spike H: Backup-Strategie C (basebackup + WAL-Archiving + Dump), Recovery-Reihenfolge, RTO/RPO |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-012 bis ADR-021).
+- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-013 bis ADR-022).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 - **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz). Bleibt im Fenster bis ADR-025 (dann fällt ADR-015 aus dem 10er-Fenster).
@@ -832,6 +833,33 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - **Folge-Aufgaben (Phase 6.1, im Detail-Plan zu konkretisieren):** Geofabrik-Update-Pipeline (monatliche Extract-Erneuerung + Tile-Rebuild als Procrastinate- oder Cron-Job — eigener Folge-ADR im 6.1-Detail-Plan), RAM-/Storage-Dimensionierung für den Ziel-Extract (Bremen ~500 MB RAM; DE gesamt deutlich mehr — Extract-Zuschnitt nach Einsatzgebieten klären), Compose-Integration mit Digest-Pin, Container-Sub-Dep-Lizenz-Verifikation.
   - **Reaktiv-Quote:** `[ERKENNTNIS]` (planmäßiges Spike-Ergebnis, keine Reaktion auf Implementierungsbug). Fenster wandert auf ADR-012 bis ADR-021; ADR-015 bleibt einziger `[REAKTIV]`-Eintrag → 1 / 10 = 10 %.
 - **Abgeleitete Regel:** Regel-020 (Container-Grenze = Lizenz-Grenze) — siehe Teil C.
+
+---
+
+#### ADR-022: Spike H — Backup-Strategie C, Recovery-Reihenfolge und RTO/RPO-Annahmen
+
+- **Datum:** 2026-06-11
+- **Status:** Aktiv
+- **Tags:** `[ERKENNTNIS]` `[MODUL]` `[DEPLOYMENT]`
+- **Phasentyp-Kontext:** ERKUNDUNG (Phase 5, Schritt 5.2 / Spike H)
+- **Reifegrad-Wirkung:** `[OFFEN]`-Bereich „Backup-Granularität, Recovery-Reihenfolge, RTO/RPO-Annahme" in `backend/resilience` → `[VORLÄUFIG]`. RTO/RPO-Werte in `architecture.md` §6 als `[VORLÄUFIG]` mit Messwert eingetragen; Beförderung auf `[BELASTBAR]` durch den 6.4-Backup-Recovery-Test auf VPS-Hardware.
+- **Kategorie:** Betrieb und Deployment (Backup-/Recovery-Verfahren; kein neuer Code, keine neue Abhängigkeit).
+- **Kontext:** Vision verlangt „nahtlose Fortsetzung nach Crash" (State-Erhaltung). Spike-H-Empirie 2026-06-11 ([`docs/spikes/spike-h-results.md`](spikes/spike-h-results.md), 90-MB-Seed mit 100k Orders): Backup/Restore in Sekunden auf beiden Pfaden (pg_dump 2,1 s/18 MB; pg_basebackup 1,5 s/29 MB; Restore 0,5 s logisch / 4,6 s physisch); `kill -9` mitten im 20k-Status-Wechsel → Recovery 0,7 s mit vollständigem Rollback der offenen Transaktion bei Erhalt aller Commits; Procrastinate-Job-State überlebt Worker-Ausfälle (`todo`-Persistenz; verwaiste `doing`-Jobs via Heartbeat-Mechanik `get_stalled_jobs`/`retry_job`/`prune_stalled_workers` verifiziert); Full-Stack-Neustart-RTO 15,1 s mit anschließend vollem dev-smoke-E2E grün (inkl. WS-Realtime).
+- **Optionen:**
+  - **A: Nur nächtlicher `pg_dump`** — einfachster Betrieb, aber RPO bis 24 h; kollidiert im Disaster-Fall mit der Vision für laufende Großlagen.
+  - **B: `pg_basebackup` täglich + kontinuierliches WAL-Archiving** (`archive_timeout` 60 s) auf Off-VPS-Ziel — RPO ≤ 1 min (PITR), nur PostgreSQL-Bordmittel.
+  - **C: Hybrid — B als Primärpfad + täglicher `pg_dump` zusätzlich** als portables logisches Artefakt (Einzeltabellen-Restore, Migrations-Tests, Mandanten-Forensik); Mehrkosten bei gemessenen Volumina ~2 s/Tag.
+- **Entscheidung:** **Option C** — Patrick-Freigabe 2026-06-11. Externes Backup-Tooling (pgBackRest, wal-g) bewusst nicht in Phase 1 (Over-Engineering bei den gemessenen Größen; Re-Evaluation, wenn die DB einige GB überschreitet).
+- **Konsequenzen:**
+  - **Eckwerte:** `pg_basebackup` täglich; WAL-Archiving kontinuierlich (`archive_timeout` 60 s); `pg_dump -Fc` täglich; **Aufbewahrung 14 Tage** — bewusst unter der 30-Tage-Anonymisierungs-Karenz (Regel: Backup-Aufbewahrung < Anonymisierungs-Karenz, sonst überleben anonymisierte Detail-Daten im Backup und unterlaufen ADR-006/`backend/retention`).
+  - **Backup-Ziel außerhalb des VPS** (naheliegend: Hetzner Storage Box per SSH/rsync) — Deployment-Detail im 6.4-Detail-Plan, keine Code-Dependency.
+  - **Recovery-Reihenfolge (verbindlich, empirisch begründet):** 1. PostgreSQL (Single Source of Truth **inklusive Procrastinate-Job-State** — ADR-002-Designziel empirisch bestätigt) → 2. Valkey (**kein Restore**: Cache + Pub/Sub; leere Rate-Limit-Counter sicherheitsunkritisch) → 3. Backend + Worker (**Stalled-Job-Start-Routine**: `get_stalled_jobs` → `retry_job`, `prune_stalled_workers` — neuer 6.4-Scope-Punkt) → 4. Valhalla-Container (kein Backup; Routing-Graph deterministisch rebuildbar aus Geofabrik-Extract, ADR-021) → 5. Frontends (statisch, kein State).
+  - **RTO/RPO-Annahmen** (`architecture.md` §6, `[VORLÄUFIG]` mit Messwert): Prozess-/Container-Crash RTO < 30 s (gemessen 0,7 s DB / 15,1 s Full-Stack), RPO 0 (WAL); Disaster mit Off-Site-Restore RTO im Minuten-Bereich (Restore selbst 4,6 s bei 90 MB, Host-Provisioning dominiert), RPO ≤ 1 min (WAL-Archiving). Validierung auf VPS-Hardware im 6.4-Backup-Recovery-Test (Stabilisierungs-Anker).
+  - **Idempotenz-Pflicht produktiver Jobs** (Retention, Export, Aggregat) ist hart: Retry-Semantik ist at-least-once (bestätigt bestehende NFR in `architecture.md` Modul `backend/retention`).
+  - **Akzeptierte Lücke:** Crash zwischen DB-Commit und Valkey-`PUBLISH` verliert genau ein WS-Event; Clients heilen per REST-Refetch beim Reconnect (4.4/4.5-Design, empirisch konsistent).
+  - **6.4-Scope ergänzt um:** WAL-Archiving-Konfiguration, Off-Site-Ziel, Stalled-Job-Start-Routine, Restore-Runbook (`docs/runbooks/restore.md`) mit obiger Reihenfolge, Backup-Recovery-Test auf VPS.
+  - **Reaktiv-Quote:** `[ERKENNTNIS]` (planmäßiges Spike-Ergebnis). Fenster wandert auf ADR-013 bis ADR-022; ADR-015 bleibt einziger `[REAKTIV]`-Eintrag → 1 / 10 = 10 %.
+- **Abgeleitete Regel:** keine neue Teil-C-Regel — die Kopplung „Backup-Aufbewahrung < Anonymisierungs-Karenz" ist als Konsequenz-Eckwert dokumentiert; sollte sie ein zweites Mal entscheidungsrelevant werden, wird sie zur Regel befördert.
 
 ---
 
