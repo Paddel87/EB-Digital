@@ -59,7 +59,7 @@
   <rect x="480" y="44" width="110" height="26" rx="5" fill="#0969da">
     <animate attributeName="opacity" values="1;0.55;1" dur="2.4s" repeatCount="indefinite"/>
   </rect>
-  <text class="seg-in" x="535" y="61" text-anchor="middle">2 / 5 Spikes</text>
+  <text class="seg-in" x="535" y="61" text-anchor="middle">3 / 5 Spikes</text>
 
   <!-- Phase 6–7: OFFEN -->
   <rect class="open" x="595" y="44" width="110" height="26" rx="5"/>

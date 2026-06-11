@@ -2,7 +2,7 @@
 
 - **Fahrplan-Referenz:** 5.3 (Phase 5, ERKUNDUNG)
 - **Datum:** 2026-06-10
-- **Status:** Konzept vollständig, **wartet auf Freigabe** (ADR-Entwurf unten; ADR-Anlage ist freigabepflichtig, CLAUDE.md §4 Kategorie 4/5)
+- **Status:** **ABGESCHLOSSEN** — **Patrick-Freigabe Option A am 2026-06-11**, fixiert als **ADR-023** in `docs/decisions.md`. Das Konzept unten ist durch ADR-023 verbindlich; dieses Dokument bleibt als Spike-Artefakt erhalten.
 - **Zeitverbrauch:** ~1,5 h (innerhalb Zeitbox 2–3 h)
 
 ## 1. Vision-Anker (bindend)
