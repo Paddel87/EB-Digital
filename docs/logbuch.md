@@ -26,6 +26,24 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-11 – [SESSIONENDE] 5.2 / Spike H Empirie vollständig — ADR-Entwurf (Backup-Strategie C) wartet auf Freigabe
+
+- **Session-Inhalt:** Spike H komplett empirisch durchgeführt (lokaler Compose-Stack, 90-MB-Seed mit 100k Orders / 200k Audit-Einträgen / 50k Sessions), Ergebnisprotokoll [`docs/spikes/spike-h-results.md`](spikes/spike-h-results.md), ADR-Entwurf, Doku-Sync.
+- **Kern-Messwerte:** pg_dump 2,1 s / 18 MB; pg_basebackup 1,5 s / 29 MB; Restore logisch 0,5 s (`-j 4`) / physisch 4,6 s; **kill-9 mitten im 20k-Status-Wechsel → Recovery 0,7 s (Redo 0,13 s), unkommittete Transaktion vollständig zurückgerollt, parallele Commits erhalten** (Atomaritäts-Beweis für „Crash mitten im Auftragsstatus-Wechsel"); Procrastinate: `todo`-Jobs überleben Worker-Ausfall, verwaiste `doing`-Jobs via `get_stalled_jobs`/`retry_job`/`prune_stalled_workers` empirisch geheilt (Heartbeat-Mechanik 3.8.1); **Full-Stack-Neustart-RTO 15,1 s**, danach **voller dev-smoke.sh grün** (23 Stufen inkl. WS-Realtime — beantwortet die Reconnect-nach-State-Reload-Frage).
+- **ADR-Entwurf (Empfehlung C):** pg_basebackup täglich + WAL-Archiving (`archive_timeout` 60 s, RPO ≤ 1 min) + täglicher pg_dump als portables Artefakt; **Aufbewahrung 14 Tage** (bewusst < 30-Tage-Anonymisierungs-Karenz — sonst überleben anonymisierte Detail-Daten im Backup); Off-VPS-Ziel als 6.4-Deployment-Detail; kein externes Backup-Tooling in Phase 1. Recovery-Reihenfolge: PostgreSQL (inkl. Job-State — ADR-002-Designziel empirisch bestätigt) → Valkey (kein Restore) → Backend/Worker (Stalled-Job-Start-Routine als neuer 6.4-Scope-Punkt) → Valhalla (rebuildbar, kein Backup) → Frontends.
+- **Lehren:** (a) Idempotenz-Pflicht produktiver Jobs ist hart (at-least-once durch Retry-Semantik); (b) akzeptierte Lücke Commit→PUBLISH-Crash verliert genau ein WS-Event, heilt per REST-Refetch beim Reconnect (4.4-Design bestätigt); (c) Backup-Aufbewahrung und DSGVO-Anonymisierung koppeln — Aufbewahrung muss unter der Karenz bleiben.
+- **Hygiene:** Seed-Daten, Backup-Artefakte, Restore-Container und Spike-Tabelle vollständig entfernt (16 reguläre Dev-Orders verbleiben); Stack lief bewusst up (Laufzeit-Messung), Coverage-Disziplin (Stack down) nicht berührt.
+- **Kein ADR angelegt, keine Reifegrad-Änderung** (Spike-ADR freigabepflichtig; Beförderung Spike-H-Bereich → `[VORLÄUFIG]` erst mit ADR). Reaktiv-Quote unverändert 1/10 = 10 %.
+- **Git:** Branch `feat/5.2-spike-h` (von `main` `9354042`). Reine Doku-Änderung. PR folgt.
+- **README-Sync-Check (CLAUDE.md §16):** Phase-5-Akkordeon (Spike H 🕐), „Nächste Schritte" (Spike-H-Freigabe als #1), Projektphasen-Spike-Stand synchronisiert. SVG unverändert korrekt (1/5 erledigt — H wartet auf Freigabe). Status „Konzeption", v0.1.0, keine Badge-Änderung.
+- **Offen / nächster Schritt:** **(1)** Patrick: Spike-H-ADR-Entwurf freigeben. **(2)** Patrick: Spike-K-Konzept freigeben. **(3)** Danach: Spike L (MapTiler-Key nötig), Spike M (DPolG-Fragenkatalog kann vorbereitet werden).
+
+### 2026-06-11 – [SESSIONSTART] Fortsetzung — Beginn Schritt 5.2 (Spike H, Resilience-Granularität) auf Patrick-Weisung
+
+- **Kontext:** Fortsetzung derselben Konversation (Mindest-Lektüre-Stand aktuell aus dieser Session; PR [#43](https://github.com/Paddel87/EB-Digital/pull/43) gemergt — `main` auf `9354042`). Patrick: „weiter mit 5.2". TomTom-Key wurde betreiberseitig rotiert und ist erloschen (kein Bezug mehr nötig).
+- **Git:** neuer Branch `feat/5.2-spike-h` von `main` `9354042`.
+- **Eingangslage 5.2:** Spike-Schritt (ERKUNDUNG, freigabefrei; Folge-ADR freigabepflichtig — Muster 5.1/5.3). Stub definiert die zu klärenden Fragen; empirischer Prototyp läuft gegen den lokalen Compose-Stack (db/cache/backend/worker vorhanden, Procrastinate-`ping`-Task als Job-Engine-Probe). Abweichend von der Test-Disziplin (Memory-Lehre „Stack down für Coverage-Läufe") braucht dieser Spike den Stack **up** — er misst Laufzeit-Resilienz, keine Unit-Coverage.
+
 ### 2026-06-11 – [SESSIONENDE] 5.1 / Spike G ERLEDIGT — ADR-021 (Valhalla self-hosted) angelegt, TomTom vollständig entfallen
 
 - **Session-Inhalt** (Fortsetzung der 2026-06-10-Session über Mitternacht): Patrick-Freigabe **Option B** für den Spike-G-ADR-Entwurf; ADR-Anlage + vollständiger Doku-Sync über alle Pflicht-Dokumente. Zuvor in derselben Konversation: Komplexitäts-Erklärung Option C und Lizenz-Analyse Valhalla/ODbL als Entscheidungsgrundlage.
