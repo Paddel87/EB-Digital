@@ -26,6 +26,18 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-11 – [SESSIONENDE] 5.2 / Spike H ERLEDIGT — ADR-022 (Backup-Strategie C) angelegt
+
+- **Session-Inhalt** (Fortsetzung derselben Konversation): Patrick-Freigabe **Option C** für den Spike-H-ADR-Entwurf; **ADR-022** angelegt + vollständiger Doku-Sync. PR [#44](https://github.com/Paddel87/EB-Digital/pull/44) (Empirie) war zuvor von Patrick gemergt; ADR-Arbeit auf neuem Branch `feat/5.2-spike-h-adr` von `main` `4b2e5ed`.
+- **ADR-022 angelegt** `[ERKENNTNIS] [MODUL] [DEPLOYMENT]`: Backup-Strategie C (`pg_basebackup` täglich + WAL-Archiving `archive_timeout` 60 s + täglicher `pg_dump -Fc`; **Aufbewahrung 14 Tage < 30-Tage-Anonymisierungs-Karenz** — DSGVO-Kopplung als Eckwert dokumentiert; Off-VPS-Ziel als 6.4-Detail); verbindliche Recovery-Reihenfolge (PostgreSQL inkl. Job-State → Valkey kein Restore → Backend/Worker mit Stalled-Job-Start-Routine → Valhalla rebuildbar → Frontends); RTO/RPO-Annahmen mit Messwerten (Crash 0,7 s / Full-Stack 15,1 s / RPO ≤ 1 min), `[BELASTBAR]`-Beförderung über den 6.4-Backup-Recovery-Test auf VPS-Hardware. Kein externes Backup-Tooling in Phase 1.
+- **[REIFEGRAD-WECHSEL]:** `[OFFEN]`-Bereich „Backup-Granularität/Recovery-Reihenfolge/RTO-RPO" (`backend/resilience`) → `[VORLÄUFIG]` (ADR-022). `backend/resilience` hat keinen `[OFFEN]`-Bereich mehr. Neuer §6-NFR-Block „Resilienz" mit Messwerten.
+- **Drift-Fix nebenbei:** zwei TomTom-Reste in `architecture.md` §6 (Tile-Cache-NFR, API-Key-Zeile, Routing-Disziplin-NFR), die den ADR-021-Sweep überlebt hatten, auf MapTiler/Valhalla korrigiert (§16-Drift = Bug, im selben Commit behoben).
+- **Doku-Sync:** `decisions.md` (ADR-022 + Teil-A-Zeile, Fenster ADR-013–022, Reaktiv-Quote 1/10 = 10 % unverändert); `architecture.md` (Resilience-Modul auf ADR-022 konkretisiert, §6 Resilienz-Block, §9 Zeilen + Kopf); `fahrplan.md` (5.2 ERLEDIGT, 6.4-Scope angereichert, Aktueller Stand, Phasen-Übersicht 2/5); `README.md` (Akkordeon 2/5 mit Spike H ✅, Nächste Schritte auf Spike-K-Freigabe als #1, Projektphase); SVG „2 / 5 Spikes"; Spike-Protokoll-Status auf ABGESCHLOSSEN.
+- **Kein Code geändert.** Reaktiv-Quote unverändert.
+- **Git:** Branch `feat/5.2-spike-h-adr`, PR folgt.
+- **README-Sync-Check (CLAUDE.md §16):** vollständig (siehe Doku-Sync); Status „Konzeption", v0.1.0, keine Badge-Änderung.
+- **Offen / nächster Schritt:** **(1)** Patrick: Spike-K-Konzept-Freigabe (letzte offene Phase-5-Freigabe). **(2)** Spike L nach MapTiler-Key, Spike M nach DPolG-Rückfrage (Fragenkatalog auf Zuruf vorbereitbar). Phase-5-Abschlusskriterium: ADR pro Spike — G ✅ ADR-021, H ✅ ADR-022, K/L/M offen.
+
 ### 2026-06-11 – [SESSIONENDE] 5.2 / Spike H Empirie vollständig — ADR-Entwurf (Backup-Strategie C) wartet auf Freigabe
 
 - **Session-Inhalt:** Spike H komplett empirisch durchgeführt (lokaler Compose-Stack, 90-MB-Seed mit 100k Orders / 200k Audit-Einträgen / 50k Sessions), Ergebnisprotokoll [`docs/spikes/spike-h-results.md`](spikes/spike-h-results.md), ADR-Entwurf, Doku-Sync.

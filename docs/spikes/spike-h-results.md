@@ -2,7 +2,7 @@
 
 - **Fahrplan-Referenz:** 5.2 (Phase 5, ERKUNDUNG)
 - **Datum:** 2026-06-11
-- **Status:** Empirie vollständig — ADR-Entwurf unten, **wartet auf Freigabe**
+- **Status:** **ABGESCHLOSSEN** — Empirie vollständig; **Patrick-Freigabe Option C am 2026-06-11**, fixiert als **ADR-022** in `docs/decisions.md`. Der ADR-Entwurf in Abschnitt 3 ist durch ADR-022 abgelöst und bleibt als Spike-Artefakt erhalten.
 - **Zeitverbrauch:** ~2 h (innerhalb Zeitbox 6–8 h)
 - **Setup:** lokaler Compose-Stack (PostgreSQL 17.9, Valkey 8.1.7, Backend + Procrastinate-Worker 3.8.1), Apple Silicon. Mess-Volumen synthetisch geseedet: **100.000 `customer_order`** + 200.000 Audit-Log-Einträge + 50.000 anonyme Sessions an einer Operation → **DB 90 MB** (realistische Obergrenze einer einzelnen mehrwöchigen Großlage; Seed nach Abschluss rückstandsfrei entfernt).
 
