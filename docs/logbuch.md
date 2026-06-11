@@ -26,6 +26,17 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-11 – [SESSIONENDE] 5.3 / Spike K ERLEDIGT — ADR-023 (Hilfe-Knopf-Semantik) angelegt; Phase 5 ohne offene Freigaben
+
+- **Session-Inhalt** (Fortsetzung derselben Konversation): Patrick fragte „weiter mit K, worum geht es?" → Konzept-Zusammenfassung mit ENTSCHEIDUNG-Block vorgelegt → **Patrick-Freigabe Option A** → **ADR-023** angelegt + Doku-Sync. PR [#45](https://github.com/Paddel87/EB-Digital/pull/45) (ADR-022) war zuvor gemergt; Arbeit auf Branch `feat/5.3-spike-k-adr` von `main` `5b0c8e0`.
+- **ADR-023 angelegt** `[ERKENNTNIS] [MODUL] [DATENMODELL]`: Hilfe-Knopf-Semantik — 2 Kategorien `eigennot`/`panne`, Beschreibung optional (keine Tipp-Hürde bei Eigennot), Auto-Standort-Anhang (30-Tage-Anonymisierung), Rückzieh-Pfad statt Bestätigungs-Dialog, Acknowledge/Resolve-Quittung via WS + neue Audit-Action-Types, **Re-Notification statt Eskalation** (kein Eskalations-Ziel vorhanden), keine Priorisierungs-Heuristik, Kein-Notruf-UX-Pflicht („110/112"), `help_alert`-Datenmodell + API-Tripel + WS-Payload (Persistenz vor Transport, kein Freitext im Push). **Schließt die offene S3-`help_alert`-Payload-Frage aus Schritt 4.4.** Keine ADR-006-Schema-Änderung nötig.
+- **[REIFEGRAD-WECHSEL]:** `[OFFEN]`-Bereich „Hilfe-Knopf-Semantik" (`backend/operations`) → `[VORLÄUFIG]` (ADR-023) — **`backend/operations` hat keinen `[OFFEN]`-Bereich mehr**; reservierter `help_alert`-Payload-Anteil (S3/`backend/realtime`) → `[VORLÄUFIG]` (spezifiziert). Beförderung auf `[BELASTBAR]` mit Phase-6-Implementierung.
+- **Doku-Sync:** `decisions.md` (ADR-023 + Teil-A-Zeile, Fenster ADR-014–023, Reaktiv-Quote 1/10 = 10 % unverändert); `architecture.md` (operations/realtime/S3/frontend-betreuer + §9); `fahrplan.md` (5.3 ERLEDIGT, 6.3-Verweis auf ADR-023, Aktueller Stand, Phasen-Übersicht 3/5); `README.md` (Akkordeon 3/5, Nächste Schritte auf Spike L/M); SVG „3 / 5 Spikes"; Spike-Protokoll auf ABGESCHLOSSEN.
+- **Kein Code geändert.** Reaktiv-Quote unverändert.
+- **Git:** Branch `feat/5.3-spike-k-adr`, PR folgt.
+- **README-Sync-Check (CLAUDE.md §16):** vollständig (siehe Doku-Sync); Status „Konzeption", v0.1.0, keine Badge-Änderung.
+- **Offen / nächster Schritt:** Phase 5 hat **keine offenen Freigaben** mehr — verbleibend: **5.4 / Spike L** (wartet auf MapTiler-Key von Patrick) und **5.5 / Spike M** (DPolG-Stakeholder-Rückfrage; Fragenkatalog + Optionsvergleich auf Zuruf vorbereitbar). Phase-5-Abschlusskriterium: ADR pro Spike — G ✅ 021, H ✅ 022, K ✅ 023, L/M offen.
+
 ### 2026-06-11 – [SESSIONENDE] 5.2 / Spike H ERLEDIGT — ADR-022 (Backup-Strategie C) angelegt
 
 - **Session-Inhalt** (Fortsetzung derselben Konversation): Patrick-Freigabe **Option C** für den Spike-H-ADR-Entwurf; **ADR-022** angelegt + vollständiger Doku-Sync. PR [#44](https://github.com/Paddel87/EB-Digital/pull/44) (Empirie) war zuvor von Patrick gemergt; ADR-Arbeit auf neuem Branch `feat/5.2-spike-h-adr` von `main` `4b2e5ed`.

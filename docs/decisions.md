@@ -13,34 +13,35 @@
 
 ## Teil A: ADR-Übersicht
 
-| ADR | Datum      | Status | Klassifikation | Themen                    | Kategorie                  | Kurztitel                                                                                      |
-| --- | ---------- | ------ | -------------- | ------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------- |
-| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Projektgrößen-Klassifikation Klasse G                                                          |
-| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK                     | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate)                         |
-| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends                                |
-| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                                            |
-| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                                                 |
-| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets                                       |
-| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE             | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                                             |
-| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL                     | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                                             |
-| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5                                     |
-| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                                             |
-| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime                                       |
-| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten     | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)                             |
-| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY           | Externe Abhängigkeiten     | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                                        |
-| 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL           | Architekturänderungen      | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip                     |
-| 015 | 2026-05-15 | Aktiv  | REAKTIV        | STACK, SECURITY, METHODIK | Sicherheit und Datenschutz | `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b)  |
-| 016 | 2026-05-17 | Aktiv  | STRATEGISCH    | MODUL, STACK, PERFORMANCE | Architekturänderungen      | Verzicht auf serverseitiges Caching vor externen Geo-Services                                  |
-| 017 | 2026-05-18 | Aktiv  | ERKENNTNIS     | PERFORMANCE, MODUL        | Architekturänderungen      | Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)           |
-| 018 | 2026-05-28 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodelländerungen      | Bündelungs-Trigger (Spike J): manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders    |
-| 019 | 2026-05-28 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Phase-4-Sonderregel — UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen (Regel-019)    |
-| 020 | 2026-05-28 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert (Plausibility-/Geo-Pfad)          |
-| 021 | 2026-06-10 | Aktiv  | ERKENNTNIS     | MODUL, STACK, PERFORMANCE | Externe Abhängigkeiten     | Spike G: Routing-Wechsel auf self-hosted Valhalla (TomTom-K.-o. für permanente Sperrungen)     |
-| 022 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, DEPLOYMENT         | Betrieb und Deployment     | Spike H: Backup-Strategie C (basebackup + WAL-Archiving + Dump), Recovery-Reihenfolge, RTO/RPO |
+| ADR | Datum      | Status | Klassifikation | Themen                    | Kategorie                  | Kurztitel                                                                                                          |
+| --- | ---------- | ------ | -------------- | ------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Projektgrößen-Klassifikation Klasse G                                                                              |
+| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK                     | Externe Abhängigkeiten     | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate)                                             |
+| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Architekturänderungen      | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends                                                    |
+| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz | Admin-Bootstrap-Flow als CLI-Befehl                                                                                |
+| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz | AccessCode-Schema (6 Zeichen Crockford-Base32)                                                                     |
+| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen      | Aggregations-Schema pro Operation, ohne Personen-Buckets                                                           |
+| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE             | API-Vertragsänderungen     | Datenexport asynchron via Procrastinate-Job-Tripel                                                                 |
+| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL                     | Architekturänderungen      | Multi-Disponent ohne Lead, vollständiges Audit-Log                                                                 |
+| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen      | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5                                                         |
+| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten     | GitHub-Actions Major-Update + Verifikations-Regime                                                                 |
+| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime                                                           |
+| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten     | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)                                                 |
+| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY           | Externe Abhängigkeiten     | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                                                            |
+| 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL           | Architekturänderungen      | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip                                         |
+| 015 | 2026-05-15 | Aktiv  | REAKTIV        | STACK, SECURITY, METHODIK | Sicherheit und Datenschutz | `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b)                      |
+| 016 | 2026-05-17 | Aktiv  | STRATEGISCH    | MODUL, STACK, PERFORMANCE | Architekturänderungen      | Verzicht auf serverseitiges Caching vor externen Geo-Services                                                      |
+| 017 | 2026-05-18 | Aktiv  | ERKENNTNIS     | PERFORMANCE, MODUL        | Architekturänderungen      | Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)                               |
+| 018 | 2026-05-28 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodelländerungen      | Bündelungs-Trigger (Spike J): manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders                        |
+| 019 | 2026-05-28 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                   | Phase-4-Sonderregel — UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen (Regel-019)                        |
+| 020 | 2026-05-28 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance      | Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert (Plausibility-/Geo-Pfad)                              |
+| 021 | 2026-06-10 | Aktiv  | ERKENNTNIS     | MODUL, STACK, PERFORMANCE | Externe Abhängigkeiten     | Spike G: Routing-Wechsel auf self-hosted Valhalla (TomTom-K.-o. für permanente Sperrungen)                         |
+| 022 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, DEPLOYMENT         | Betrieb und Deployment     | Spike H: Backup-Strategie C (basebackup + WAL-Archiving + Dump), Recovery-Reihenfolge, RTO/RPO                     |
+| 023 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodell + API-Vertrag  | Spike K: Hilfe-Knopf-Semantik (2 Kategorien, optionale Beschreibung, Re-Notification statt Eskalation, help_alert) |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-013 bis ADR-022).
+- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-014 bis ADR-023).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 - **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz). Bleibt im Fenster bis ADR-025 (dann fällt ADR-015 aus dem 10er-Fenster).
@@ -860,6 +861,30 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - **6.4-Scope ergänzt um:** WAL-Archiving-Konfiguration, Off-Site-Ziel, Stalled-Job-Start-Routine, Restore-Runbook (`docs/runbooks/restore.md`) mit obiger Reihenfolge, Backup-Recovery-Test auf VPS.
   - **Reaktiv-Quote:** `[ERKENNTNIS]` (planmäßiges Spike-Ergebnis). Fenster wandert auf ADR-013 bis ADR-022; ADR-015 bleibt einziger `[REAKTIV]`-Eintrag → 1 / 10 = 10 %.
 - **Abgeleitete Regel:** keine neue Teil-C-Regel — die Kopplung „Backup-Aufbewahrung < Anonymisierungs-Karenz" ist als Konsequenz-Eckwert dokumentiert; sollte sie ein zweites Mal entscheidungsrelevant werden, wird sie zur Regel befördert.
+
+---
+
+#### ADR-023: Spike K — Hilfe-Knopf-Semantik (Kategorien, Quittungspfad, Re-Notification, `help_alert`-Datenmodell)
+
+- **Datum:** 2026-06-11
+- **Status:** Aktiv
+- **Tags:** `[ERKENNTNIS]` `[MODUL]` `[DATENMODELL]`
+- **Phasentyp-Kontext:** ERKUNDUNG (Phase 5, Schritt 5.3 / Spike K)
+- **Reifegrad-Wirkung:** `[OFFEN]`-Bereich „Hilfe-Knopf-Semantik" in `backend/operations` → `[VORLÄUFIG]`; reservierter `help_alert`-Payload-Anteil in `backend/realtime`/S3 → `[VORLÄUFIG]` (Payload-Schema spezifiziert — schließt die offene 4.4-Frage); Hilfe-Knopf-UI-Anteil in `frontend-betreuer` konzeptionell fixiert. Beförderung auf `[BELASTBAR]` mit Phase-6-Implementierung (6.3 + Backend-Anteil).
+- **Kategorie:** Datenmodelländerung + API-Vertrag (CLAUDE.md §4 Kategorien 4/5).
+- **Kontext:** Vision verlangt einen Hilfe-Knopf in der Betreuer-PWA für Eigennot/Pannen, einseitig zum Disponenten, ausdrücklich **kein Notruf-Kanal** und keine Hilfe-Funktion für Einsatzkräfte. Offen waren Pflichtfeld-Beschreibung, automatische Priorisierung und Eskalations-Routing. Vollständiges Konzept in [`docs/spikes/spike-k-results.md`](spikes/spike-k-results.md).
+- **Optionen:** A — Konzept wie vorgelegt; B — Konzept mit Änderungen (Pflichtfeld, anderes Re-Notification-Intervall, dritte Kategorie). **Entscheidung: Option A** — Patrick-Freigabe 2026-06-11.
+- **Konsequenzen (Konzept-Eckpunkte, bindend für Phase 6):**
+  - **Auslösung:** zwei Taps (Knopf → Kategorie-Wahl `eigennot`/`panne`); **kein Bestätigungs-Dialog**, stattdessen Rückzieh-Pfad (`cancelled`, nur eigene offene Meldung).
+  - **Beschreibung optional** (keine Tipp-Hürde bei Eigennot), nachreichbar; UI-Hinweis „keine Namen Dritter"; **kein Freitext im WS-Push** (PII-Disziplin, Description per REST).
+  - **Standort automatisch angehängt** (lat/lng + `accuracy_m`, nullable); unterliegt der 30-Tage-Anonymisierung (`description` + `location_*` werden vom 6.5-Job genullt; Aggregat-Zähler `anzahl_hilfe_meldungen` existiert bereits — keine ADR-006-Änderung).
+  - **Quittungspfad:** `open` → `acknowledged` (WS-Quittung „übernommen von <Username>") → `resolved`; Acknowledge/Resolve erzeugen Audit-Log-Einträge (neue Action-Types `help_alert_acknowledged`/`help_alert_resolved`); alle Disponenten gleichberechtigt (ADR-008), Transparenz statt Lock.
+  - **Keine automatische Eskalation** (kein Eskalations-Ziel vorhanden); stattdessen client-seitige **Re-Notification** nach 2 min un-acknowledged (Intervall = UI-Detail Phase 6). **Keine Priorisierungs-Heuristik** (Eigennot vor Panne, dann FIFO).
+  - **Kein-Notruf-UX-Pflicht:** statischer Hinweis „Bei akuter Gefahr: 110/112" im Hilfe-Dialog.
+  - **Datenmodell `help_alert`** (Phase-6-Migration) und **API-Tripel + WS-Payload** gemäß Spike-Protokoll Abschnitte 4/5; **Persistenz vor Transport** (erst PostgreSQL, dann `RealtimePublisher` auf `operation.{id}.help_alert`; Reconnect lädt offene Alerts per REST — Muster identisch `order_status`, konsistent mit ADR-022-Resilienz-Befund).
+  - **Bewusste Nicht-Entscheidungen:** kein externer Benachrichtigungskanal (SMS/Push), keine Einsatzkraft-Hilfe-Funktion, kein Eskalations-Routing.
+  - **Reaktiv-Quote:** `[ERKENNTNIS]` (planmäßiges Spike-Ergebnis). Fenster wandert auf ADR-014 bis ADR-023; ADR-015 bleibt einziger `[REAKTIV]`-Eintrag → 1 / 10 = 10 %.
+- **Abgeleitete Regel:** keine.
 
 ---
 
