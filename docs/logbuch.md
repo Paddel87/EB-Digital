@@ -26,6 +26,16 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-11 – [BEOBACHTUNG] 5.5 / Spike M begonnen — Fragenkatalog für DPolG versandfertig (Vergleichsstudien-Teil erledigt)
+
+- **Auftrag (Patrick):** „Fragenkatalog für M vorbereiten". 5.5 auf IN ARBEIT; der Schritt wartet jetzt auf extern (DPolG-Antworten via Patrick) — bewusst kein `blockers.md`-Eintrag (geplante Stakeholder-Schleife, kein ungeplanter Blocker).
+- **Artefakt:** [`docs/spikes/spike-m-fragenkatalog.md`](spikes/spike-m-fragenkatalog.md) — nicht-technische Anschreiben-Vorlage, Sichtbarkeits-Tabelle (wo Fahrzeugnamen auftauchen, inkl. Cross-Berufsverbands-Aspekt der Einsatzkraft-PWA), Optionsvergleich A (strukturiertes Schema) / B (Funkrufnamen, mit BOS-Verwechslungs-Hinweis) / C (Freitext mit Systemregeln), **acht geschlossene Fragen M1–M8** mit Antwortformat (analog Versions-Verifikations-Muster), Teil-5-Mapping Antworten → ADR-Inhalte.
+- **Technischer Ist-Stand dokumentiert:** `vehicle.name` ist `String(120)` ohne Eindeutigkeits-/Format-Constraint (`backend/eb_digital/fleet/models.py:107`) — bewusste Spike-M-Lücke; ADR fixiert später Länge, Zeichensatz-CHECK, Partial-UNIQUE auf `(tenant_id, name)`, Vergabe-Berechtigung. Constraint-Verschärfung ist risikofrei, solange keine produktiven Fahrzeuge existieren (Status Konzeption).
+- **Vorläufige Empfehlung im Katalog:** Modell C als Systemmechanik + Schema A als Doku-Vorbelegung — final erst nach DPolG-Antworten.
+- **PII-Leitplanke fixiert:** keine Personennamen in Fahrzeugbezeichnungen (Vision-Constraint), als feststehende Leitplanke im Katalog markiert, nicht als Frage.
+- **Git:** Folge-Commit auf Branch `feat/5.3-spike-k-adr` (PR [#46](https://github.com/Paddel87/EB-Digital/pull/46), noch offen — thematisch Phase-5-Doku; separater atomarer Commit).
+- **Nächster Schritt:** Patrick legt den Katalog der DPolG Bremen vor; parallel bleibt 5.4 / Spike L auf den MapTiler-Key wartend. Phase-5-Stand: G ✅ 021, H ✅ 022, K ✅ 023, M in Stakeholder-Schleife, L wartet auf Key.
+
 ### 2026-06-11 – [SESSIONENDE] 5.3 / Spike K ERLEDIGT — ADR-023 (Hilfe-Knopf-Semantik) angelegt; Phase 5 ohne offene Freigaben
 
 - **Session-Inhalt** (Fortsetzung derselben Konversation): Patrick fragte „weiter mit K, worum geht es?" → Konzept-Zusammenfassung mit ENTSCHEIDUNG-Block vorgelegt → **Patrick-Freigabe Option A** → **ADR-023** angelegt + Doku-Sync. PR [#45](https://github.com/Paddel87/EB-Digital/pull/45) (ADR-022) war zuvor gemergt; Arbeit auf Branch `feat/5.3-spike-k-adr` von `main` `5b0c8e0`.
