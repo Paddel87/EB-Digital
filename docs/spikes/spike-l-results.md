@@ -2,7 +2,7 @@
 
 - **Fahrplan-Referenz:** 5.4 (Phase 5, ERKUNDUNG — Prototyp)
 - **Datum:** 2026-06-11
-- **Status:** Empirie vollständig — ADR-Entwurf unten, **wartet auf Freigabe**
+- **Status:** **ABGESCHLOSSEN** — Empirie vollständig; **Patrick-Freigabe am 2026-06-11**, fixiert als **ADR-024** in `docs/decisions.md`. Der ADR-Entwurf in Abschnitt 5 ist durch ADR-024 abgelöst und bleibt als Spike-Artefakt erhalten.
 - **Zeitverbrauch:** ~1,5 h (innerhalb Zeitbox 8–10 h; die Messung war schneller als veranschlagt, weil MapTiler die offenen Fragen mit echten Headern direkt beantwortet)
 - **Key-Hinweis:** Tests liefen mit einem temporären, von Patrick bereitgestellten MapTiler-API-Key (nach Spike-Abschluss rotiert; `.env` zurück auf Platzhalter, verifiziert byte-identisch mit `.env.example`).
 - **Architektur-Kontext:** ADR-016 macht den **PWA-Service-Worker zur alleinigen Cache-Schicht** für Tile-Last-Glättung (kein serverseitiges Caching, kein nginx-Cache). MapLibre GL JS rendert Vektor-Tiles (ADR-014/Regel-017). Dieser Spike klärt die Workbox-Strategie und das Pre-Cache-Budget.

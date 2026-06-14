@@ -26,6 +26,18 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-11 – [SESSIONENDE] 5.4 / Spike L ERLEDIGT — ADR-024 (Tile-Caching) angelegt; 4/5 Phase-5-Spikes erledigt, nur noch M offen
+
+- **Session-Inhalt:** Patrick-Freigabe des Spike-L-ADR-Entwurfs → **ADR-024** angelegt + Doku-Sync. Als Folge-Commit auf denselben Branch `feat/5.4-spike-l` / PR [#47](https://github.com/Paddel87/EB-Digital/pull/47) (Muster Spike G: Empirie + ADR im selben PR).
+- **ADR-024 angelegt** `[ERKENNTNIS] [MODUL] [PERFORMANCE]`: Tile-Caching — Runtime `CacheFirst` + ExpirationPlugin (statt StaleWhileRevalidate; Offline-Robustheit im Funkloch + MapTiler-Budget schlagen Aktualität), Operationsraum-Pre-Cache beim Schichtbeginn (z12–15 aus Operations-BBox, `cache.addAll()` per Nutzeraktion, Budget 4–12 MB gemessen, near-100 % Hit-Rate), client-TTL ~24 h statt Provider-4 h (ADR-016-konform: per-User-Cache erlaubt), maxzoom 15 deckelt Pre-Cache, Workbox 7.4.x via vite-plugin-pwa; Einsatzkraft-PWA dünner (nur Runtime). `navigator.storage.estimate()`-Pre-Check; iOS-7-Tage-Eviction durch Re-Pre-Cache abgefedert.
+- **[REIFEGRAD-WECHSEL]:** `[OFFEN]`-Bereich „Tile-Caching-Strategie / Service-Worker" (`frontend-betreuer`) → `[VORLÄUFIG]` (ADR-024) — **`frontend-betreuer` hat keinen `[OFFEN]`-Bereich mehr.** Beförderung auf `[BELASTBAR]` mit Phase-6.3-Implementierung.
+- **Doku-Sync:** `decisions.md` (ADR-024 + Teil-A-Zeile, Fenster ADR-015–024, Reaktiv-Quote 1/10 = 10 % unverändert); `architecture.md` (Modul `frontend-betreuer` Reifegrad/Struktur/offene Fragen + §9-Zeilen + Heading); `fahrplan.md` (5.4 ERLEDIGT, Aktueller Stand, Phasen-Übersicht 4/5); `README.md` (Akkordeon 4/5, Nächste Schritte auf Spike M + Phase 6); SVG „4 / 5 Spikes"; Spike-Protokoll auf ABGESCHLOSSEN.
+- **Kein Code geändert.** Reaktiv-Quote unverändert.
+- **Phase-5-Bilanz:** ADR pro Spike — G ✅ 021, H ✅ 022, K ✅ 023, **L ✅ 024**; nur noch **5.5 / Spike M** offen (wartet auf DPolG-Antworten, Fragenkatalog versandt). Nach M ist das Phase-5-Abschlusskriterium (ADR pro Spike + alle `[OFFEN]`-Bereiche → `[VORLÄUFIG]`) erfüllt → Übergang zu Phase 6 (UMSETZUNG).
+- **Git:** Branch `feat/5.4-spike-l`, PR [#47](https://github.com/Paddel87/EB-Digital/pull/47) (jetzt Empirie + ADR-024).
+- **README-Sync-Check (CLAUDE.md §16):** vollständig; Status „Konzeption", v0.1.0, keine Badge-Änderung.
+- **Offen / nächster Schritt:** Spike M (DPolG-Antworten) als letzter Phase-5-Baustein; danach Phase-6-Eintritt.
+
 ### 2026-06-11 – [SESSIONENDE] 5.4 / Spike L Empirie vollständig — ADR-Entwurf (Tile-Caching) wartet auf Freigabe; MapTiler-Key genutzt & rotiert
 
 - **Session-Inhalt:** Patrick stellte einen temporären MapTiler-Key bereit (danach rotiert) → Spike L empirisch durchgeführt, Ergebnisprotokoll [`docs/spikes/spike-l-results.md`](spikes/spike-l-results.md), ADR-Entwurf, `.env`-Reset, Doku-Sync. Modellwechsel auf Opus 4.8 zu Session-Beginn (kein inhaltlicher Einfluss).
