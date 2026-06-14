@@ -26,6 +26,18 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-11 – [SESSIONENDE] 5.5 / Spike M ERLEDIGT — ADR-025 (Fahrzeug-Naming); **PHASE 5 VOLLSTÄNDIG ABGESCHLOSSEN**
+
+- **Session-Inhalt:** Spike M auf Patrick-Weisung „M machen wir hier im Chat" direkt interaktiv geklärt — Fragenkatalog M1–M8 von Patrick (Plattform-Betreiber mit DPolG-Bezug) per AskUserQuestion beantwortet; **ADR-025** angelegt + Doku-Sync. Damit ist Phase 5 (alle fünf Spikes) abgeschlossen.
+- **Antworten M1–M8:** Mischform (Default `EB-<Mandanten-Kürzel>-NN`, überschreibbar) · dauerhaft (Stammdaten, architektur-abgeleitet) · Vergabe Disponent/PA (architektur-abgeleitet) · pro Mandant eindeutig · max 20 Zeichen · BOS-UI-Hinweis ohne harte Sperre · Umlaute erlaubt. Zwei Fragen (M3/M4) waren bereits durch die bestehende `vehicle`-Architektur (Stammdaten + Fleet-Rollen-Matrix S8d) entschieden — als Fakten markiert, nicht als offene Frage gestellt.
+- **ADR-025 angelegt** `[ERKENNTNIS] [MODUL] [DATENMODELL]`: Datenmodell-Konsequenzen auf `vehicle.name` (Phase-6.2-Migration, da Tabelle seit 4.2 `[BELASTBAR]`, im Status Konzeption ohne Produktivdaten — additiv): `String(120)`→`String(20)`, Zeichensatz-CHECK `^[A-Za-zÄÖÜäöüß0-9 -]+$` + Nicht-Leer, Partial-UNIQUE `(tenant_id, name)` WHERE `is_active=TRUE` (wiederverwendet bestehendes Soft-Delete-Prädikat), UI-Default-Vorbelegung + UI-Hinweise PII/BOS (keine technische Durchsetzung).
+- **[REIFEGRAD-WECHSEL]:** `[OFFEN]`-Bereich „Fahrzeugbezeichnungs-Schema" (`backend/fleet`) → `[VORLÄUFIG]` (ADR-025). **Phase-5-Bilanz: alle fünf Spike-`[OFFEN]`-Bereiche auf `[VORLÄUFIG]` befördert** — `backend/geo` (G), `backend/operations`+S3 (K), `backend/resilience` (H), `frontend-betreuer` (L), `backend/fleet` (M) haben keinen `[OFFEN]`-Bereich mehr. Phase-5-Abschlusskriterium (ADR pro Spike + alle Bereiche `[VORLÄUFIG]`) erfüllt.
+- **Doku-Sync:** `decisions.md` (ADR-025 + Teil-A-Zeile, Fenster ADR-016–025, Reaktiv-Quote 1/10 = 10 % unverändert); `architecture.md` (Modul `backend/fleet` offene Fragen + §9-Zeile + §9-Heading „Phase 5 abgeschlossen"); `fahrplan.md` (5.5 ERLEDIGT, **Phase 5 ERLEDIGT** — Aktueller Stand, Laufende Phase auf Phase 6, Phasentyp, Phasen-Übersicht, Phase-5-Sektion-Header mit Abschluss-Notiz, Nächster Schritt auf Phase 6); `spike-m-fragenkatalog.md` (Antworten + Ergebnis, ABGESCHLOSSEN); `README.md` (Akkordeon Phase 5 ERLEDIGT + Phase 6 NÄCHSTE aufgeklappt, Nächste Schritte, Projektphase, SVG-Alt-Text); SVG-Balken **5/7 Phasen (71 %)**, Phase 5 grün, Phase 6 pulsierend.
+- **Kein Code geändert.** Reaktiv-Quote unverändert. Status bleibt „Konzeption", v0.1.0 (Phasen-Abschluss ist kein Statuswechsel) — keine Badge-Änderung.
+- **Git:** Branch `feat/5.5-spike-m` (von `main` `49da364`). Reine Doku-Änderung. PR folgt.
+- **README-Sync-Check (CLAUDE.md §16):** vollständig (siehe Doku-Sync); Drift geprüft, keine.
+- **Offen / nächster Schritt:** **Phase 6 (UMSETZUNG)** — Geo + Disponent-/Betreuer-PWAs + Resilience + Retention + Export. Vor jedem 6.x-Schritt: Eingangsdisziplin nach Regel-019 (berührte Bestandteile auf `[BELASTBAR]` heben) + Detail-Plan zur Freigabe. Erster Schritt typischerweise 6.1 `backend/geo` (Valhalla-Routing-Adapter, ADR-021; Folge-ADR Geofabrik-Update-Pipeline).
+
 ### 2026-06-11 – [SESSIONENDE] 5.4 / Spike L ERLEDIGT — ADR-024 (Tile-Caching) angelegt; 4/5 Phase-5-Spikes erledigt, nur noch M offen
 
 - **Session-Inhalt:** Patrick-Freigabe des Spike-L-ADR-Entwurfs → **ADR-024** angelegt + Doku-Sync. Als Folge-Commit auf denselben Branch `feat/5.4-spike-l` / PR [#47](https://github.com/Paddel87/EB-Digital/pull/47) (Muster Spike G: Empirie + ADR im selben PR).

@@ -2,8 +2,8 @@
 
 - **Fahrplan-Referenz:** 5.5 (Phase 5, ERKUNDUNG — Vergleichsstudie + Stakeholder-Rückfrage)
 - **Datum:** 2026-06-11
-- **Status:** Vergleichsstudien-Teil erledigt, Fragenkatalog versandfertig — **wartet auf DPolG-Antworten** (Vorlage durch Patrick)
-- **Verfahren:** Antworten unten im Antwortformat eintragen → daraus entsteht der Spike-M-ADR `[ERKENNTNIS] [DATENMODELL]` „Fahrzeug-Naming" (freigabepflichtig).
+- **Status:** **ABGESCHLOSSEN** — Antworten am 2026-06-11 von Patrick (Plattform-Betreiber mit DPolG-Bezug) direkt im Chat gegeben (Teil 4); fixiert als **ADR-025** in `docs/decisions.md`. Schließt Phase 5 ab (5/5 Spikes).
+- **Verfahren:** Antworten unten eingetragen → ADR-025 `[ERKENNTNIS] [MODUL] [DATENMODELL]` „Fahrzeug-Naming".
 
 ---
 
@@ -39,21 +39,24 @@
 
 **Vorläufige technische Empfehlung** (final erst nach euren Antworten): **Modell C als Systemmechanik** — das System erzwingt nur Eindeutigkeit pro Verband, eine Maximallänge und einen sicheren Zeichensatz — **mit Schema A als empfohlener Vorbelegung** in der Dokumentation. So kann die DPolG ihre etablierten Namen 1:1 verwenden (falls vorhanden), und Verbände ohne Konvention bekommen einen sinnvollen Default.
 
-## Teil 4 — Fragenkatalog (M1–M8)
+## Teil 4 — Fragenkatalog (M1–M8) mit Antworten (2026-06-11)
 
-**Antwortformat pro Zeile:** Frage-Nr. + Antwort (bei ja/nein-Fragen reicht das Wort; Freitext wo gefragt).
+| Nr.       | Frage (Kurzform)                  | **Antwort**                                                                                                                  |
+| --------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **M1/M2** | Bestehende Konvention + Übernahme | **Mischform** — System schlägt Default-Bezeichnung vor (`EB-<Mandanten-Kürzel>-NN`), Disponent kann überschreiben (Freitext) |
+| **M3**    | Stabilität                        | **dauerhaft** (Stammdaten; folgt aus `vehicle`-Tabelle 4.2)                                                                  |
+| **M4**    | Vergabe-Berechtigung              | **Disponent/Plattform-Admin** bei Fahrzeug-Anlage (folgt aus Fleet-Rollen-Matrix S8d 4.2)                                    |
+| **M5**    | Reichweite Eindeutigkeit          | **pro Mandant** (Verbund-Präfix automatisch in Phase X)                                                                      |
+| **M6**    | Länge                             | **max 20 Zeichen**                                                                                                           |
+| **M7**    | BOS-Abgrenzung                    | **UI-Hinweis, keine harte Sperre** (keine technische Erkennung)                                                              |
+| **M8**    | Zeichensatz                       | **Umlaute erlaubt** (ä ö ü Ä Ö Ü ß + A–Z, 0–9, Bindestrich, Leerzeichen)                                                     |
 
-- **M1 — Bestehende Konvention:** Gibt es bei der DPolG Bremen bereits etablierte Bezeichnungen für die Betreuungsfahrzeuge? _(ja → bitte 2–3 Beispiele / nein)_
-- **M2 — Übernahme:** Falls ja: Sollen diese Bezeichnungen 1:1 in EB Digital erscheinen, oder darf das System ein eigenes Schema vorgeben? _(1:1 übernehmen / System darf vorgeben / Mischform)_
-- **M3 — Stabilität:** Soll eine Bezeichnung dauerhaft am Fahrzeug bleiben (Stammdaten, einsatzübergreifend) oder pro Einsatz neu vergeben werden? _(dauerhaft / pro Einsatz — Hinweis: dauerhaft ist technisch vorgesehen und empfohlen)_
-- **M4 — Vergabe:** Wer soll Bezeichnungen vergeben bzw. ändern dürfen? _(Disponent bei Fahrzeug-Anlage / Vorgabe durch Landesvorstand / beides)_
-- **M5 — Reichweite der Eindeutigkeit:** Reicht es, wenn Bezeichnungen innerhalb der DPolG Bremen eindeutig sind? Bei späterer verbandsübergreifender Zusammenarbeit würde das System automatisch das Verbands-Kürzel voranstellen. _(reicht / wir wünschen von Anfang an verbandsübergreifend eindeutige Namen)_
-- **M6 — Länge:** Ist eine Obergrenze von **20 Zeichen** für die Anzeige praktikabel (Smartphone-Display, Durchsagen)? _(ja / nein, wir brauchen bis zu \_\_ Zeichen)_
-- **M7 — BOS-Abgrenzung:** Bestehen aus eurer Sicht Bedenken, wenn Fahrzeugbezeichnungen an polizeiliche Funkrufnamen erinnern (Verwechslungsgefahr im Einsatzumfeld)? Sollen wir solche Muster bewusst vermeiden? _(vermeiden / unkritisch / Freitext)_
-- **M8 — Zeichensatz:** Werden Umlaute oder Sonderzeichen benötigt (z. B. „Süd")? _(ja, nämlich: … / nein, A–Z, 0–9, Bindestrich und Leerzeichen reichen)_
+## Teil 5 — Ergebnis (fixiert in ADR-025)
 
-## Teil 5 — Was aus den Antworten wird (technische Konsequenz, intern)
+Die Antworten sind als **ADR-025** `[ERKENNTNIS] [MODUL] [DATENMODELL]` festgehalten. Datenmodell-Konsequenzen auf `vehicle.name` (Implementierung als Phase-6.2-Migration, da `vehicle`-Tabelle seit 4.2 `[BELASTBAR]`, im Status Konzeption ohne Produktivdaten — additiv und risikofrei):
 
-- **Ist-Stand im Schema:** `vehicle.name` ist heute `String(120)`, **ohne** Eindeutigkeits- und Format-Constraint (bewusst offen gelassen bis Spike M). Der ADR fixiert: Maximallänge (M6), Zeichensatz-CHECK (M8), Partial-UNIQUE-Index auf `(tenant_id, name)` für aktive Fahrzeuge (M5; Verbund-Anzeige mit Mandanten-Kürzel-Präfix als spätere Phase-X-Konsequenz), Vergabe-/Änderungs-Berechtigung (M4 — Änderungen laufen wie alle Fleet-Mutationen über das Audit-Log), ggf. Format-Empfehlung als UI-Vorbelegung (M1/M2).
-- **Kein Migrations-Risiko:** Constraint-Verschärfung auf `String(120)` → kürzer ist additiv möglich, solange keine produktiven Fahrzeuge existieren (Status Konzeption — genau deshalb jetzt klären).
-- **PII-Regel** (keine Personennamen) wird unabhängig von den Antworten als UI-Hinweis + Doku-Regel umgesetzt; eine technische Namens-Erkennung ist bewusst nicht vorgesehen (Scheingenauigkeit).
+- **Länge:** `String(120)` → `String(20)` (M6).
+- **Zeichensatz-CHECK** `ck_vehicle_name_charset`: Regex `^[A-Za-zÄÖÜäöüß0-9 -]+$` plus Nicht-Leer (`length(btrim(name)) >= 1`) (M8).
+- **Eindeutigkeit:** Partial-UNIQUE `uq_vehicle_tenant_name_active` auf `(tenant_id, name)` `WHERE is_active = TRUE` (M5) — wiederverwendet das Soft-Delete-Prädikat des bestehenden `ix_vehicle_tenant_id_active`.
+- **Default-Vorbelegung (UI, kein DB-Constraint):** `frontend-disponent` schlägt `EB-<Mandanten-Kürzel>-NN` vor, überschreibbar (M1/M2).
+- **UI-Hinweise (keine technische Durchsetzung):** „keine Personennamen" (PII-Leitplanke, Vision) + „keine echten Funkrufnamen" (M7).
