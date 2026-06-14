@@ -24,7 +24,7 @@ Für alle anderen Fälle gilt die Dreifach-Regel aus CLAUDE.md Abschnitt 10.
 
 _Keine aktiven Blocker._
 
-(Stand Aktive Blocker: 2026-06-10 — Blocker #002 am selben Tag gelöst, siehe „Gelöste Blocker". **Hinweis für Spike L (5.4):** `MAPTILER_API_KEY` in `.env` ist weiterhin Platzhalter — vor Beginn von 5.4 als Eingangsbedingung von Patrick bereitzustellen; bewusst kein aktiver Blocker, da 5.4 nicht begonnen ist.)
+(Stand Aktive Blocker: 2026-06-11 — keine. Blocker #002 (TomTom-Key) am 2026-06-10 gelöst, siehe „Gelöste Blocker". **Spike L (5.4):** `MAPTILER_API_KEY`-Eingangsbedingung am 2026-06-11 erfüllt — Patrick stellte einen temporären Key bereit, Empirie durchgeführt, Key danach rotiert, `.env` zurück auf Platzhalter. Kein Blocker entstanden.)
 
 (Stand: 2026-05-10. Im Härtungs-Schritt von Modus-2-Schritt 3 wurden keine Blocker identifiziert; alle in Schublade 1 zusammengefassten Grundsatzfragen aus `project-context.md` Abschnitt 11 sind in der Klärungs-Session am 2026-05-07 abschließend entschieden, alle Schublade-2-Punkte als Spikes G–M in `fahrplan.md` Phasen 3 und 5 platziert, alle Schublade-3-Punkte als Roadmap-Meilensteine N/O/P in Phase 7. Blocker #001 wurde am 2026-05-10 ursächlich aufgeklärt und nach „Gelöste Blocker" verschoben.)
 
