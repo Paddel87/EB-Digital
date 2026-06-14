@@ -26,6 +26,18 @@ mindestens den letzten SESSIONENDE-Eintrag und alle Einträge danach, um den Fad
 
 ## Einträge (neueste oben)
 
+### 2026-06-11 – [SESSIONENDE] 5.4 / Spike L Empirie vollständig — ADR-Entwurf (Tile-Caching) wartet auf Freigabe; MapTiler-Key genutzt & rotiert
+
+- **Session-Inhalt:** Patrick stellte einen temporären MapTiler-Key bereit (danach rotiert) → Spike L empirisch durchgeführt, Ergebnisprotokoll [`docs/spikes/spike-l-results.md`](spikes/spike-l-results.md), ADR-Entwurf, `.env`-Reset, Doku-Sync. Modellwechsel auf Opus 4.8 zu Session-Beginn (kein inhaltlicher Einfluss).
+- **Kern-Messwerte (echte MapTiler-Header, streets-v2 / tiles v3):** Vektor-Tile-TTL `cache-control: max-age=14400` = **exakt 4 h** (bestätigt `project-context.md`-Annahme empirisch); Vektor-Tileset **maxzoom 15** → z16+ overzoomt MapLibre clientseitig, Pre-Cache gedeckelt; Tile-Größen z14 ~120 KB / z15 ~62 KB / z12–13 ~56–64 KB (gzip); Style-JSON 63 KB, Sprite@2x 94 KB, Glyph-Range 83 KB. **Pre-Cache-Budget Operationsraum z12–15: 4,2 MB (Innenstadt 2,8×3,3 km) bis 12,1 MB (Stadtgebiets-Großlage 6,7×7,3 km)** — trivial gegen mobile Quota.
+- **ADR-Entwurf:** (1) Pre-Cache beim Schichtbeginn per Nutzeraktion (kritischer Hebel, near-100 % Hit-Rate, `cache.addAll()` + Fortschritt); (2) Runtime `CacheFirst` + ExpirationPlugin statt `StaleWhileRevalidate` (Offline-Robustheit im Funkloch + MapTiler-Budget schlagen Tile-Aktualität — Straßennetz ändert sich über eine Schicht nicht); (3) client-TTL auf Operationsdauer ~24 h statt Provider-4 h (ADR-016-konform: per-End-User-Cache erlaubt, nur Multi-Client-Server-Cache war untersagt); (4) Workbox 7.4.x via vite-plugin-pwa, `runtimeCaching` auf `api.maptiler.com/tiles/v3/*`; (5) Einsatzkraft-PWA dünner (nur Runtime, kein Schicht-Pre-Cache).
+- **Quota-Befund (Referenz):** Chrome ~60 % Disk, Safari/iOS restriktiver mit 7-Tage-Eviction — 12 MB unkritisch; iOS-Eviction durch Re-Pre-Cache beim Schichtbeginn abgefedert; `navigator.storage.estimate()`-Pre-Check.
+- **Key-Hygiene:** MapTiler-Key nur in lokaler `.env` (gitignored), nie in Code/Doku/Logs; nach Abschluss `.env` zurück auf Platzhalter (verifiziert byte-identisch mit `.env.example`); Patrick rotiert den Key. `blockers.md`-Merker „5.4-Eingangsbedingung MapTiler-Key" als erfüllt markiert.
+- **Kein Code, kein ADR angelegt** (freigabepflichtig — Entwurf im Protokoll). Keine Reifegrad-Änderung (Beförderung `frontend-betreuer`-Tile-Cache-Bereich → `[VORLÄUFIG]` erst mit ADR). Reaktiv-Quote unverändert 1/10 = 10 %.
+- **Git:** Branch `feat/5.4-spike-l` (von `main` `32e8f2e`). Reine Doku-Änderung. PR folgt.
+- **README-Sync-Check (CLAUDE.md §16):** Projektphase (Spike-L-Stand), Phase-5-Akkordeon (Spike L 🕐), „Nächste Schritte" (Spike-L-Freigabe #1) synchronisiert. SVG bleibt 3/5 (L wartet auf Freigabe, zählt nicht als erledigt). Status „Konzeption", v0.1.0, keine Badge-Änderung.
+- **Offen / nächster Schritt:** **(1)** Patrick: Spike-L-ADR-Entwurf freigeben → letzter Phase-5-ADR neben M. **(2)** Spike M wartet auf DPolG-Antworten (Fragenkatalog versandt). Nach L+M ist Phase 5 abgeschlossen (ADR pro Spike: G/H/K ✅, L/M offen).
+
 ### 2026-06-11 – [BEOBACHTUNG] 5.5 / Spike M begonnen — Fragenkatalog für DPolG versandfertig (Vergleichsstudien-Teil erledigt)
 
 - **Auftrag (Patrick):** „Fragenkatalog für M vorbereiten". 5.5 auf IN ARBEIT; der Schritt wartet jetzt auf extern (DPolG-Antworten via Patrick) — bewusst kein `blockers.md`-Eintrag (geplante Stakeholder-Schleife, kein ungeplanter Blocker).
