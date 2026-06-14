@@ -13,36 +13,37 @@
 
 ## Teil A: ADR-Übersicht
 
-| ADR | Datum      | Status | Klassifikation | Themen                    | Kategorie                    | Kurztitel                                                                                                          |
-| --- | ---------- | ------ | -------------- | ------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                     | Projektgrößen-Klassifikation Klasse G                                                                              |
-| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK                     | Externe Abhängigkeiten       | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate)                                             |
-| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Architekturänderungen        | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends                                                    |
-| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz   | Admin-Bootstrap-Flow als CLI-Befehl                                                                                |
-| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz   | AccessCode-Schema (6 Zeichen Crockford-Base32)                                                                     |
-| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen        | Aggregations-Schema pro Operation, ohne Personen-Buckets                                                           |
-| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE             | API-Vertragsänderungen       | Datenexport asynchron via Procrastinate-Job-Tripel                                                                 |
-| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL                     | Architekturänderungen        | Multi-Disponent ohne Lead, vollständiges Audit-Log                                                                 |
-| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen        | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5                                                         |
-| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten       | GitHub-Actions Major-Update + Verifikations-Regime                                                                 |
-| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance        | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime                                                           |
-| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten       | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)                                                 |
-| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY           | Externe Abhängigkeiten       | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                                                            |
-| 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL           | Architekturänderungen        | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip                                         |
-| 015 | 2026-05-15 | Aktiv  | REAKTIV        | STACK, SECURITY, METHODIK | Sicherheit und Datenschutz   | `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b)                      |
-| 016 | 2026-05-17 | Aktiv  | STRATEGISCH    | MODUL, STACK, PERFORMANCE | Architekturänderungen        | Verzicht auf serverseitiges Caching vor externen Geo-Services                                                      |
-| 017 | 2026-05-18 | Aktiv  | ERKENNTNIS     | PERFORMANCE, MODUL        | Architekturänderungen        | Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)                               |
-| 018 | 2026-05-28 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodelländerungen        | Bündelungs-Trigger (Spike J): manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders                        |
-| 019 | 2026-05-28 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                     | Phase-4-Sonderregel — UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen (Regel-019)                        |
-| 020 | 2026-05-28 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance        | Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert (Plausibility-/Geo-Pfad)                              |
-| 021 | 2026-06-10 | Aktiv  | ERKENNTNIS     | MODUL, STACK, PERFORMANCE | Externe Abhängigkeiten       | Spike G: Routing-Wechsel auf self-hosted Valhalla (TomTom-K.-o. für permanente Sperrungen)                         |
-| 022 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, DEPLOYMENT         | Betrieb und Deployment       | Spike H: Backup-Strategie C (basebackup + WAL-Archiving + Dump), Recovery-Reihenfolge, RTO/RPO                     |
-| 023 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodell + API-Vertrag    | Spike K: Hilfe-Knopf-Semantik (2 Kategorien, optionale Beschreibung, Re-Notification statt Eskalation, help_alert) |
-| 024 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, PERFORMANCE        | Performance (Frontend-Cache) | Spike L: Tile-Caching CacheFirst + Operationsraum-Pre-Cache beim Schichtbeginn (4–12 MB), client-TTL 24 h          |
+| ADR | Datum      | Status | Klassifikation | Themen                    | Kategorie                     | Kurztitel                                                                                                                  |
+| --- | ---------- | ------ | -------------- | ------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 001 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                      | Projektgrößen-Klassifikation Klasse G                                                                                      |
+| 002 | 2026-05-07 | Aktiv  | STRATEGISCH    | STACK                     | Externe Abhängigkeiten        | Stack-Wahl (FastAPI + SvelteKit + PostgreSQL + Valkey + Procrastinate)                                                     |
+| 003 | 2026-05-07 | Aktiv  | STRATEGISCH    | METHODIK                  | Architekturänderungen         | Architektur-Pattern Modular Monolith + drei SvelteKit-Frontends                                                            |
+| 004 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz    | Admin-Bootstrap-Flow als CLI-Befehl                                                                                        |
+| 005 | 2026-05-07 | Aktiv  | STRATEGISCH    | SECURITY                  | Sicherheit und Datenschutz    | AccessCode-Schema (6 Zeichen Crockford-Base32)                                                                             |
+| 006 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen         | Aggregations-Schema pro Operation, ohne Personen-Buckets                                                                   |
+| 007 | 2026-05-07 | Aktiv  | STRATEGISCH    | SCHNITTSTELLE             | API-Vertragsänderungen        | Datenexport asynchron via Procrastinate-Job-Tripel                                                                         |
+| 008 | 2026-05-07 | Aktiv  | STRATEGISCH    | MODUL                     | Architekturänderungen         | Multi-Disponent ohne Lead, vollständiges Audit-Log                                                                         |
+| 009 | 2026-05-07 | Aktiv  | STRATEGISCH    | DATENMODELL               | Datenmodelländerungen         | Verbund-Reinterpretation V2 plus Phase-1-Invarianten I1–I5                                                                 |
+| 010 | 2026-05-08 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten        | GitHub-Actions Major-Update + Verifikations-Regime                                                                         |
+| 011 | 2026-05-09 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance         | psycopg LGPL-3.0-only akzeptiert + Sub-Dep-Lizenz-Regime                                                                   |
+| 012 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, DEPL.              | Externe Abhängigkeiten        | actions/upload-artifact Major-Update v4 → v7 (Node-20-Deprecation)                                                         |
+| 013 | 2026-05-10 | Aktiv  | OPERATIV       | STACK, SECURITY           | Externe Abhängigkeiten        | Rate-Limit als eigener Valkey-Counter (vor Schritt 2.2)                                                                    |
+| 014 | 2026-05-10 | Aktiv  | STRATEGISCH    | METHODIK, MODUL           | Architekturänderungen         | Anbieter-Austauschbarkeit für externe Geo-Services als Architektur-Prinzip                                                 |
+| 015 | 2026-05-15 | Aktiv  | REAKTIV        | STACK, SECURITY, METHODIK | Sicherheit und Datenschutz    | `get_db_session()` als FastAPI-yield-Dependency mit Rollback (Lifecycle-Bug-Fix Schritt 2.5b)                              |
+| 016 | 2026-05-17 | Aktiv  | STRATEGISCH    | MODUL, STACK, PERFORMANCE | Architekturänderungen         | Verzicht auf serverseitiges Caching vor externen Geo-Services                                                              |
+| 017 | 2026-05-18 | Aktiv  | ERKENNTNIS     | PERFORMANCE, MODUL        | Architekturänderungen         | Geo-Plausibilitäts-Algorithmus: Hülle-Distanz + dynamische GPS-Toleranz (2·accuracy)                                       |
+| 018 | 2026-05-28 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodelländerungen         | Bündelungs-Trigger (Spike J): manuell durch Disponent, `order_bundle`-Entity, min. 2 Orders                                |
+| 019 | 2026-05-28 | Aktiv  | STRATEGISCH    | METHODIK                  | Methodik                      | Phase-4-Sonderregel — UMSETZUNG-Eingangsdisziplin für Modul-Beförderungs-Phasen (Regel-019)                                |
+| 020 | 2026-05-28 | Aktiv  | OPERATIV       | STACK, METHODIK           | Lizenz und Compliance         | Shapely 2.1.2 + GEOS LGPL-2.1 als Pflicht-Sub-Dep akzeptiert (Plausibility-/Geo-Pfad)                                      |
+| 021 | 2026-06-10 | Aktiv  | ERKENNTNIS     | MODUL, STACK, PERFORMANCE | Externe Abhängigkeiten        | Spike G: Routing-Wechsel auf self-hosted Valhalla (TomTom-K.-o. für permanente Sperrungen)                                 |
+| 022 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, DEPLOYMENT         | Betrieb und Deployment        | Spike H: Backup-Strategie C (basebackup + WAL-Archiving + Dump), Recovery-Reihenfolge, RTO/RPO                             |
+| 023 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodell + API-Vertrag     | Spike K: Hilfe-Knopf-Semantik (2 Kategorien, optionale Beschreibung, Re-Notification statt Eskalation, help_alert)         |
+| 024 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, PERFORMANCE        | Performance (Frontend-Cache)  | Spike L: Tile-Caching CacheFirst + Operationsraum-Pre-Cache beim Schichtbeginn (4–12 MB), client-TTL 24 h                  |
+| 025 | 2026-06-11 | Aktiv  | ERKENNTNIS     | MODUL, DATENMODELL        | Datenmodell (Fahrzeug-Naming) | Spike M: Fahrzeug-Naming Mischform (Default `EB-<Kürzel>-NN`, überschreibbar), max 20 Zeichen, Umlaute, UNIQUE pro Mandant |
 
 ### Reaktiv-Quote
 
-- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-015 bis ADR-024).
+- **Aktueller Wert:** 1 / 10 = 10 % `[REAKTIV]`-Anteil über die letzten 10 ADRs (ADR-016 bis ADR-025).
 - **Schwellenwert (`project-context.md` Abschnitt 6, Klasse G):** 20 % `[REAKTIV]`-Anteil über die letzten 10 ADRs.
 - **Bei Überschreitung:** STOPP, Reflexion in `fahrplan.md` ergänzen, prüfen ob Architektur-Refactoring nötig ist.
 - **Aktuelle reaktive ADRs:** ADR-015 (Lifecycle-Bug in `get_db_session` durch `return` aus `async with`-Block — bei Schritt 2.5b extern gemeldeter Verdacht; Fix als Hot-Stabilisierung außerhalb der Schritt-Sequenz). Bleibt im Fenster bis ADR-025 (dann fällt ADR-015 aus dem 10er-Fenster).
@@ -909,6 +910,35 @@ Durchgehend, keine Lücken. Auch verworfene oder überholte Einträge behalten i
   - **Tooling:** Workbox 7.4.x via `vite-plugin-pwa` (bereits im Stack).
   - **6.3-Scope ergänzt um:** Pre-Cache-UX (Nutzeraktion + Fortschritt), Tile-Listen-Berechnung aus Operations-BBox, Workbox-`runtimeCaching`-Konfiguration, Playwright-Offline-Service-Worker-Smoke.
   - **Reaktiv-Quote:** `[ERKENNTNIS]` (planmäßiges Spike-Ergebnis). Fenster wandert auf ADR-015 bis ADR-024; ADR-015 bleibt einziger `[REAKTIV]`-Eintrag → 1 / 10 = 10 %.
+- **Abgeleitete Regel:** keine.
+
+---
+
+#### ADR-025: Spike M — Fahrzeugbezeichnungs-Schema (Mischform mit Default-Vorbelegung, pro Mandant eindeutig)
+
+- **Datum:** 2026-06-11
+- **Status:** Aktiv
+- **Tags:** `[ERKENNTNIS]` `[MODUL]` `[DATENMODELL]`
+- **Phasentyp-Kontext:** ERKUNDUNG (Phase 5, Schritt 5.5 / Spike M)
+- **Reifegrad-Wirkung:** `[OFFEN]`-Bereich „Fahrzeugbezeichnungs-Schema" in `backend/fleet` → `[VORLÄUFIG]`. Die implementierende Constraint-Migration + Disponenten-UI-Vorbelegung sind Phase-6.2-Aufgabe (Beförderung der Naming-Constraints auf `[BELASTBAR]` mit der Implementierung).
+- **Kategorie:** Datenmodelländerung (Constraints auf `vehicle.name`; kein neues Modul, keine neue Abhängigkeit).
+- **Kontext:** `vehicle.name` ist seit Schritt 4.2 `String(120)` **ohne** Eindeutigkeits- oder Format-Constraint — bewusst offen gehalten bis Spike M (`docs/architecture.md` Modul `backend/fleet`, „Offene Fragen"). Der Fragenkatalog ([`docs/spikes/spike-m-fragenkatalog.md`](spikes/spike-m-fragenkatalog.md)) wurde am 2026-06-11 von Patrick (Plattform-Betreiber mit DPolG-Bezug) direkt im Chat beantwortet. Die `vehicle`-Tabelle enthält im Status Konzeption keine Produktivdaten — Constraint-Verschärfung ist additiv und risikofrei.
+- **Antworten (M1–M8):**
+  - **M1/M2 — Vergabe-Modell: Mischform.** System schlägt eine Default-Bezeichnung vor (Schema `EB-<Mandanten-Kürzel>-NN`, z. B. `EB-HB-01`), die der Disponent **überschreiben** kann (Freitext). Etablierte DPolG-Namen sind damit 1:1 nutzbar, Verbände ohne Konvention bekommen einen sinnvollen Default.
+  - **M3 — Stabilität: dauerhaft** (Stammdaten, einsatzübergreifend) — folgt bereits aus der `vehicle`-Tabelle (4.2).
+  - **M4 — Vergabe: Disponent/Plattform-Admin** bei Fahrzeug-Anlage; Änderungen über die Fleet-API (S8d) — folgt aus der bestehenden Rollen-Matrix (4.2).
+  - **M5 — Eindeutigkeit: pro Mandant.** Bezeichnungen müssen je Mandant eindeutig sein; bei späterem Verbund stellt das System ein Mandanten-Kürzel voran (Phase-X-Konsequenz, kein Phase-1-Aufwand).
+  - **M6 — Länge: max 20 Zeichen.**
+  - **M7 — BOS-Abgrenzung: UI-Hinweis, keine harte Sperre.** Beim Anlegen ein dezenter Hinweis („keine echten Funkrufnamen verwenden"); keine technische Erkennung (Scheingenauigkeit). Der `EB-`-Präfix der Default-Vorbelegung grenzt ohnehin ab.
+  - **M8 — Zeichensatz: Umlaute erlaubt** (ä ö ü Ä Ö Ü ß plus A–Z, 0–9, Bindestrich, Leerzeichen).
+- **Datenmodell-Konsequenzen (Phase-6.2-Migration auf `vehicle`):**
+  - **Länge:** `vehicle.name` `String(120)` → `String(20)` (M6).
+  - **Zeichensatz-CHECK:** `ck_vehicle_name_charset` — Regex `^[A-Za-zÄÖÜäöüß0-9 -]+$` (M8), plus Nicht-Leer/Nicht-nur-Whitespace (`length(btrim(name)) >= 1`).
+  - **Eindeutigkeit:** Partial-UNIQUE-Index `uq_vehicle_tenant_name_active` auf `(tenant_id, name)` `WHERE is_active = TRUE` (M5) — verwendet dasselbe Soft-Delete-Prädikat wie der bestehende `ix_vehicle_tenant_id_active`; deaktivierte Fahrzeuge belegen den Namen nicht.
+  - **Default-Vorbelegung (UI, kein DB-Constraint):** `frontend-disponent` schlägt `EB-<Mandanten-Kürzel>-<laufende NN>` vor (Kürzel aus Tenant-Stammdaten), überschreibbar (M1/M2).
+  - **UI-Hinweise:** „keine Personennamen" (PII-Leitplanke, Vision-Constraint) + „keine echten Funkrufnamen" (M7) am Eingabefeld; keine technische Durchsetzung.
+- **Bewusste Nicht-Entscheidungen:** keine technische Personennamen-/BOS-Erkennung; keine globale Eindeutigkeit in Phase 1; keine Pro-Einsatz-Namen.
+- **Reaktiv-Quote:** `[ERKENNTNIS]` (planmäßiges Spike-Ergebnis). Fenster wandert auf ADR-016 bis ADR-025; ADR-015 bleibt einziger `[REAKTIV]`-Eintrag → 1 / 10 = 10 %.
 - **Abgeleitete Regel:** keine.
 
 ---
